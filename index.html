@@ -406,7 +406,7 @@ const ROADMAP_ITEMS = [
     status: 'upcoming',
     description: 'Improved handling of key homophones (e.g., "period", "colon"). Better date and number localization.',
     mapX: 44, mapY: 12,
-    icon: 'chest'
+    icon: 'tent'
   },
   {
     id: 5,
@@ -414,30 +414,30 @@ const ROADMAP_ITEMS = [
     status: 'upcoming',
     description: 'Real-time partial transcription as the user speaks. Essential for building responsive dictation UIs where text appears on screen with minimal perceived latency.',
     mapX: 58, mapY: 12,
-    icon: 'chest'
+    icon: 'tent'
   },
   {
     id: 6,
     title: 'Advanced Commands',
     status: 'upcoming',
     description: 'Wildcard variables for templated command systems beyond static phrase matching. Non-verbal command anchors that map physical device inputs (foot pedals, hotkeys, button presses) to actions in the transcription stream.',
-    mapX: 58, mapY: 38,
-    icon: 'chest'
+    mapX: 58, mapY: 30,
+    icon: 'tent'
   },
   {
     id: 7,
     title: 'Advanced Customization',
     status: 'upcoming',
     description: 'Organization-specific tuning. Custom vocabulary handles recognition (getting the model to hear the right terms), replacement rules handle formatting (standardizing what appears in output). Together they let customers tailor the full pipeline to their environment.',
-    mapX: 44, mapY: 38,
-    icon: 'chest'
+    mapX: 44, mapY: 30,
+    icon: 'tent'
   },
   {
     id: 'milestone2',
     title: 'SLAY THE DRAGON\nONCE AND FOR ALL',
     status: 'milestone',
     description: '',
-    mapX: 44, mapY: 52,
+    mapX: 44, mapY: 46,
     icon: 'dragon'
   }
 ];
@@ -1170,9 +1170,9 @@ class WorldMap {
       { x: 44, y: 24 },  // milestone1 — East
       { x: 44, y: 12 },  // item 4 — North (turn!)
       { x: 58, y: 12 },  // item 5 — East
-      { x: 58, y: 38 },  // item 6 — South (turn!) — pushed down for clear gap from stop 4
-      { x: 44, y: 38 },  // item 7 — West (turn!)
-      { x: 44, y: 52 },  // dragon — South (turn!)
+      { x: 58, y: 30 },  // item 6 — South (turn!)
+      { x: 44, y: 30 },  // item 7 — West (turn!)
+      { x: 44, y: 46 },  // dragon — South (turn!)
     ];
 
     // Draw right-angle path segments
@@ -1222,82 +1222,92 @@ class WorldMap {
     this.addWaterBody(5, 14, 6, 4, 101);    // Inside dark forest zone
     this.addWaterBody(22, 2, 5, 4, 202);    // Upper grass zone
     this.addWaterBody(50, 20, 6, 4, 303);   // Grass zone south
-    this.addWaterBody(36, 42, 5, 4, 404);   // Before volcanic
+    this.addWaterBody(36, 36, 5, 4, 404);   // Before volcanic
     this.addWaterBody(8, 50, 6, 4, 505);    // Lower area
 
-    // Stone / castle area near milestone1 — organic edges
-    for (let y = 18; y < 30; y++) {
+    // Stone / castle area near milestone1 — organic circular-ish boundary
+    for (let y = 16; y < 32; y++) {
+      for (let x = 34; x < 54; x++) {
+        const cx = 44, cy = 22; // center of stone zone
+        const dist = Math.sqrt(((x - cx) / 10) ** 2 + ((y - cy) / 7) ** 2);
+        const noiseOff = zoneNoise(x * 3 + y * 5 + 300) * 0.08;
+        if (dist < 1.0 + noiseOff && this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'stone';
+        }
+      }
+    }
+
+    // Second stone area near power-ups north section — organic ellipse
+    for (let y = 4; y < 20; y++) {
       for (let x = 36; x < 52; x++) {
-        const edgeDistX = Math.min(x - 36, 52 - x);
-        const edgeDistY = Math.min(y - 18, 30 - y);
-        const edgeDist = Math.min(edgeDistX, edgeDistY);
-        if (edgeDist > 1 + zoneNoise(x + y * 7) * 0.5 && this.grid[y][x] === 'grass') {
+        const cx = 44, cy = 12; // center near stop 4
+        const dist = Math.sqrt(((x - cx) / 8) ** 2 + ((y - cy) / 6) ** 2);
+        const noiseOff = zoneNoise(x * 4 + y * 3 + 350) * 0.08;
+        if (dist < 1.0 + noiseOff && this.grid[y][x] === 'grass') {
           this.grid[y][x] = 'stone';
         }
       }
     }
 
-    // Second stone area near power-ups north section — organic edges
-    for (let y = 6; y < 18; y++) {
-      for (let x = 38; x < 50; x++) {
-        const edgeDistX = Math.min(x - 38, 50 - x);
-        const edgeDistY = Math.min(y - 6, 18 - y);
-        const edgeDist = Math.min(edgeDistX, edgeDistY);
-        if (edgeDist > 1 + zoneNoise(x * 3 + y * 5) * 0.4 && this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'stone';
-        }
-      }
-    }
-
-    // Volcanic area near dragon — organic edges spreading from center (44,52)
-    for (let y = 42; y < this.rows; y++) {
-      for (let x = 30; x < 60; x++) {
-        const dist = Math.sqrt((x - 44) ** 2 + (y - 52) ** 2);
+    // Volcanic area near dragon — organic edges spreading from center (44,46)
+    for (let y = 36; y < this.rows; y++) {
+      for (let x = 28; x < 62; x++) {
+        const dist = Math.sqrt((x - 44) ** 2 + (y - 46) ** 2);
         const noiseOff = zoneNoise(x * 2 + y * 3 + 400);
-        const maxRadius = y >= 48 ? 18 : 10;
+        const maxRadius = y >= 42 ? 18 : 10;
         if (dist < maxRadius + noiseOff && this.grid[y][x] !== 'path') {
+          if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+            this.grid[y][x] = 'volcanic';
+          }
+        }
+      }
+    }
+    // Bottom rows — volcanic with noisy top boundary
+    for (let y = this.rows - 6; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        const topEdge = this.rows - 6 + zoneNoise(x * 3 + 900) * 0.5;
+        if (y >= topEdge && this.grid[y][x] !== 'path') {
           this.grid[y][x] = 'volcanic';
         }
       }
     }
-    // Bottom rows always volcanic
-    for (let y = this.rows - 4; y < this.rows; y++) {
-      for (let x = 0; x < this.cols; x++) {
-        if (this.grid[y][x] !== 'path') this.grid[y][x] = 'volcanic';
+
+    // Dark forest patches — right side of map with organic edges on ALL sides
+    // Right-side dark forest (mid-lower region)
+    for (let y = 0; y < this.rows; y++) {
+      // The right edge of the map is always dark, with a noisy left boundary
+      let rightForestLeftEdge;
+      if (y < 10) {
+        rightForestLeftEdge = 56 + zoneNoise(y * 4 + 600); // Top-right area
+      } else if (y < 24) {
+        rightForestLeftEdge = 64 + zoneNoise(y * 4 + 500); // Near stops 4-5, pull back
+      } else if (y < 40) {
+        rightForestLeftEdge = 60 + zoneNoise(y * 4 + 500); // Mid-right area
+      } else {
+        rightForestLeftEdge = 58 + zoneNoise(y * 4 + 500); // Lower area
+      }
+      for (let x = Math.max(0, Math.floor(rightForestLeftEdge)); x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
 
-    // Dark forest patches for variety — organic edges
-    for (let y = 24; y < 46; y++) {
-      const leftEdge = 60 + zoneNoise(y * 4 + 500);
-      for (let x = Math.max(0, Math.floor(leftEdge)); x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    for (let y = 0; y < 10; y++) {
-      const leftEdge = 58 + zoneNoise(y * 4 + 600);
-      for (let x = Math.max(0, Math.floor(leftEdge)); x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    // Top-right corner dark
-    for (let y = 0; y < 6 + zoneNoise(700); y++) {
-      for (let x = this.cols - 8; x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    // Bottom rows — dark forest for anything not already volcanic or path
-    for (let y = this.rows - 10; y < this.rows; y++) {
-      for (let x = 0; x < 18 + zoneNoise(y + 800); x++) {
-        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'darkGrass';
+    // Top strip dark forest — full width with noisy bottom edge
+    for (let y = 0; y < this.rows; y++) {
+      const topEdgeLimit = 4 + zoneNoise(y * 7 + 700) * 0.5;
+      if (y < topEdgeLimit) {
+        for (let x = 0; x < this.cols; x++) {
+          if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
         }
       }
     }
-    // Right edge dark forest
-    for (let y = 0; y < this.rows; y++) {
-      for (let x = this.cols - 4; x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+
+    // Bottom dark forest (below volcanic zone, left side) — noisy right edge
+    for (let y = this.rows - 12; y < this.rows; y++) {
+      const rightEdge = 16 + zoneNoise(y + 800) + (y - (this.rows - 12)) * 0.3;
+      for (let x = 0; x < Math.min(Math.floor(rightEdge), this.cols); x++) {
+        if (this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'darkGrass';
+        }
       }
     }
 
@@ -1324,9 +1334,9 @@ class WorldMap {
     for (let i = 0; i <= steps; i++) {
       const px = Math.round(from.x + (dx * i / steps));
       const py = Math.round(from.y + (dy * i / steps));
-      // Make path 5 tiles wide for smoother transitions
-      for (let oy = -2; oy <= 2; oy++) {
-        for (let ox = -2; ox <= 2; ox++) {
+      // Make path 3 tiles wide for cleaner separation
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
           const nx = px + ox, ny = py + oy;
           if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
             this.grid[ny][nx] = 'path';
@@ -1871,14 +1881,111 @@ class Game {
 
     const treeCanvas = await loadAssetImg('assets/trees/pine_south.png');
     if (treeCanvas) { this.decos.tree0 = treeCanvas; this.decos.tree1 = treeCanvas; }
-    // Flowers, rocks, rose bushes, and boulders use enhanced procedural sprites (already set above)
 
-    // Load PixelLab coin tile
-    this.coinSprite = await new Promise((resolve) => {
+    // Load PixelLab decoration sprites (replace procedural fallbacks)
+    const decoAssets = {
+      rock: 'assets/decorations/rock.png',
+      boulder: 'assets/decorations/boulder.png',
+      campfire: 'assets/decorations/campfire.png',
+      flower: 'assets/decorations/flower.png',
+      roseBush: 'assets/decorations/rosebush.png',
+      skull: 'assets/decorations/skull.png',
+      signpost: 'assets/decorations/signpost.png',
+      deadTree: 'assets/decorations/deadtree.png',
+      lava: 'assets/decorations/lava.png',
+      flag: 'assets/decorations/flag.png',
+      bridge: 'assets/decorations/bridge.png',
+    };
+    for (const [key, src] of Object.entries(decoAssets)) {
+      const c = await loadAssetImg(src);
+      if (c) this.decos[key] = c;
+    }
+
+    // Load PixelLab dragon sprite (replaces procedural dragon)
+    const dragonCanvas = await loadAssetImg('assets/dragon/south.png');
+    if (dragonCanvas) this.decos.dragon = dragonCanvas;
+
+    // Pre-render 8 round coin rotation frames (classic pixel game style)
+    this.coinFrames = [];
+    {
+      const frameCount = 8;
+      const coinSize = 14; // diameter in pixels
+      const coinH = coinSize;
+      for (let i = 0; i < frameCount; i++) {
+        const angle = (i / frameCount) * Math.PI * 2;
+        const scaleX = Math.abs(Math.cos(angle));
+        const coinW = Math.max(2, Math.round(coinSize * scaleX));
+        const fc = document.createElement('canvas');
+        fc.width = coinW + 2; fc.height = coinH + 2;
+        const fctx = fc.getContext('2d');
+        const cx = (coinW + 2) / 2;
+        const cy = (coinH + 2) / 2;
+        const rx = coinW / 2;
+        const ry = coinH / 2;
+
+        // Dark outline
+        fctx.fillStyle = '#8a6010';
+        fctx.beginPath();
+        fctx.ellipse(cx, cy, rx + 1, ry + 1, 0, 0, Math.PI * 2);
+        fctx.fill();
+
+        // Main gold body
+        fctx.fillStyle = '#d4a020';
+        fctx.beginPath();
+        fctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        fctx.fill();
+
+        // Highlight (top)
+        if (coinW > 4) {
+          fctx.fillStyle = '#f0d060';
+          fctx.beginPath();
+          fctx.ellipse(cx, cy - ry * 0.2, rx * 0.7, ry * 0.5, 0, 0, Math.PI * 2);
+          fctx.fill();
+
+          // Bright shine spot
+          fctx.fillStyle = '#fff8d0';
+          fctx.beginPath();
+          fctx.ellipse(cx - rx * 0.2, cy - ry * 0.3, rx * 0.25, ry * 0.25, 0, 0, Math.PI * 2);
+          fctx.fill();
+
+          // Embossed detail (show on front-facing frames)
+          if (scaleX > 0.5) {
+            fctx.fillStyle = '#c09018';
+            fctx.beginPath();
+            fctx.ellipse(cx, cy, rx * 0.35, ry * 0.35, 0, 0, Math.PI * 2);
+            fctx.fill();
+            fctx.fillStyle = '#d4a020';
+            fctx.beginPath();
+            fctx.ellipse(cx, cy, rx * 0.25, ry * 0.25, 0, 0, Math.PI * 2);
+            fctx.fill();
+          }
+        }
+
+        // Bottom shadow edge
+        fctx.fillStyle = '#9a6808';
+        fctx.beginPath();
+        fctx.ellipse(cx, cy + ry * 0.7, rx * 0.8, ry * 0.2, 0, 0, Math.PI);
+        fctx.fill();
+
+        this.coinFrames.push(fc);
+      }
+    }
+    this.coinSprite = this.coinFrames.length > 0 ? this.coinFrames[0] : null;
+
+    // Load PixelLab castle sprite (for shipped stops)
+    this.castleSprite = await new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = 'assets/items/coin_iso.png';
+      img.src = 'assets/items/castle/south.png';
+    });
+
+    // Load PixelLab tent sprite (for upcoming stops)
+    this.tentSprite = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = 'assets/items/tent/tent.png';
     });
 
     loadText.textContent = 'Summoning Bard the Bowman...';
@@ -2105,10 +2212,9 @@ class Game {
   }
 
   drawCoins(ctx, cx, cy) {
-    const spinPhase = this.time * 0.1;
-    const useSpriteImg = this.coinSprite;
-    const sprW = useSpriteImg ? useSpriteImg.width : 0;
-    const sprH = useSpriteImg ? useSpriteImg.height : 0;
+    const hasFrames = this.coinFrames && this.coinFrames.length > 0;
+    const frameCount = hasFrames ? this.coinFrames.length : 8;
+    const COIN_SCALE = 1.0; // Round coins are already properly sized
 
     for (const coin of this.coins) {
       if (coin.collected && coin.collectAnim <= 0) continue;
@@ -2122,16 +2228,14 @@ class Game {
         ctx.globalAlpha = 1 - progress;
         const floatY = sy - progress * 24;
 
-        if (useSpriteImg) {
-          const scale = 0.7 * (1 - progress * 0.3);
-          ctx.drawImage(useSpriteImg,
-            sx - sprW * scale / 2, floatY - sprH * scale / 2,
-            sprW * scale, sprH * scale);
+        if (hasFrames) {
+          const frame = this.coinFrames[0]; // show face on collect
+          const w = frame.width * COIN_SCALE * (1 - progress * 0.3);
+          const h = frame.height * COIN_SCALE * (1 - progress * 0.3);
+          ctx.drawImage(frame, sx - w / 2, floatY - h / 2, w, h);
         } else {
           ctx.fillStyle = '#f0c040';
           ctx.fillRect(sx - 4, floatY - 5, 8, 10);
-          ctx.fillStyle = '#fff8d0';
-          ctx.fillRect(sx - 2, floatY - 3, 4, 4);
         }
 
         // +1 text
@@ -2144,32 +2248,34 @@ class Game {
         ctx.globalAlpha = 1;
       } else {
         const hover = Math.sin(this.time * 0.05 + coin.x * 0.01 + coin.y * 0.005) * 2;
-        const spinScale = Math.abs(Math.cos(spinPhase + coin.x * 0.02));
+
+        // Classic pixel rotation: cycle through pre-rendered frames
+        // Each coin starts at a different phase based on position
+        const phase = coin.x * 0.03 + coin.y * 0.02;
+        const frameIdx = Math.floor((this.time * 0.15 + phase) % frameCount);
 
         // Shadow
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.fillRect(sx - 5, sy + 8 + hover, 10, 3);
 
-        if (useSpriteImg) {
-          // Draw PixelLab coin sprite with spinning scale on X axis
-          const drawW = sprW * 0.7 * (spinScale * 0.7 + 0.3);
-          const drawH = sprH * 0.7;
-          ctx.drawImage(useSpriteImg,
-            sx - drawW / 2, sy - drawH / 2 + hover,
-            drawW, drawH);
+        if (hasFrames) {
+          const frame = this.coinFrames[frameIdx];
+          const w = frame.width * COIN_SCALE;
+          const h = frame.height * COIN_SCALE;
+          ctx.drawImage(frame, sx - w / 2, sy - h / 2 + hover, w, h);
 
-          // Bright shine overlay when front-facing
-          if (spinScale > 0.7) {
-            ctx.globalAlpha = (spinScale - 0.7) / 0.3 * 0.5;
+          // Bright shine when showing face (frame 0 or near it)
+          if (frameIdx === 0 || frameIdx === frameCount - 1) {
+            ctx.globalAlpha = 0.4;
             ctx.fillStyle = '#fff8d0';
-            ctx.fillRect(sx - 3, sy - 4 + hover, 3, 3);
+            ctx.fillRect(sx - 2, sy - 4 + hover, 3, 3);
             ctx.globalAlpha = 1;
           }
         } else {
-          // Fallback procedural coin
+          // Fallback procedural spinning coin
+          const spinScale = Math.abs(Math.cos((frameIdx / frameCount) * Math.PI));
           const spinW = spinScale * 8 + 2;
           const coinH = 10;
-
           ctx.fillStyle = '#a07010';
           ctx.fillRect(sx - spinW / 2 - 1, sy - coinH / 2 + hover - 1, spinW + 2, coinH + 2);
           ctx.fillStyle = '#d4a020';
@@ -2432,9 +2538,9 @@ class Game {
       { x: 44, y: 24 },  // milestone1
       { x: 44, y: 12 },  // item 4
       { x: 58, y: 12 },  // item 5
-      { x: 58, y: 38 },  // item 6
-      { x: 44, y: 38 },  // item 7
-      { x: 44, y: 52 },  // dragon
+      { x: 58, y: 30 },  // item 6
+      { x: 44, y: 30 },  // item 7
+      { x: 44, y: 46 },  // dragon
     ].map(p => ({ x: p.x * TILE_SIZE + TILE_SIZE/2, y: p.y * TILE_SIZE + TILE_SIZE/2 }));
 
     for (let i = 0; i < breadcrumbWaypoints.length - 1; i++) {
@@ -2562,7 +2668,7 @@ class Game {
 
     // Dragon Lair label
     const sec3X = 44 * TILE_SIZE - cx;
-    const sec3Y = 48 * TILE_SIZE - cy;
+    const sec3Y = 42 * TILE_SIZE - cy;
     ctx.save();
     ctx.globalAlpha = 0.15;
     ctx.font = '14px "Press Start 2P"';
@@ -2582,7 +2688,10 @@ class Game {
 
   drawRoadmapItem(ctx, item, cx, cy) {
     const sprite = this.decos[item.icon];
-    if (!sprite) return;
+    // For tent/tower with PixelLab sprites, allow rendering even without deco fallback
+    if (!sprite && item.icon !== 'tent' && item.icon !== 'tower') return;
+    if (!sprite && item.icon === 'tower' && !this.castleSprite) return;
+    if (!sprite && item.icon === 'tent' && !this.tentSprite) return;
 
     const drawX = item.mapX * TILE_SIZE - cx;
     const drawY = item.mapY * TILE_SIZE - cy;
@@ -2590,13 +2699,19 @@ class Game {
 
     // Dragon special handling
     if (item.icon === 'dragon') {
+      const dragonScale = 2.0; // Scale up the dragon for boss presence
+      const dw = sprite.width * dragonScale;
+      const dh = sprite.height * dragonScale;
+      const dragonCX = drawX + TILE_SIZE / 2;
+      const dragonCY = drawY + TILE_SIZE / 2;
+
       if (this.dragonSlain) {
         // Draw fallen dragon (flipped, faded)
         ctx.globalAlpha = 0.5;
         ctx.save();
-        ctx.translate(drawX + 48, drawY + 48);
+        ctx.translate(dragonCX, dragonCY);
         ctx.scale(1, -1);
-        ctx.drawImage(sprite, -48, -48);
+        ctx.drawImage(sprite, -dw / 2, -dh / 2, dw, dh);
         ctx.restore();
         ctx.globalAlpha = 1;
 
@@ -2610,7 +2725,7 @@ class Game {
           ctx.globalAlpha = 0.5 + Math.random() * 0.5;
           this.dragonHitTimer--;
         }
-        ctx.drawImage(sprite, drawX - 16, drawY - sprite.height + TILE_SIZE + breathOffset);
+        ctx.drawImage(sprite, dragonCX - dw / 2, dragonCY - dh / 2 + breathOffset - 16, dw, dh);
         ctx.globalAlpha = 1;
 
         // Fire breath particles
@@ -2628,10 +2743,36 @@ class Game {
 
     // Draw the icon
     if (item.icon === 'tower') {
-      ctx.drawImage(sprite, drawX - TILE_SIZE/2, drawY - sprite.height + TILE_SIZE);
+      // Use PixelLab castle sprite if available
+      if (this.castleSprite) {
+        const cW = this.castleSprite.width;
+        const cH = this.castleSprite.height;
+        const scale = 1.4; // Scale up slightly for visibility
+        ctx.drawImage(this.castleSprite,
+          centerX - (cW * scale) / 2,
+          drawY - (cH * scale) + TILE_SIZE + 4,
+          cW * scale, cH * scale);
+      } else {
+        ctx.drawImage(sprite, drawX - TILE_SIZE/2, drawY - sprite.height + TILE_SIZE);
+      }
       // Checkmark for shipped
       if (item.status === 'shipped') {
         ctx.drawImage(this.decos.checkmark, drawX + TILE_SIZE - 4, drawY - 8);
+      }
+    } else if (item.icon === 'tent') {
+      // Use PixelLab tent sprite if available
+      if (this.tentSprite) {
+        const tW = this.tentSprite.width;
+        const tH = this.tentSprite.height;
+        const scale = 1.2;
+        ctx.drawImage(this.tentSprite,
+          centerX - (tW * scale) / 2,
+          drawY - (tH * scale) + TILE_SIZE + 4,
+          tW * scale, tH * scale);
+      } else {
+        // Fallback to old chest sprite
+        const fallbackSprite = this.decos['chest'];
+        if (fallbackSprite) ctx.drawImage(fallbackSprite, drawX, drawY);
       }
     } else if (item.icon === 'chest') {
       ctx.drawImage(sprite, drawX, drawY);
@@ -2652,29 +2793,77 @@ class Game {
       }
     }
 
-    // Draw numbered circle on each stop (not milestones)
+    // Draw numbered pixelated banner/shield to the right of each stop (not milestones)
     if (typeof item.id === 'number') {
-      const numX = centerX;
-      const numY = item.icon === 'tower' ? drawY - sprite.height + TILE_SIZE - 6 : drawY - 6;
-      const radius = 10;
+      // Position the banner to the bottom-right of the icon
+      const bannerX = centerX + 14;
+      const bannerY = drawY + 6;
+      const bw = 18; // banner width
+      const bh = 20; // banner height (before pennant tail)
+      const px = 2;  // pixel size for pixelated look
 
-      // Circle background
-      ctx.fillStyle = item.status === 'shipped' ? '#2a8a2a' : '#a07020';
-      ctx.beginPath();
-      ctx.arc(numX, numY, radius, 0, Math.PI * 2);
-      ctx.fill();
-      // Circle border
-      ctx.strokeStyle = item.status === 'shipped' ? '#40e040' : '#f0c040';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(numX, numY, radius, 0, Math.PI * 2);
-      ctx.stroke();
-      // Number
+      const isShipped = item.status === 'shipped';
+      const darkColor = isShipped ? '#1a5a1a' : '#5a3810';
+      const mainColor = isShipped ? '#2a8a2a' : '#7a5020';
+      const lightColor = isShipped ? '#40c040' : '#c09030';
+      const borderColor = isShipped ? '#30d030' : '#d0a040';
+      const numColor = '#fff';
+
+      // Banner pole (small vertical line on left)
+      ctx.fillStyle = '#8a7050';
+      ctx.fillRect(bannerX - 2, bannerY - 4, px, bh + 8);
+      ctx.fillStyle = '#a08860';
+      ctx.fillRect(bannerX - 2, bannerY - 4, 1, bh + 8);
+      // Pole cap
+      ctx.fillStyle = '#d0b060';
+      ctx.fillRect(bannerX - 3, bannerY - 6, px + 2, px);
+
+      // Banner body — pixelated rectangle with inner border
+      // Outer border (dark)
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(bannerX, bannerY, bw, bh);
+      // Inner fill
+      ctx.fillStyle = mainColor;
+      ctx.fillRect(bannerX + px, bannerY + px, bw - px * 2, bh - px * 2);
+      // Top highlight
+      ctx.fillStyle = lightColor;
+      ctx.fillRect(bannerX + px, bannerY + px, bw - px * 2, px);
+      // Left highlight
+      ctx.fillRect(bannerX + px, bannerY + px, px, bh - px * 3);
+      // Bottom shadow
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(bannerX + px, bannerY + bh - px * 2, bw - px * 2, px);
+
+      // Pennant tail (two triangular points at bottom)
+      ctx.fillStyle = mainColor;
+      for (let i = 0; i < 4; i++) {
+        // Left point
+        ctx.fillRect(bannerX + i * px, bannerY + bh + i * px, px, px);
+        // Right point
+        ctx.fillRect(bannerX + bw - (i + 1) * px, bannerY + bh + i * px, px, px);
+      }
+      // Darken outer edges of pennant
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(bannerX, bannerY + bh, px, px);
+      ctx.fillRect(bannerX + bw - px, bannerY + bh, px, px);
+
+      // Corner accents (pixelated rivets)
+      ctx.fillStyle = borderColor;
+      ctx.fillRect(bannerX + px, bannerY + px, px, px);
+      ctx.fillRect(bannerX + bw - px * 2, bannerY + px, px, px);
+      ctx.fillRect(bannerX + px, bannerY + bh - px * 2, px, px);
+      ctx.fillRect(bannerX + bw - px * 2, bannerY + bh - px * 2, px, px);
+
+      // Number text centered in banner
       ctx.font = '8px "Press Start 2P"';
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = numColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(String(item.id), numX, numY);
+      // Add tiny shadow for readability
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(String(item.id), bannerX + bw / 2 + 1, bannerY + bh / 2 + 1);
+      ctx.fillStyle = numColor;
+      ctx.fillText(String(item.id), bannerX + bw / 2, bannerY + bh / 2);
       ctx.textAlign = 'start';
       ctx.textBaseline = 'alphabetic';
     }
@@ -2701,8 +2890,8 @@ class Game {
 
       const alpha = Math.min(1, (maxDist - dist) / 200);
 
-      // Label background
-      const labelY = item.icon === 'tower' ? drawY - 52 : drawY - 22;
+      // Label background — positioned just above the icon
+      const labelY = item.icon === 'tower' ? drawY - 36 : drawY - 18;
       const label = item.title;
       const metrics = ctx.measureText(label);
       const labelW = metrics.width + 16;
