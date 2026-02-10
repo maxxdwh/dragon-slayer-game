@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DragonMap — Corti API Roadmap Quest</title>
+  <title>Dictation Quest — Corti API Roadmap</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -295,12 +295,13 @@
 
     <div id="hud">
       <div>
-        <div class="title">DRAGONMAP</div>
+        <div class="title">DICTATION QUEST</div>
         <div class="subtitle">The Quest for Clinical Dictation</div>
       </div>
       <div class="quest-info">
         <div id="quest-status">QUEST: Slay the Dragon</div>
         <div id="quest-progress" style="margin-top:4px;"></div>
+        <div id="coin-counter" style="margin-top:4px; color:#f0d060;"></div>
       </div>
     </div>
 
@@ -322,7 +323,7 @@
     <!-- Title / Intro screen -->
     <div id="title-screen" style="display:none;">
       <div style="text-align:center;">
-        <div style="font-size:48px; color:#f0c040; text-shadow:4px 4px 0 #000, 0 0 40px rgba(240,192,64,0.4); margin-bottom:32px; line-height:1.6;">DRAGONMAP</div>
+        <div style="font-size:48px; color:#f0c040; text-shadow:4px 4px 0 #000, 0 0 40px rgba(240,192,64,0.4); margin-bottom:32px; line-height:1.6;">DICTATION QUEST</div>
         <div style="font-size:16px; color:#a0a0b0; text-shadow:2px 2px 0 #000; margin-bottom:40px; line-height:2.4; max-width:700px;">
           The best foundation for building<br>clinical dictation products,<br>delivered as an API.
         </div>
@@ -334,7 +335,7 @@
     </div>
 
     <div id="loading">
-      <div class="load-title">DRAGONMAP</div>
+      <div class="load-title">DICTATION QUEST</div>
       <div class="load-bar-outer">
         <div class="load-bar-inner" id="load-bar"></div>
       </div>
@@ -344,7 +345,7 @@
 
   <script>
 // ============================================================
-// DRAGONMAP — 2D Pixel Art Roadmap Quest
+// DICTATION QUEST — 2D Pixel Art Roadmap Quest
 // ============================================================
 
 const TILE_SIZE = 32;
@@ -397,7 +398,7 @@ const ROADMAP_ITEMS = [
     status: 'milestone',
     description: '',
     mapX: 44, mapY: 24,
-    icon: 'sword'
+    icon: 'bow'
   },
   {
     id: 4,
@@ -420,7 +421,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Commands',
     status: 'upcoming',
     description: 'Wildcard variables for templated command systems beyond static phrase matching. Non-verbal command anchors that map physical device inputs (foot pedals, hotkeys, button presses) to actions in the transcription stream.',
-    mapX: 58, mapY: 30,
+    mapX: 58, mapY: 38,
     icon: 'chest'
   },
   {
@@ -428,7 +429,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Customization',
     status: 'upcoming',
     description: 'Organization-specific tuning. Custom vocabulary handles recognition (getting the model to hear the right terms), replacement rules handle formatting (standardizing what appears in output). Together they let customers tailor the full pipeline to their environment.',
-    mapX: 44, mapY: 30,
+    mapX: 44, mapY: 38,
     icon: 'chest'
   },
   {
@@ -436,7 +437,7 @@ const ROADMAP_ITEMS = [
     title: 'SLAY THE DRAGON\nONCE AND FOR ALL',
     status: 'milestone',
     description: '',
-    mapX: 44, mapY: 44,
+    mapX: 44, mapY: 52,
     icon: 'dragon'
   }
 ];
@@ -458,159 +459,110 @@ class PixelArt {
     ctx.fillRect(x * scale, y * scale, scale, scale);
   }
 
-  // Character sprite — Bard the Bowman, 8 directions
-  // Returns object with sprites for each direction
-  static generateCharacter() {
+  // Load character sprites from PixelLab-generated PNGs
+  // Returns a promise that resolves to {idle: {dir: Image}, walk: {dir: [Image]}}
+  static async loadCharacterSprites() {
+    const PIXELLAB_DIR_MAP = {
+      'n': 'north',
+      'ne': 'north-east',
+      'e': 'east',
+      'se': 'south-east',
+      's': 'south',
+      'sw': 'south-west',
+      'w': 'west',
+      'nw': 'north-west'
+    };
+    const WALK_FRAMES = 6;
+    const basePath = 'assets/character';
+
+    const loadImg = (src) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load: ' + src));
+      img.src = src;
+    });
+
     const sprites = {};
-    const SCALE = 2;
-    const W = 16, H = 16;
+    const promises = [];
 
-    const skin = '#f5c5a3';
-    const hair = '#5a3320';
-    const tunic = '#2a6e3f';
-    const tunicDk = '#1d5030';
-    const boots = '#4a3728';
-    const cape = '#8b2020';
-    const capeDk = '#6b1515';
-    const bow = '#a06030';
-    const quiver = '#704020';
-    const belt = '#c8a84a';
+    for (const dir of DIR_NAMES) {
+      const plDir = PIXELLAB_DIR_MAP[dir];
+      sprites[dir] = [];
 
-    // Generate for each direction and each animation frame
-    for (let d = 0; d < 8; d++) {
-      const frames = [];
-      for (let frame = 0; frame < 4; frame++) {
-        const { canvas, ctx } = this.createCanvas(W * SCALE, H * SCALE);
-        const p = (x, y, c) => this.px(ctx, x, y, c, SCALE);
-
-        // Animation offsets
-        const walk = frame % 2 === 0 ? 0 : (frame === 1 ? -1 : 1);
-        const bob = frame % 2 === 0 ? 0 : -1;
-
-        if (d === 4) { // South (facing down)
-          // Cape behind
-          p(5,4+bob, capeDk); p(6,4+bob, cape); p(7,4+bob, cape); p(8,4+bob, cape); p(9,4+bob, capeDk);
-          p(5,5+bob, capeDk); p(6,5+bob, cape); p(7,5+bob, cape); p(8,5+bob, cape); p(9,5+bob, capeDk);
-          // Hair
-          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
-          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
-          // Face
-          p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, skin);
-          p(6,5+bob, skin); p(7,5+bob, skin); p(8,5+bob, skin);
-          // Eyes
-          p(6,4+bob, '#222'); p(8,4+bob, '#222');
-          // Body
-          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
-          p(5,7+bob, tunic); p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic); p(9,7+bob, tunic);
-          p(5,8+bob, tunic); p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic); p(9,8+bob, tunic);
-          p(5,9+bob, tunicDk); p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk); p(9,9+bob, tunicDk);
-          // Legs
-          p(6,10, boots); p(7,10, tunicDk); p(8,10, boots);
-          p(6+walk,11, boots); p(8-walk,11, boots);
-          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
-          // Arms
-          p(4,7+bob, skin); p(10,7+bob, skin);
-          // Bow on back
-          p(10,5+bob, bow); p(10,6+bob, bow); p(11,4+bob, bow);
-        } else if (d === 0) { // North (facing up)
-          // Hair (back of head)
-          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
-          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
-          p(6,4+bob, hair); p(7,4+bob, hair); p(8,4+bob, hair);
-          p(6,5+bob, hair); p(7,5+bob, hair); p(8,5+bob, hair);
-          // Cape
-          p(5,6+bob, cape); p(6,6+bob, cape); p(7,6+bob, cape); p(8,6+bob, cape); p(9,6+bob, cape);
-          p(5,7+bob, cape); p(6,7+bob, cape); p(7,7+bob, cape); p(8,7+bob, cape); p(9,7+bob, cape);
-          p(5,8+bob, cape); p(6,8+bob, capeDk); p(7,8+bob, capeDk); p(8,8+bob, capeDk); p(9,8+bob, cape);
-          p(5,9+bob, capeDk); p(6,9+bob, capeDk); p(7,9+bob, capeDk); p(8,9+bob, capeDk); p(9,9+bob, capeDk);
-          // Quiver
-          p(10,5+bob, quiver); p(10,6+bob, quiver); p(10,7+bob, quiver);
-          p(11,4+bob, bow); p(11,5+bob, bow);
-          // Legs
-          p(6,10, boots); p(8,10, boots);
-          p(6+walk,11, boots); p(8-walk,11, boots);
-          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
-        } else if (d === 2) { // East (facing right)
-          // Cape
-          p(4,5+bob, cape); p(4,6+bob, cape); p(4,7+bob, capeDk); p(4,8+bob, capeDk);
-          p(3,6+bob, capeDk); p(3,7+bob, capeDk);
-          // Hair
-          p(7,2+bob, hair); p(8,2+bob, hair);
-          p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
-          p(6,4+bob, hair); p(7,4+bob, skin); p(8,4+bob, skin); p(9,4+bob, hair);
-          // Face
-          p(7,5+bob, skin); p(8,5+bob, skin); p(9,5+bob, skin);
-          p(9,4+bob, '#222'); // Eye
-          // Body
-          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
-          p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic);
-          p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic);
-          p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk);
-          // Arm with bow
-          p(9,6+bob, skin); p(10,6+bob, bow); p(10,5+bob, bow); p(10,7+bob, bow);
-          // Legs
-          p(7,10, boots); p(7+walk,11, boots); p(7+walk,12, '#3a2718');
-        } else if (d === 6) { // West (facing left)
-          // Cape
-          p(10,5+bob, cape); p(10,6+bob, cape); p(10,7+bob, capeDk); p(10,8+bob, capeDk);
-          p(11,6+bob, capeDk); p(11,7+bob, capeDk);
-          // Hair
-          p(6,2+bob, hair); p(7,2+bob, hair);
-          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair);
-          p(5,4+bob, hair); p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, hair);
-          // Face
-          p(5,5+bob, skin); p(6,5+bob, skin); p(7,5+bob, skin);
-          p(5,4+bob, '#222'); // Eye
-          // Body
-          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
-          p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic);
-          p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic);
-          p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk);
-          // Arm with bow
-          p(5,6+bob, skin); p(4,6+bob, bow); p(4,5+bob, bow); p(4,7+bob, bow);
-          // Legs
-          p(7,10, boots); p(7+walk,11, boots); p(7+walk,12, '#3a2718');
-        } else {
-          // Diagonal directions — blend between cardinal sprites
-          // For simplicity, use a slight variation of the nearest cardinal
-          const base = d < 4 ? (d < 2 ? 0 : 2) : (d < 6 ? 4 : 6);
-          const { canvas: baseCanvas } = this.createCanvas(W * SCALE, H * SCALE);
-          // Just reuse the south-facing as a base and tint slightly
-          // Hair
-          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
-          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
-          p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, skin);
-          p(6,5+bob, skin); p(7,5+bob, skin); p(8,5+bob, skin);
-          // Cape hint
-          if (d === 1 || d === 7) { p(5,6+bob, cape); p(9,6+bob, cape); }
-          if (d === 3 || d === 5) { p(5,5+bob, capeDk); p(9,5+bob, capeDk); }
-          // Eyes based on direction
-          if (d === 1) { p(7,4+bob, '#222'); p(9,4+bob, '#222'); }
-          else if (d === 3) { p(7,5+bob, '#222'); p(9,4+bob, '#222'); }
-          else if (d === 5) { p(5,4+bob, '#222'); p(7,5+bob, '#222'); }
-          else if (d === 7) { p(5,4+bob, '#222'); p(7,4+bob, '#222'); }
-          // Body
-          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
-          p(5,7+bob, tunic); p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic); p(9,7+bob, tunic);
-          p(5,8+bob, tunic); p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic); p(9,8+bob, tunic);
-          p(5,9+bob, tunicDk); p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk); p(9,9+bob, tunicDk);
-          // Arms
-          p(4,7+bob, skin); p(10,7+bob, skin);
-          // Bow
-          if (d === 1 || d === 3) { p(10,5+bob, bow); p(10,6+bob, bow); p(11,4+bob, bow); }
-          else { p(4,5+bob, bow); p(4,6+bob, bow); p(3,4+bob, bow); }
-          // Legs
-          p(6,10, boots); p(8,10, boots);
-          p(6+walk,11, boots); p(8-walk,11, boots);
-          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
-        }
-
-        frames.push(canvas);
+      // Load walk animation frames (6 frames)
+      for (let f = 0; f < WALK_FRAMES; f++) {
+        const frameStr = String(f).padStart(3, '0');
+        const path = `${basePath}/animations/walking-4-frames/${plDir}/frame_${frameStr}.png`;
+        const idx = f;
+        const d = dir;
+        promises.push(
+          loadImg(path).then(img => { sprites[d][idx] = img; })
+        );
       }
-      sprites[DIR_NAMES[d]] = frames;
     }
 
-    return sprites;
+    await Promise.all(promises);
+
+    // Also load idle frames (rotation images) as the stand-still pose
+    const idleSprites = {};
+    const idlePromises = [];
+    for (const dir of DIR_NAMES) {
+      const plDir = PIXELLAB_DIR_MAP[dir];
+      const path = `${basePath}/rotations/${plDir}.png`;
+      idlePromises.push(
+        loadImg(path).then(img => { idleSprites[dir] = img; })
+      );
+    }
+    await Promise.all(idlePromises);
+
+    return { walk: sprites, idle: idleSprites };
+  }
+
+  // Load a Wang tileset from PixelLab-generated PNG + metadata JSON
+  // Returns an array of 16 tile canvases indexed by Wang number (NW*8+NE*4+SW*2+SE)
+  // Darken a canvas by overlaying semi-transparent black (source-atop preserves transparency)
+  static darkenCanvas(canvas, amount = 0.2) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = `rgba(0, 0, 0, ${amount})`;
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'source-over';
+    return canvas;
+  }
+
+  static async loadWangTileset(pngPath, metaPath) {
+    // Load image
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('Failed to load tileset: ' + pngPath));
+      i.src = pngPath;
+    });
+
+    // Load metadata
+    const resp = await fetch(metaPath);
+    const meta = await resp.json();
+
+    // Parse tiles and index by Wang number
+    const wangTiles = new Array(16).fill(null);
+    for (const tile of meta.tileset_data.tiles) {
+      const c = tile.corners;
+      const nw = c.NW === 'upper' ? 1 : 0;
+      const ne = c.NE === 'upper' ? 1 : 0;
+      const sw = c.SW === 'upper' ? 1 : 0;
+      const se = c.SE === 'upper' ? 1 : 0;
+      const wangIdx = nw * 8 + ne * 4 + sw * 2 + se;
+
+      // Extract tile from spritesheet
+      const bb = tile.bounding_box;
+      const canvas = document.createElement('canvas');
+      canvas.width = bb.width;
+      canvas.height = bb.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, bb.x, bb.y, bb.width, bb.height, 0, 0, bb.width, bb.height);
+      wangTiles[wangIdx] = canvas;
+    }
+    return wangTiles;
   }
 
   // Generate tile sprites
@@ -809,40 +761,108 @@ class PixelArt {
     fCtx.clearRect(30, 10, 4, 6);
     decos.flag = flagC;
 
-    // Sword (stuck in stone, waiting to be picked up)
-    const { canvas: swordC, ctx: swCtx } = this.createCanvas(S, S*2);
-    // Stone base
-    swCtx.fillStyle = '#707070';
-    swCtx.fillRect(8, S+10, 16, 10);
-    swCtx.fillStyle = '#808080';
-    swCtx.fillRect(10, S+8, 12, 6);
-    swCtx.fillStyle = '#606060';
-    swCtx.fillRect(10, S+14, 12, 4);
-    // Blade
-    swCtx.fillStyle = '#c0c8d8';
-    swCtx.fillRect(14, 8, 4, S+4);
-    swCtx.fillStyle = '#d8e0f0';
-    swCtx.fillRect(15, 8, 2, S+2);
-    // Blade tip
-    swCtx.fillStyle = '#e0e8f8';
-    swCtx.fillRect(15, 4, 2, 6);
-    swCtx.fillRect(15, 2, 2, 4);
-    swCtx.fillStyle = '#fff';
-    swCtx.fillRect(15, 0, 2, 3);
-    // Guard (crosspiece)
-    swCtx.fillStyle = '#c0a030';
-    swCtx.fillRect(8, S+2, 16, 4);
-    swCtx.fillStyle = '#e0c040';
-    swCtx.fillRect(9, S+3, 14, 2);
-    // Grip
-    swCtx.fillStyle = '#6a3a20';
-    swCtx.fillRect(13, S+6, 6, 6);
-    swCtx.fillStyle = '#8a5030';
-    swCtx.fillRect(14, S+7, 4, 4);
-    // Pommel
-    swCtx.fillStyle = '#c0a030';
-    swCtx.fillRect(14, S+12, 4, 3);
-    decos.sword = swordC;
+    // Bow (on a stone pedestal, waiting to be picked up)
+    const { canvas: bowC, ctx: bwCtx } = this.createCanvas(S, S*2);
+    // Stone pedestal base — carved stone
+    bwCtx.fillStyle = '#606060';
+    bwCtx.fillRect(5, S+12, 22, 8);
+    bwCtx.fillStyle = '#787878';
+    bwCtx.fillRect(7, S+8, 18, 8);
+    bwCtx.fillStyle = '#8a8a8a';
+    bwCtx.fillRect(9, S+6, 14, 4);
+    bwCtx.fillStyle = '#555';
+    bwCtx.fillRect(7, S+14, 18, 2);
+    // Pedestal highlight
+    bwCtx.fillStyle = '#9a9a9a';
+    bwCtx.fillRect(10, S+7, 12, 1);
+
+    // Bow body — detailed recurve
+    // Dark outline layer
+    bwCtx.fillStyle = '#3a2010';
+    bwCtx.fillRect(9, 2, 4, 2);
+    bwCtx.fillRect(7, 4, 4, 3);
+    bwCtx.fillRect(6, 7, 3, 4);
+    bwCtx.fillRect(5, 11, 3, 6);
+    bwCtx.fillRect(6, 17, 3, 4);
+    bwCtx.fillRect(7, 21, 4, 3);
+    bwCtx.fillRect(9, 24, 4, 3);
+    bwCtx.fillRect(11, 27, 4, 2);
+
+    // Main wood — warm brown
+    bwCtx.fillStyle = '#9a5828';
+    bwCtx.fillRect(10, 3, 2, 2);     // top recurve
+    bwCtx.fillRect(8, 5, 2, 3);
+    bwCtx.fillRect(7, 8, 2, 3);
+    bwCtx.fillRect(6, 11, 2, 6);     // widest point
+    bwCtx.fillRect(7, 17, 2, 4);
+    bwCtx.fillRect(8, 21, 2, 3);
+    bwCtx.fillRect(10, 24, 2, 3);
+    bwCtx.fillRect(12, 27, 2, 2);    // bottom recurve
+
+    // Wood highlight — lighter inner edge
+    bwCtx.fillStyle = '#b87838';
+    bwCtx.fillRect(10, 4, 1, 1);
+    bwCtx.fillRect(8, 6, 1, 2);
+    bwCtx.fillRect(7, 9, 1, 2);
+    bwCtx.fillRect(6, 13, 1, 2);
+    bwCtx.fillRect(7, 18, 1, 2);
+    bwCtx.fillRect(9, 22, 1, 2);
+    bwCtx.fillRect(11, 25, 1, 2);
+
+    // Grip wrap — golden leather with bands
+    bwCtx.fillStyle = '#d4a830';
+    bwCtx.fillRect(5, 13, 3, 6);
+    bwCtx.fillStyle = '#e8c040';
+    bwCtx.fillRect(6, 14, 1, 4);
+    // Grip detail lines
+    bwCtx.fillStyle = '#b08820';
+    bwCtx.fillRect(5, 14, 3, 1);
+    bwCtx.fillRect(5, 16, 3, 1);
+
+    // Nock tips — polished metal
+    bwCtx.fillStyle = '#c8c8c8';
+    bwCtx.fillRect(10, 2, 2, 1);
+    bwCtx.fillRect(12, 28, 2, 1);
+    bwCtx.fillStyle = '#e0e0e0';
+    bwCtx.fillRect(11, 2, 1, 1);
+    bwCtx.fillRect(13, 28, 1, 1);
+
+    // Bowstring — thin taut line connecting nock tips
+    bwCtx.fillStyle = '#e0d8c0';
+    bwCtx.fillRect(13, 3, 1, 4);
+    bwCtx.fillRect(13, 7, 1, 4);
+    bwCtx.fillRect(13, 11, 1, 4);
+    bwCtx.fillRect(13, 15, 1, 4);
+    bwCtx.fillRect(13, 19, 1, 4);
+    bwCtx.fillRect(13, 23, 1, 5);
+    // String highlights
+    bwCtx.fillStyle = '#f0ece0';
+    bwCtx.fillRect(13, 13, 1, 1);
+    bwCtx.fillRect(13, 17, 1, 1);
+
+    // Arrow resting on bow
+    bwCtx.fillStyle = '#b08040';
+    bwCtx.fillRect(13, 15, 14, 2);
+    // Arrow shaft grain
+    bwCtx.fillStyle = '#c09050';
+    bwCtx.fillRect(15, 15, 2, 1);
+    bwCtx.fillRect(20, 15, 2, 1);
+    // Arrow tip — iron
+    bwCtx.fillStyle = '#707070';
+    bwCtx.fillRect(25, 14, 3, 4);
+    bwCtx.fillStyle = '#909090';
+    bwCtx.fillRect(26, 15, 2, 2);
+    bwCtx.fillStyle = '#b0b0b0';
+    bwCtx.fillRect(27, 15, 1, 1);
+    // Arrow fletching — red feathers
+    bwCtx.fillStyle = '#cc3030';
+    bwCtx.fillRect(13, 13, 3, 2);
+    bwCtx.fillRect(13, 17, 3, 2);
+    bwCtx.fillStyle = '#e04040';
+    bwCtx.fillRect(14, 13, 1, 1);
+    bwCtx.fillRect(14, 17, 1, 1);
+
+    decos.bow = bowC;
 
     // Dragon
     const { canvas: dragonC, ctx: dCtx } = this.createCanvas(S*3, S*3);
@@ -906,27 +926,137 @@ class PixelArt {
     dCtx.fillRect(88, 35, 4, 2);
     decos.dragon = dragonC;
 
-    // Rocks
+    // Rocks — small pile of 3 stones with highlights and shadows
     const { canvas: rockC, ctx: rCtx } = this.createCanvas(S, S);
-    rCtx.fillStyle = '#707070';
-    rCtx.fillRect(8, 18, 16, 10);
-    rCtx.fillStyle = '#808080';
-    rCtx.fillRect(10, 16, 12, 8);
-    rCtx.fillStyle = '#606060';
-    rCtx.fillRect(12, 20, 8, 6);
+    // Large stone (back)
+    rCtx.fillStyle = '#5a5a5a';
+    rCtx.fillRect(6, 18, 14, 10);
+    rCtx.fillStyle = '#6e6e6e';
+    rCtx.fillRect(8, 16, 10, 10);
+    rCtx.fillStyle = '#7e7e7e'; // highlight
+    rCtx.fillRect(9, 17, 6, 4);
+    rCtx.fillStyle = '#4a4a4a'; // shadow
+    rCtx.fillRect(8, 24, 10, 3);
+    // Medium stone (right)
+    rCtx.fillStyle = '#626262';
+    rCtx.fillRect(18, 20, 10, 8);
+    rCtx.fillStyle = '#747474';
+    rCtx.fillRect(19, 19, 8, 7);
+    rCtx.fillStyle = '#848484'; // highlight
+    rCtx.fillRect(20, 20, 4, 3);
+    // Small stone (front-left)
+    rCtx.fillStyle = '#6a6a6a';
+    rCtx.fillRect(4, 24, 8, 6);
+    rCtx.fillStyle = '#7a7a7a';
+    rCtx.fillRect(5, 23, 6, 5);
+    // Moss patches
+    rCtx.fillStyle = '#4a6a3a';
+    rCtx.fillRect(10, 18, 3, 2);
+    rCtx.fillRect(21, 21, 2, 2);
     decos.rock = rockC;
 
-    // Flowers
+    // Boulder — larger single rock with detailed shading
+    const { canvas: boulderC, ctx: boCtx } = this.createCanvas(S, S);
+    // Main body
+    boCtx.fillStyle = '#585858';
+    boCtx.fillRect(4, 12, 24, 18);
+    boCtx.fillStyle = '#686868';
+    boCtx.fillRect(6, 10, 20, 18);
+    boCtx.fillStyle = '#7a7a7a';
+    boCtx.fillRect(8, 8, 16, 16);
+    // Top highlight
+    boCtx.fillStyle = '#909090';
+    boCtx.fillRect(10, 10, 10, 6);
+    boCtx.fillStyle = '#9a9a9a';
+    boCtx.fillRect(12, 11, 6, 3);
+    // Bottom shadow
+    boCtx.fillStyle = '#484848';
+    boCtx.fillRect(6, 26, 20, 4);
+    boCtx.fillStyle = '#404040';
+    boCtx.fillRect(8, 28, 16, 2);
+    // Cracks
+    boCtx.fillStyle = '#505050';
+    boCtx.fillRect(14, 14, 2, 8);
+    boCtx.fillRect(10, 18, 6, 2);
+    // Moss
+    boCtx.fillStyle = '#4a6a3a';
+    boCtx.fillRect(8, 22, 4, 3);
+    boCtx.fillRect(18, 24, 3, 2);
+    boCtx.fillStyle = '#5a7a4a';
+    boCtx.fillRect(9, 23, 2, 2);
+    decos.boulder = boulderC;
+
+    // Flowers — cluster of colorful wildflowers with stems
     const { canvas: flowerC, ctx: flCtx } = this.createCanvas(S, S);
+    // Stems
     flCtx.fillStyle = '#3a7a3a';
-    flCtx.fillRect(15, 20, 2, 8);
-    flCtx.fillStyle = '#e04080';
-    flCtx.fillRect(13, 16, 6, 6);
-    flCtx.fillStyle = '#f06090';
-    flCtx.fillRect(14, 17, 4, 4);
-    flCtx.fillStyle = '#ff0';
-    flCtx.fillRect(15, 18, 2, 2);
+    flCtx.fillRect(10, 20, 2, 8);
+    flCtx.fillRect(16, 18, 2, 10);
+    flCtx.fillRect(22, 22, 2, 6);
+    flCtx.fillStyle = '#4a8a4a';
+    flCtx.fillRect(13, 22, 2, 6);
+    flCtx.fillRect(19, 20, 2, 8);
+    // Leaves
+    flCtx.fillStyle = '#3a8a3a';
+    flCtx.fillRect(8, 24, 4, 2);
+    flCtx.fillRect(18, 26, 4, 2);
+    flCtx.fillRect(14, 25, 3, 2);
+    // Pink flower (left)
+    flCtx.fillStyle = '#d04070';
+    flCtx.fillRect(8, 16, 6, 6);
+    flCtx.fillStyle = '#e06090';
+    flCtx.fillRect(9, 17, 4, 4);
+    flCtx.fillStyle = '#ffcc44';
+    flCtx.fillRect(10, 18, 2, 2);
+    // Yellow flower (center)
+    flCtx.fillStyle = '#d0a020';
+    flCtx.fillRect(14, 14, 6, 6);
+    flCtx.fillStyle = '#e8c040';
+    flCtx.fillRect(15, 15, 4, 4);
+    flCtx.fillStyle = '#a06010';
+    flCtx.fillRect(16, 16, 2, 2);
+    // White/blue flower (right)
+    flCtx.fillStyle = '#7090d0';
+    flCtx.fillRect(20, 18, 6, 6);
+    flCtx.fillStyle = '#90b0e0';
+    flCtx.fillRect(21, 19, 4, 4);
+    flCtx.fillStyle = '#ffdd55';
+    flCtx.fillRect(22, 20, 2, 2);
     decos.flower = flowerC;
+
+    // Rose bush — red roses on a green bush
+    const { canvas: roseBushC, ctx: rbCtx } = this.createCanvas(S, S);
+    // Bush body
+    rbCtx.fillStyle = '#2a5a2a';
+    rbCtx.fillRect(4, 14, 24, 16);
+    rbCtx.fillStyle = '#3a6a3a';
+    rbCtx.fillRect(6, 12, 20, 16);
+    rbCtx.fillStyle = '#4a7a4a';
+    rbCtx.fillRect(8, 10, 16, 14);
+    // Leaf highlights
+    rbCtx.fillStyle = '#5a8a4a';
+    rbCtx.fillRect(10, 12, 4, 3);
+    rbCtx.fillRect(18, 14, 3, 3);
+    rbCtx.fillRect(12, 20, 4, 2);
+    // Red roses (3 roses)
+    rbCtx.fillStyle = '#c02020';
+    rbCtx.fillRect(8, 12, 6, 5);
+    rbCtx.fillStyle = '#e03030';
+    rbCtx.fillRect(9, 13, 4, 3);
+    rbCtx.fillStyle = '#c02020';
+    rbCtx.fillRect(18, 10, 5, 5);
+    rbCtx.fillStyle = '#e03030';
+    rbCtx.fillRect(19, 11, 3, 3);
+    rbCtx.fillStyle = '#c02020';
+    rbCtx.fillRect(12, 18, 6, 5);
+    rbCtx.fillStyle = '#e03030';
+    rbCtx.fillRect(13, 19, 4, 3);
+    // Rose centers
+    rbCtx.fillStyle = '#ff5555';
+    rbCtx.fillRect(10, 14, 2, 1);
+    rbCtx.fillRect(20, 12, 1, 1);
+    rbCtx.fillRect(14, 20, 2, 1);
+    decos.roseBush = roseBushC;
 
     // Bridge section
     const { canvas: bridgeC, ctx: brCtx } = this.createCanvas(S, S);
@@ -1040,9 +1170,9 @@ class WorldMap {
       { x: 44, y: 24 },  // milestone1 — East
       { x: 44, y: 12 },  // item 4 — North (turn!)
       { x: 58, y: 12 },  // item 5 — East
-      { x: 58, y: 30 },  // item 6 — South (turn!)
-      { x: 44, y: 30 },  // item 7 — West (turn!)
-      { x: 44, y: 44 },  // dragon — South (turn!)
+      { x: 58, y: 38 },  // item 6 — South (turn!) — pushed down for clear gap from stop 4
+      { x: 44, y: 38 },  // item 7 — West (turn!)
+      { x: 44, y: 52 },  // dragon — South (turn!)
     ];
 
     // Draw right-angle path segments
@@ -1051,57 +1181,122 @@ class WorldMap {
     }
 
     // Terrain zones ------------------------------------------------
+    // Use noise-based boundaries for organic, irregular shapes
 
-    // Forest zone (left side, start area)
-    for (let y = 0; y < 20; y++) {
-      for (let x = 0; x < 12; x++) {
+    const zoneRng = PixelArt.seededRandom(777);
+    // Pre-compute noise offsets for organic boundaries
+    const noiseTable = [];
+    for (let i = 0; i < 200; i++) noiseTable.push(zoneRng() * 6 - 3); // -3 to +3 tile variance
+
+    const zoneNoise = (idx) => noiseTable[Math.abs(idx) % noiseTable.length];
+
+    // Forest zone — covers entire left side of map with organic right edge
+    // The dark forest runs the full height of the map on the left
+    for (let y = 0; y < this.rows; y++) {
+      // Right edge varies by vertical position — wider at top, narrows in middle, widens again at bottom
+      let forestRightEdge;
+      if (y < 8) {
+        forestRightEdge = 16 + zoneNoise(y * 3);        // Wide top
+      } else if (y < 22) {
+        forestRightEdge = 12 + zoneNoise(y * 3);        // Start area
+      } else if (y < 35) {
+        forestRightEdge = 10 + zoneNoise(y * 3 + 50);   // Mid section
+      } else {
+        forestRightEdge = 14 + zoneNoise(y * 3 + 80);   // Lower section wider
+      }
+      for (let x = 0; x < Math.min(Math.floor(forestRightEdge), this.cols); x++) {
         if (this.grid[y][x] === 'grass') {
           this.grid[y][x] = 'darkGrass';
         }
       }
     }
 
-    // Water features
-    this.addWaterBody(8, 18, 5, 3);
-    this.addWaterBody(20, 4, 4, 3);
-    this.addWaterBody(50, 18, 5, 3);
-    this.addWaterBody(36, 36, 4, 3);
-    this.addWaterBody(10, 42, 5, 3);
+    // Top strip always dark — full width fading out
+    for (let y = 0; y < 4; y++) {
+      for (let x = 0; x < 20 + zoneNoise(y + 200); x++) {
+        if (x < this.cols && this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
 
-    // Stone / castle area near milestone1
-    for (let y = 20; y < 28; y++) {
+    // Water features — positioned well within terrain zones
+    this.addWaterBody(5, 14, 6, 4, 101);    // Inside dark forest zone
+    this.addWaterBody(22, 2, 5, 4, 202);    // Upper grass zone
+    this.addWaterBody(50, 20, 6, 4, 303);   // Grass zone south
+    this.addWaterBody(36, 42, 5, 4, 404);   // Before volcanic
+    this.addWaterBody(8, 50, 6, 4, 505);    // Lower area
+
+    // Stone / castle area near milestone1 — organic edges
+    for (let y = 18; y < 30; y++) {
+      for (let x = 36; x < 52; x++) {
+        const edgeDistX = Math.min(x - 36, 52 - x);
+        const edgeDistY = Math.min(y - 18, 30 - y);
+        const edgeDist = Math.min(edgeDistX, edgeDistY);
+        if (edgeDist > 1 + zoneNoise(x + y * 7) * 0.5 && this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'stone';
+        }
+      }
+    }
+
+    // Second stone area near power-ups north section — organic edges
+    for (let y = 6; y < 18; y++) {
       for (let x = 38; x < 50; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'stone';
+        const edgeDistX = Math.min(x - 38, 50 - x);
+        const edgeDistY = Math.min(y - 6, 18 - y);
+        const edgeDist = Math.min(edgeDistX, edgeDistY);
+        if (edgeDist > 1 + zoneNoise(x * 3 + y * 5) * 0.4 && this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'stone';
+        }
       }
     }
 
-    // Second stone area near power-ups north section
-    for (let y = 8; y < 16; y++) {
-      for (let x = 40; x < 48; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'stone';
-      }
-    }
-
-    // Volcanic area near dragon (south of map, around item at 44,44)
-    for (let y = 38; y < this.rows; y++) {
-      for (let x = 36; x < 56; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'volcanic';
-      }
-    }
+    // Volcanic area near dragon — organic edges spreading from center (44,52)
     for (let y = 42; y < this.rows; y++) {
-      for (let x = 32; x < 60; x++) {
+      for (let x = 30; x < 60; x++) {
+        const dist = Math.sqrt((x - 44) ** 2 + (y - 52) ** 2);
+        const noiseOff = zoneNoise(x * 2 + y * 3 + 400);
+        const maxRadius = y >= 48 ? 18 : 10;
+        if (dist < maxRadius + noiseOff && this.grid[y][x] !== 'path') {
+          this.grid[y][x] = 'volcanic';
+        }
+      }
+    }
+    // Bottom rows always volcanic
+    for (let y = this.rows - 4; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
         if (this.grid[y][x] !== 'path') this.grid[y][x] = 'volcanic';
       }
     }
 
-    // Dark forest patches for variety
-    for (let y = 26; y < 38; y++) {
-      for (let x = 62; x < this.cols; x++) {
+    // Dark forest patches for variety — organic edges
+    for (let y = 24; y < 46; y++) {
+      const leftEdge = 60 + zoneNoise(y * 4 + 500);
+      for (let x = Math.max(0, Math.floor(leftEdge)); x < this.cols; x++) {
         if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
-    for (let y = 0; y < 8; y++) {
-      for (let x = 62; x < this.cols; x++) {
+    for (let y = 0; y < 10; y++) {
+      const leftEdge = 58 + zoneNoise(y * 4 + 600);
+      for (let x = Math.max(0, Math.floor(leftEdge)); x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+    // Top-right corner dark
+    for (let y = 0; y < 6 + zoneNoise(700); y++) {
+      for (let x = this.cols - 8; x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+    // Bottom rows — dark forest for anything not already volcanic or path
+    for (let y = this.rows - 10; y < this.rows; y++) {
+      for (let x = 0; x < 18 + zoneNoise(y + 800); x++) {
+        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'darkGrass';
+        }
+      }
+    }
+    // Right edge dark forest
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = this.cols - 4; x < this.cols; x++) {
         if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
@@ -1129,9 +1324,9 @@ class WorldMap {
     for (let i = 0; i <= steps; i++) {
       const px = Math.round(from.x + (dx * i / steps));
       const py = Math.round(from.y + (dy * i / steps));
-      // Make path 3 tiles wide for the zoomed-in view
-      for (let oy = -1; oy <= 1; oy++) {
-        for (let ox = -1; ox <= 1; ox++) {
+      // Make path 5 tiles wide for smoother transitions
+      for (let oy = -2; oy <= 2; oy++) {
+        for (let ox = -2; ox <= 2; ox++) {
           const nx = px + ox, ny = py + oy;
           if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
             this.grid[ny][nx] = 'path';
@@ -1141,14 +1336,44 @@ class WorldMap {
     }
   }
 
-  addWaterBody(x, y, w, h) {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
-          if (this.grid[ny][nx] !== 'path') {
-            this.grid[ny][nx] = 'water';
+  addWaterBody(cx, cy, w, h, seed) {
+    // Create a natural pond shape using overlapping blobs
+    const rng = PixelArt.seededRandom(seed || (cx * 100 + cy));
+    const centerX = cx + w / 2;
+    const centerY = cy + h / 2;
+
+    // Generate 3-5 overlapping ellipses for organic shape
+    const blobCount = 3 + Math.floor(rng() * 3);
+    const blobs = [];
+    for (let i = 0; i < blobCount; i++) {
+      blobs.push({
+        x: centerX + (rng() - 0.5) * w * 0.6,
+        y: centerY + (rng() - 0.5) * h * 0.6,
+        rx: w * (0.3 + rng() * 0.3),
+        ry: h * (0.3 + rng() * 0.3)
+      });
+    }
+
+    // Check each tile against all blobs
+    const margin = 3;
+    for (let dy = -margin; dy <= h + margin; dy++) {
+      for (let dx = -margin; dx <= w + margin; dx++) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx < 0 || nx >= this.cols || ny < 0 || ny >= this.rows) continue;
+        if (this.grid[ny][nx] === 'path') continue;
+
+        // Check if this tile is inside any blob
+        let inside = false;
+        for (const blob of blobs) {
+          const bx = (nx - blob.x) / blob.rx;
+          const by = (ny - blob.y) / blob.ry;
+          if (bx * bx + by * by < 1.0) {
+            inside = true;
+            break;
           }
+        }
+        if (inside) {
+          this.grid[ny][nx] = 'water';
         }
       }
     }
@@ -1189,14 +1414,14 @@ class WorldMap {
     // Dead trees in volcanic area
     for (let i = 0; i < 12; i++) {
       const x = 34 + Math.floor(rng() * 24);
-      const y = 38 + Math.floor(rng() * 18);
+      const y = 44 + Math.floor(rng() * 14);
       if (canPlace(x, y, ['volcanic']) && notTooClose(x, y)) {
         this.decorations.push({ type: 'deadTree', x, y });
       }
     }
 
-    // Rocks scattered
-    for (let i = 0; i < 25; i++) {
+    // Small rocks scattered
+    for (let i = 0; i < 20; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass', 'stone', 'volcanic']) && notTooClose(x, y)) {
@@ -1204,12 +1429,30 @@ class WorldMap {
       }
     }
 
+    // Boulders — larger, less frequent, on stone and volcanic
+    for (let i = 0; i < 12; i++) {
+      const x = Math.floor(rng() * this.cols);
+      const y = Math.floor(rng() * this.rows);
+      if (canPlace(x, y, ['stone', 'volcanic', 'darkGrass']) && notTooClose(x, y)) {
+        this.decorations.push({ type: 'boulder', x, y });
+      }
+    }
+
     // Flowers scattered on grass
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 30; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass'])) {
         this.decorations.push({ type: 'flower', x, y });
+      }
+    }
+
+    // Rose bushes — along path edges and in grass areas
+    for (let i = 0; i < 20; i++) {
+      const x = Math.floor(rng() * this.cols);
+      const y = Math.floor(rng() * this.rows);
+      if (canPlace(x, y, ['grass']) && notTooClose(x, y, 2)) {
+        this.decorations.push({ type: 'roseBush', x, y });
       }
     }
 
@@ -1245,8 +1488,7 @@ class WorldMap {
     const col = Math.floor(x / TILE_SIZE);
     const row = Math.floor(y / TILE_SIZE);
     if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return false;
-    const tile = this.grid[row][col];
-    return tile !== 'water';
+    return this.grid[row][col] === 'path';
   }
 }
 
@@ -1264,11 +1506,15 @@ class Character {
     this.moving = false;
     this.sprites = null;
     this.visitedItems = new Set();
-    this.hasSword = false;
+    this.hasBow = false;
+    this.jumpTimer = 0; // frames remaining in jump animation
   }
 
-  loadSprites(sprites) {
-    this.sprites = sprites;
+  loadSprites(spriteData) {
+    // spriteData: { walk: {dir: [Image, ...]}, idle: {dir: Image} }
+    this.walkSprites = spriteData.walk;
+    this.idleSprites = spriteData.idle;
+    this.sprites = spriteData.walk; // Keep for compatibility checks
   }
 
   update(keys, worldMap) {
@@ -1324,53 +1570,134 @@ class Character {
       this.frameTimer++;
       if (this.frameTimer > 8) {
         this.frameTimer = 0;
-        this.frame = (this.frame + 1) % 4;
+        this.frame = (this.frame + 1) % 6;
       }
     } else {
       this.frame = 0;
       this.frameTimer = 0;
     }
+
+    // Tick jump animation
+    if (this.jumpTimer > 0) this.jumpTimer--;
   }
 
   draw(ctx, cameraX, cameraY) {
     if (!this.sprites) return;
     const dirName = DIR_NAMES[this.dir];
-    const sprite = this.sprites[dirName][this.frame];
-    const drawX = this.x - cameraX - 16;
-    const drawY = this.y - cameraY - 24;
+    // Use walk animation when moving, idle rotation when standing
+    let sprite;
+    if (this.moving && this.walkSprites && this.walkSprites[dirName]) {
+      sprite = this.walkSprites[dirName][this.frame];
+    } else if (this.idleSprites && this.idleSprites[dirName]) {
+      sprite = this.idleSprites[dirName];
+    } else {
+      sprite = this.walkSprites[dirName][0];
+    }
+    // Sprite is 48x48, center horizontally and anchor feet at character position
+    // Jump arc: peak at midpoint of jumpTimer (12 frames total, peak at 6)
+    const jumpOffset = this.jumpTimer > 0 ? Math.sin((this.jumpTimer / 12) * Math.PI) * 14 : 0;
+    const drawX = this.x - cameraX - 24;
+    const drawY = this.y - cameraY - 40 - jumpOffset;
     ctx.drawImage(sprite, drawX, drawY);
 
-    // Draw held sword
-    if (this.hasSword) {
+    // Draw held bow
+    if (this.hasBow) {
       const d = this.dir;
-      // Offset sword position based on facing direction
-      let ox, oy, bladeAngle;
-      if (d === 2 || d === 1 || d === 3) {       // east-ish: sword on right side
-        ox = 22; oy = 2; bladeAngle = 1;
-      } else if (d === 6 || d === 5 || d === 7) { // west-ish: sword on left side
-        ox = -6; oy = 2; bladeAngle = -1;
-      } else if (d === 0) {                        // north: sword on right
-        ox = 20; oy = 4; bladeAngle = 1;
-      } else {                                      // south: sword on left
-        ox = -4; oy = 4; bladeAngle = -1;
+      // Offset bow position based on facing direction (adjusted for 48px sprite)
+      let ox, oy, flip;
+      if (d === 2 || d === 1 || d === 3) {       // east-ish: bow on right side
+        ox = 28; oy = 0; flip = false;
+      } else if (d === 6 || d === 5 || d === 7) { // west-ish: bow on left side
+        ox = -8; oy = 0; flip = true;
+      } else if (d === 0) {                        // north: bow on right
+        ox = 26; oy = 2; flip = false;
+      } else {                                      // south: bow on left
+        ox = -6; oy = 2; flip = true;
       }
-      const bob = this.moving ? Math.sin(this.frameTimer * 0.6) * 2 : 0;
+      const bob = this.moving ? Math.sin(this.frameTimer * 0.6) * 1.5 : 0;
       const bx = drawX + ox;
       const by = drawY + oy + bob;
-      // Blade
-      ctx.fillStyle = '#b0b8c8';
-      ctx.fillRect(bx, by - 10, 4, 16);
-      ctx.fillStyle = '#d0d8e8';
-      ctx.fillRect(bx + 1, by - 10, 2, 14);
-      // Tip
-      ctx.fillStyle = '#e8f0ff';
-      ctx.fillRect(bx + 1, by - 14, 2, 5);
-      // Guard
-      ctx.fillStyle = '#d0a020';
-      ctx.fillRect(bx - 3, by + 5, 10, 3);
-      // Grip
-      ctx.fillStyle = '#5a3018';
-      ctx.fillRect(bx + 1, by + 8, 2, 5);
+
+      ctx.save();
+      if (flip) {
+        ctx.translate(bx + 8, by);
+        ctx.scale(-1, 1);
+        ctx.translate(-(bx + 8), -by);
+      }
+
+      // -- Detailed recurve bow --
+      // Dark outline/shadow first
+      ctx.fillStyle = '#3a2010';
+      // Top limb outline
+      ctx.fillRect(bx + 3, by - 12, 3, 2);
+      ctx.fillRect(bx + 4, by - 10, 3, 3);
+      ctx.fillRect(bx + 5, by - 7, 3, 3);
+      ctx.fillRect(bx + 6, by - 4, 3, 4);
+      // Bottom limb outline
+      ctx.fillRect(bx + 6, by + 6, 3, 4);
+      ctx.fillRect(bx + 5, by + 10, 3, 3);
+      ctx.fillRect(bx + 4, by + 13, 3, 3);
+      ctx.fillRect(bx + 3, by + 16, 3, 2);
+
+      // Main wood — warm brown
+      ctx.fillStyle = '#9a5828';
+      // Top recurve tip
+      ctx.fillRect(bx + 4, by - 11, 2, 2);
+      // Upper limb (curves outward)
+      ctx.fillRect(bx + 5, by - 9, 2, 3);
+      ctx.fillRect(bx + 6, by - 6, 2, 3);
+      ctx.fillRect(bx + 7, by - 3, 2, 4);
+      // Lower limb (curves outward)
+      ctx.fillRect(bx + 7, by + 5, 2, 4);
+      ctx.fillRect(bx + 6, by + 9, 2, 3);
+      ctx.fillRect(bx + 5, by + 12, 2, 3);
+      // Bottom recurve tip
+      ctx.fillRect(bx + 4, by + 15, 2, 2);
+
+      // Lighter inner highlight
+      ctx.fillStyle = '#b87838';
+      ctx.fillRect(bx + 5, by - 10, 1, 2);
+      ctx.fillRect(bx + 6, by - 8, 1, 3);
+      ctx.fillRect(bx + 7, by - 5, 1, 3);
+      ctx.fillRect(bx + 7, by + 6, 1, 3);
+      ctx.fillRect(bx + 6, by + 10, 1, 3);
+      ctx.fillRect(bx + 5, by + 13, 1, 2);
+
+      // Grip wrap — golden leather
+      ctx.fillStyle = '#d4a830';
+      ctx.fillRect(bx + 7, by - 1, 2, 8);
+      ctx.fillStyle = '#e8c040';
+      ctx.fillRect(bx + 7, by, 1, 6);
+      // Grip detail lines
+      ctx.fillStyle = '#b08820';
+      ctx.fillRect(bx + 7, by + 1, 2, 1);
+      ctx.fillRect(bx + 7, by + 3, 2, 1);
+      ctx.fillRect(bx + 7, by + 5, 2, 1);
+
+      // Nock tips — small metal fittings
+      ctx.fillStyle = '#c0c0c0';
+      ctx.fillRect(bx + 3, by - 12, 2, 1);
+      ctx.fillRect(bx + 3, by + 17, 2, 1);
+      ctx.fillStyle = '#e0e0e0';
+      ctx.fillRect(bx + 4, by - 12, 1, 1);
+      ctx.fillRect(bx + 4, by + 17, 1, 1);
+
+      // Bowstring — thin taut line
+      ctx.fillStyle = '#e0d8c0';
+      ctx.fillRect(bx + 2, by - 11, 1, 1);
+      ctx.fillRect(bx + 1, by - 10, 1, 6);
+      ctx.fillRect(bx + 1, by - 4, 1, 4);
+      ctx.fillRect(bx + 1, by, 1, 6);
+      ctx.fillRect(bx + 1, by + 6, 1, 4);
+      ctx.fillRect(bx + 1, by + 10, 1, 4);
+      ctx.fillRect(bx + 2, by + 14, 1, 3);
+      ctx.fillRect(bx + 2, by + 16, 1, 1);
+      // String highlight
+      ctx.fillStyle = '#f0ece0';
+      ctx.fillRect(bx + 1, by - 2, 1, 2);
+      ctx.fillRect(bx + 1, by + 4, 1, 2);
+
+      ctx.restore();
     }
   }
 
@@ -1473,6 +1800,9 @@ class Game {
     this.dragonHitTimer = 0;
     this.arrowsFired = [];
     this.interactCooldown = 0;
+    this.coins = [];        // {x, y, collected}
+    this.coinsCollected = 0;
+    this.totalCoins = 0;
     this.itemGlowPhase = 0;
     this.time = 0;
 
@@ -1496,16 +1826,65 @@ class Game {
     await this.sleep(300);
 
     this.tiles = PixelArt.generateTiles();
+
+    // Load PixelLab Wang tilesets in parallel
+    loadText.textContent = 'Loading terrain...';
+    loadBar.style.width = '35%';
+    const [grassPathTiles, grassWaterTiles, grassDarkTiles, grassStoneTiles, grassVolcanicTiles] = await Promise.all([
+      PixelArt.loadWangTileset('assets/tilesets/grass_path.png', 'assets/tilesets/grass_path_meta.json'),
+      PixelArt.loadWangTileset('assets/tilesets/grass_water.png', 'assets/tilesets/grass_water_meta.json'),
+      PixelArt.loadWangTileset('assets/tilesets/grass_darkgrass.png', 'assets/tilesets/grass_darkgrass_meta.json'),
+      PixelArt.loadWangTileset('assets/tilesets/grass_stone.png', 'assets/tilesets/grass_stone_meta.json'),
+      PixelArt.loadWangTileset('assets/tilesets/grass_volcanic.png', 'assets/tilesets/grass_volcanic_meta.json')
+    ]);
+    this.wangGrassPath = grassPathTiles;        // lower=grass, upper=path
+    this.wangGrassWater = grassWaterTiles;      // lower=grass, upper=water
+    this.wangGrassDark = grassDarkTiles;        // lower=grass, upper=darkGrass
+    this.wangGrassStone = grassStoneTiles;      // lower=grass, upper=stone
+    this.wangGrassVolcanic = grassVolcanicTiles; // lower=grass, upper=volcanic
+
+    // Darken all tileset tiles to reduce bright grass
+    const GRASS_DARKEN = 0.2;
+    [this.wangGrassPath, this.wangGrassWater, this.wangGrassDark,
+     this.wangGrassStone, this.wangGrassVolcanic].forEach(tileset => {
+      tileset.forEach(tile => { if (tile) PixelArt.darkenCanvas(tile, GRASS_DARKEN); });
+    });
+
     loadText.textContent = 'Growing forests...';
-    loadBar.style.width = '40%';
+    loadBar.style.width = '50%';
     await this.sleep(200);
 
     this.decos = PixelArt.generateDecorations();
+
+    // Replace procedural assets with PixelLab-generated ones
+    const loadAssetImg = (src) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c);
+      };
+      img.onerror = () => resolve(null); // graceful fallback
+      img.src = src;
+    });
+
+    const treeCanvas = await loadAssetImg('assets/trees/pine_south.png');
+    if (treeCanvas) { this.decos.tree0 = treeCanvas; this.decos.tree1 = treeCanvas; }
+    // Flowers, rocks, rose bushes, and boulders use enhanced procedural sprites (already set above)
+
+    // Load PixelLab coin tile
+    this.coinSprite = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = 'assets/items/coin_iso.png';
+    });
+
     loadText.textContent = 'Summoning Bard the Bowman...';
     loadBar.style.width = '60%';
-    await this.sleep(200);
 
-    const charSprites = PixelArt.generateCharacter();
+    const charSprites = await PixelArt.loadCharacterSprites();
     loadText.textContent = 'Awakening the dragon...';
     loadBar.style.width = '80%';
     await this.sleep(200);
@@ -1513,6 +1892,9 @@ class Game {
     this.worldMap = new WorldMap();
     this.character = new Character(4 * TILE_SIZE, 10 * TILE_SIZE);
     this.character.loadSprites(charSprites);
+
+    // Generate coins along the path
+    this.generateCoins();
 
     loadText.textContent = 'Quest begins!';
     loadBar.style.width = '100%';
@@ -1564,6 +1946,30 @@ class Game {
     this.ctx.imageSmoothingEnabled = false;
   }
 
+  // Compute Wang tile index for a cell based on which neighbor terrain matches 'upperTerrain'
+  // Each corner vertex checks the 4 tiles sharing it; if any is the upper terrain, that corner = 1
+  getWangIndex(col, row, upperTerrain) {
+    const grid = this.worldMap.grid;
+    const rows = this.worldMap.rows;
+    const cols = this.worldMap.cols;
+
+    const isUpper = (c, r) => {
+      if (c < 0 || r < 0 || c >= cols || r >= rows) return false;
+      return grid[r][c] === upperTerrain;
+    };
+
+    // NW vertex at (col, row): shared by tiles (col-1,row-1), (col,row-1), (col-1,row), (col,row)
+    const nw = (isUpper(col-1,row-1) || isUpper(col,row-1) || isUpper(col-1,row) || isUpper(col,row)) ? 1 : 0;
+    // NE vertex at (col+1, row): shared by tiles (col,row-1), (col+1,row-1), (col,row), (col+1,row)
+    const ne = (isUpper(col,row-1) || isUpper(col+1,row-1) || isUpper(col,row) || isUpper(col+1,row)) ? 1 : 0;
+    // SW vertex at (col, row+1): shared by tiles (col-1,row), (col,row), (col-1,row+1), (col,row+1)
+    const sw = (isUpper(col-1,row) || isUpper(col,row) || isUpper(col-1,row+1) || isUpper(col,row+1)) ? 1 : 0;
+    // SE vertex at (col+1, row+1): shared by tiles (col,row), (col+1,row), (col,row+1), (col+1,row+1)
+    const se = (isUpper(col,row) || isUpper(col+1,row) || isUpper(col,row+1) || isUpper(col+1,row+1)) ? 1 : 0;
+
+    return nw * 8 + ne * 4 + sw * 2 + se;
+  }
+
   setupInput() {
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); }
@@ -1594,9 +2000,9 @@ class Game {
       if (item.id === 'milestone2' && !this.dragonSlain) {
         this.startDragonFight();
       }
-      // Sword pickup
-      if (item.id === 'milestone1' && !this.character.hasSword) {
-        this.character.hasSword = true;
+      // Bow pickup
+      if (item.id === 'milestone1' && !this.character.hasBow) {
+        this.character.hasBow = true;
       }
       // Show milestone banner
       if (!this.milestoneShown.has(item.id)) {
@@ -1634,6 +2040,151 @@ class Game {
     const bannerText = document.getElementById('banner-text');
     bannerText.textContent = text.replace('\n', ' ');
     banner.classList.add('visible');
+  }
+
+  generateCoins() {
+    // Place coins along the path between waypoints, spaced ~4 tiles apart
+    const waypoints = [
+      { x: 4, y: 10 }, { x: 16, y: 10 }, { x: 30, y: 10 },
+      { x: 30, y: 24 }, { x: 44, y: 24 }, { x: 44, y: 12 },
+      { x: 58, y: 12 }, { x: 58, y: 38 }, { x: 44, y: 38 },
+      { x: 44, y: 52 }
+    ];
+    const COIN_SPACING = 3; // tiles between coins
+    const coins = [];
+
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      const from = waypoints[i];
+      const to = waypoints[i + 1];
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const dist = Math.max(Math.abs(dx), Math.abs(dy));
+      const steps = Math.floor(dist / COIN_SPACING);
+
+      for (let s = 1; s <= steps; s++) {
+        const t = s / (steps + 1);
+        const cx = from.x + dx * t;
+        const cy = from.y + dy * t;
+
+        // Skip if too close to any roadmap item
+        const tooClose = ROADMAP_ITEMS.some(item =>
+          Math.abs(item.mapX - cx) < 2 && Math.abs(item.mapY - cy) < 2
+        );
+        if (!tooClose) {
+          coins.push({
+            x: cx * TILE_SIZE + TILE_SIZE / 2,
+            y: cy * TILE_SIZE + TILE_SIZE / 2,
+            collected: false,
+            collectAnim: 0 // animation timer when collected
+          });
+        }
+      }
+    }
+
+    this.coins = coins;
+    this.totalCoins = coins.length;
+    this.coinsCollected = 0;
+  }
+
+  updateCoins() {
+    const pickupRadius = 20;
+    for (const coin of this.coins) {
+      if (coin.collected) {
+        if (coin.collectAnim > 0) coin.collectAnim--;
+        continue;
+      }
+      const dx = this.character.x - coin.x;
+      const dy = this.character.y - coin.y;
+      if (dx * dx + dy * dy < pickupRadius * pickupRadius) {
+        coin.collected = true;
+        coin.collectAnim = 15; // float-up animation frames
+        this.coinsCollected++;
+        this.character.jumpTimer = 12; // trigger jump
+      }
+    }
+  }
+
+  drawCoins(ctx, cx, cy) {
+    const spinPhase = this.time * 0.1;
+    const useSpriteImg = this.coinSprite;
+    const sprW = useSpriteImg ? useSpriteImg.width : 0;
+    const sprH = useSpriteImg ? useSpriteImg.height : 0;
+
+    for (const coin of this.coins) {
+      if (coin.collected && coin.collectAnim <= 0) continue;
+
+      const sx = coin.x - cx;
+      const sy = coin.y - cy;
+
+      if (coin.collected) {
+        // Float-up and fade out animation
+        const progress = 1 - coin.collectAnim / 15;
+        ctx.globalAlpha = 1 - progress;
+        const floatY = sy - progress * 24;
+
+        if (useSpriteImg) {
+          const scale = 0.7 * (1 - progress * 0.3);
+          ctx.drawImage(useSpriteImg,
+            sx - sprW * scale / 2, floatY - sprH * scale / 2,
+            sprW * scale, sprH * scale);
+        } else {
+          ctx.fillStyle = '#f0c040';
+          ctx.fillRect(sx - 4, floatY - 5, 8, 10);
+          ctx.fillStyle = '#fff8d0';
+          ctx.fillRect(sx - 2, floatY - 3, 4, 4);
+        }
+
+        // +1 text
+        ctx.fillStyle = '#f0d060';
+        ctx.fillRect(sx + 6, floatY - 10, 1, 5);
+        ctx.fillRect(sx + 4, floatY - 8, 5, 1);
+        ctx.fillRect(sx + 10, floatY - 10, 2, 5);
+        ctx.fillRect(sx + 9, floatY - 10, 1, 1);
+
+        ctx.globalAlpha = 1;
+      } else {
+        const hover = Math.sin(this.time * 0.05 + coin.x * 0.01 + coin.y * 0.005) * 2;
+        const spinScale = Math.abs(Math.cos(spinPhase + coin.x * 0.02));
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(sx - 5, sy + 8 + hover, 10, 3);
+
+        if (useSpriteImg) {
+          // Draw PixelLab coin sprite with spinning scale on X axis
+          const drawW = sprW * 0.7 * (spinScale * 0.7 + 0.3);
+          const drawH = sprH * 0.7;
+          ctx.drawImage(useSpriteImg,
+            sx - drawW / 2, sy - drawH / 2 + hover,
+            drawW, drawH);
+
+          // Bright shine overlay when front-facing
+          if (spinScale > 0.7) {
+            ctx.globalAlpha = (spinScale - 0.7) / 0.3 * 0.5;
+            ctx.fillStyle = '#fff8d0';
+            ctx.fillRect(sx - 3, sy - 4 + hover, 3, 3);
+            ctx.globalAlpha = 1;
+          }
+        } else {
+          // Fallback procedural coin
+          const spinW = spinScale * 8 + 2;
+          const coinH = 10;
+
+          ctx.fillStyle = '#a07010';
+          ctx.fillRect(sx - spinW / 2 - 1, sy - coinH / 2 + hover - 1, spinW + 2, coinH + 2);
+          ctx.fillStyle = '#d4a020';
+          ctx.fillRect(sx - spinW / 2, sy - coinH / 2 + hover, spinW, coinH);
+          if (spinW > 4) {
+            ctx.fillStyle = '#f0d060';
+            ctx.fillRect(sx - spinW / 2 + 1, sy - coinH / 2 + 1 + hover, spinW - 2, 3);
+            ctx.fillStyle = '#fff8d0';
+            ctx.fillRect(sx - spinW / 2 + 1, sy - coinH / 2 + 1 + hover, 2, 2);
+          }
+          ctx.fillStyle = '#9a6808';
+          ctx.fillRect(sx - spinW / 2, sy + coinH / 2 - 1 + hover, spinW, 1);
+        }
+      }
+    }
   }
 
   startDragonFight() {
@@ -1713,19 +2264,30 @@ class Game {
   }
 
   drawArrows(ctx) {
-    ctx.fillStyle = '#c08030';
     for (const arrow of this.arrowsFired) {
       const sx = arrow.x - this.cameraX;
       const sy = arrow.y - this.cameraY;
-      // Draw arrow as a line
       const angle = Math.atan2(arrow.vy, arrow.vx);
       ctx.save();
       ctx.translate(sx, sy);
       ctx.rotate(angle);
-      ctx.fillRect(-6, -1, 12, 2);
+      // Arrow shaft
+      ctx.fillStyle = '#b08040';
+      ctx.fillRect(-8, -1, 16, 2);
+      // Arrowhead (metal tip)
       ctx.fillStyle = '#888';
-      ctx.fillRect(4, -2, 3, 4);
-      ctx.fillStyle = '#c08030';
+      ctx.fillRect(6, -2, 4, 1);
+      ctx.fillRect(7, -1, 4, 2);
+      ctx.fillRect(6, 1, 4, 1);
+      ctx.fillStyle = '#aaa';
+      ctx.fillRect(8, -1, 3, 2);
+      // Fletching (red feathers at back)
+      ctx.fillStyle = '#cc3030';
+      ctx.fillRect(-8, -3, 4, 2);
+      ctx.fillRect(-8, 1, 4, 2);
+      ctx.fillStyle = '#a02020';
+      ctx.fillRect(-7, -2, 2, 1);
+      ctx.fillRect(-7, 1, 2, 1);
       ctx.restore();
     }
   }
@@ -1772,6 +2334,9 @@ class Game {
       }
     }
 
+    // Coin collection
+    this.updateCoins();
+
     // Dragon fight
     this.updateDragonFight();
 
@@ -1783,6 +2348,8 @@ class Game {
     const total = ROADMAP_ITEMS.filter(i => i.status !== 'milestone').length;
     document.getElementById('quest-progress').textContent =
       `Discoveries: ${visited}/${total}` + (this.dragonSlain ? ' | DRAGON SLAIN' : '');
+    document.getElementById('coin-counter').textContent =
+      `Coins: ${this.coinsCollected}/${this.totalCoins}`;
   }
 
   draw() {
@@ -1808,31 +2375,36 @@ class Game {
     const startRow = Math.max(0, Math.floor(cy / TILE_SIZE) - 1);
     const endRow = Math.min(this.worldMap.rows - 1, Math.ceil((cy + viewH) / TILE_SIZE) + 1);
 
-    // Draw tiles
+    // Draw tiles with Wang autotiling for all terrain types
     for (let row = startRow; row <= endRow; row++) {
       for (let col = startCol; col <= endCol; col++) {
         const tile = this.worldMap.grid[row][col];
         const drawX = col * TILE_SIZE - cx;
         const drawY = row * TILE_SIZE - cy;
 
-        let tileImg;
-        if (tile === 'grass') {
-          tileImg = this.tiles[`grass${(col + row * 3) % 4}`];
-        } else if (tile === 'path') {
-          tileImg = this.tiles[`path${(col + row) % 2}`];
-        } else if (tile === 'water') {
-          tileImg = this.tiles.water;
-        } else if (tile === 'darkGrass') {
-          tileImg = this.tiles.darkGrass;
-        } else if (tile === 'stone') {
-          tileImg = this.tiles.stone;
-        } else if (tile === 'volcanic') {
-          tileImg = this.tiles.volcanic;
-        }
+        // Layer Wang transitions: draw base then overlay each terrain transition
+        // This avoids grass strips between non-grass terrains (e.g. darkGrass → water)
+        const darkWang = this.getWangIndex(col, row, 'darkGrass');
+        const stoneWang = this.getWangIndex(col, row, 'stone');
+        const volcanicWang = this.getWangIndex(col, row, 'volcanic');
+        const waterWang = this.getWangIndex(col, row, 'water');
+        const pathWang = this.getWangIndex(col, row, 'path');
 
-        if (tileImg) {
-          ctx.drawImage(tileImg, drawX, drawY);
-        }
+        // Base grass tile always drawn first
+        const baseTile = this.wangGrassPath[0];
+        if (baseTile) ctx.drawImage(baseTile, drawX, drawY);
+
+        // Layer terrains from lowest to highest priority
+        if (darkWang > 0 && this.wangGrassDark[darkWang])
+          ctx.drawImage(this.wangGrassDark[darkWang], drawX, drawY);
+        if (stoneWang > 0 && this.wangGrassStone[stoneWang])
+          ctx.drawImage(this.wangGrassStone[stoneWang], drawX, drawY);
+        if (volcanicWang > 0 && this.wangGrassVolcanic[volcanicWang])
+          ctx.drawImage(this.wangGrassVolcanic[volcanicWang], drawX, drawY);
+        if (waterWang > 0 && this.wangGrassWater[waterWang])
+          ctx.drawImage(this.wangGrassWater[waterWang], drawX, drawY);
+        if (pathWang > 0 && this.wangGrassPath[pathWang])
+          ctx.drawImage(this.wangGrassPath[pathWang], drawX, drawY);
       }
     }
 
@@ -1860,9 +2432,9 @@ class Game {
       { x: 44, y: 24 },  // milestone1
       { x: 44, y: 12 },  // item 4
       { x: 58, y: 12 },  // item 5
-      { x: 58, y: 30 },  // item 6
-      { x: 44, y: 30 },  // item 7
-      { x: 44, y: 44 },  // dragon
+      { x: 58, y: 38 },  // item 6
+      { x: 44, y: 38 },  // item 7
+      { x: 44, y: 52 },  // dragon
     ].map(p => ({ x: p.x * TILE_SIZE + TILE_SIZE/2, y: p.y * TILE_SIZE + TILE_SIZE/2 }));
 
     for (let i = 0; i < breadcrumbWaypoints.length - 1; i++) {
@@ -1883,6 +2455,9 @@ class Game {
 
     // Draw zone section labels on the terrain
     this.drawZoneLabels(ctx, cx, cy);
+
+    // Draw coins on path
+    this.drawCoins(ctx, cx, cy);
 
     // Draw decorations (behind character based on y-sort)
     const charY = this.character.y;
@@ -1987,7 +2562,7 @@ class Game {
 
     // Dragon Lair label
     const sec3X = 44 * TILE_SIZE - cx;
-    const sec3Y = 40 * TILE_SIZE - cy;
+    const sec3Y = 48 * TILE_SIZE - cy;
     ctx.save();
     ctx.globalAlpha = 0.15;
     ctx.font = '14px "Press Start 2P"';
@@ -2063,11 +2638,11 @@ class Game {
     } else if (item.icon === 'flag') {
       const flagWave = Math.sin(this.time * 0.1) * 2;
       ctx.drawImage(sprite, drawX, drawY - TILE_SIZE + flagWave);
-    } else if (item.icon === 'sword') {
-      // Only draw sword on map if character hasn't picked it up yet
-      if (!this.character.hasSword) {
+    } else if (item.icon === 'bow') {
+      // Only draw bow on map if character hasn't picked it up yet
+      if (!this.character.hasBow) {
         const hover = Math.sin(this.time * 0.06) * 3;
-        // Glow pulse around sword
+        // Glow pulse around bow
         const glowAlpha = 0.15 + Math.sin(this.time * 0.04) * 0.1;
         ctx.fillStyle = `rgba(255, 220, 80, ${glowAlpha})`;
         ctx.beginPath();
