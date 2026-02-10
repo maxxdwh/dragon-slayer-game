@@ -397,7 +397,7 @@ const ROADMAP_ITEMS = [
     status: 'milestone',
     description: '',
     mapX: 44, mapY: 24,
-    icon: 'flag'
+    icon: 'sword'
   },
   {
     id: 4,
@@ -808,6 +808,41 @@ class PixelArt {
     // Pennant cut
     fCtx.clearRect(30, 10, 4, 6);
     decos.flag = flagC;
+
+    // Sword (stuck in stone, waiting to be picked up)
+    const { canvas: swordC, ctx: swCtx } = this.createCanvas(S, S*2);
+    // Stone base
+    swCtx.fillStyle = '#707070';
+    swCtx.fillRect(8, S+10, 16, 10);
+    swCtx.fillStyle = '#808080';
+    swCtx.fillRect(10, S+8, 12, 6);
+    swCtx.fillStyle = '#606060';
+    swCtx.fillRect(10, S+14, 12, 4);
+    // Blade
+    swCtx.fillStyle = '#c0c8d8';
+    swCtx.fillRect(14, 8, 4, S+4);
+    swCtx.fillStyle = '#d8e0f0';
+    swCtx.fillRect(15, 8, 2, S+2);
+    // Blade tip
+    swCtx.fillStyle = '#e0e8f8';
+    swCtx.fillRect(15, 4, 2, 6);
+    swCtx.fillRect(15, 2, 2, 4);
+    swCtx.fillStyle = '#fff';
+    swCtx.fillRect(15, 0, 2, 3);
+    // Guard (crosspiece)
+    swCtx.fillStyle = '#c0a030';
+    swCtx.fillRect(8, S+2, 16, 4);
+    swCtx.fillStyle = '#e0c040';
+    swCtx.fillRect(9, S+3, 14, 2);
+    // Grip
+    swCtx.fillStyle = '#6a3a20';
+    swCtx.fillRect(13, S+6, 6, 6);
+    swCtx.fillStyle = '#8a5030';
+    swCtx.fillRect(14, S+7, 4, 4);
+    // Pommel
+    swCtx.fillStyle = '#c0a030';
+    swCtx.fillRect(14, S+12, 4, 3);
+    decos.sword = swordC;
 
     // Dragon
     const { canvas: dragonC, ctx: dCtx } = this.createCanvas(S*3, S*3);
@@ -1229,6 +1264,7 @@ class Character {
     this.moving = false;
     this.sprites = null;
     this.visitedItems = new Set();
+    this.hasSword = false;
   }
 
   loadSprites(sprites) {
@@ -1303,6 +1339,39 @@ class Character {
     const drawX = this.x - cameraX - 16;
     const drawY = this.y - cameraY - 24;
     ctx.drawImage(sprite, drawX, drawY);
+
+    // Draw held sword
+    if (this.hasSword) {
+      const d = this.dir;
+      // Offset sword position based on facing direction
+      let ox, oy, bladeAngle;
+      if (d === 2 || d === 1 || d === 3) {       // east-ish: sword on right side
+        ox = 22; oy = 2; bladeAngle = 1;
+      } else if (d === 6 || d === 5 || d === 7) { // west-ish: sword on left side
+        ox = -6; oy = 2; bladeAngle = -1;
+      } else if (d === 0) {                        // north: sword on right
+        ox = 20; oy = 4; bladeAngle = 1;
+      } else {                                      // south: sword on left
+        ox = -4; oy = 4; bladeAngle = -1;
+      }
+      const bob = this.moving ? Math.sin(this.frameTimer * 0.6) * 2 : 0;
+      const bx = drawX + ox;
+      const by = drawY + oy + bob;
+      // Blade
+      ctx.fillStyle = '#b0b8c8';
+      ctx.fillRect(bx, by - 10, 4, 16);
+      ctx.fillStyle = '#d0d8e8';
+      ctx.fillRect(bx + 1, by - 10, 2, 14);
+      // Tip
+      ctx.fillStyle = '#e8f0ff';
+      ctx.fillRect(bx + 1, by - 14, 2, 5);
+      // Guard
+      ctx.fillStyle = '#d0a020';
+      ctx.fillRect(bx - 3, by + 5, 10, 3);
+      // Grip
+      ctx.fillStyle = '#5a3018';
+      ctx.fillRect(bx + 1, by + 8, 2, 5);
+    }
   }
 
   getNearbyItem(range = 48) {
@@ -1524,6 +1593,10 @@ class Game {
       this.activePanel = item; // Track so we don't re-trigger every frame
       if (item.id === 'milestone2' && !this.dragonSlain) {
         this.startDragonFight();
+      }
+      // Sword pickup
+      if (item.id === 'milestone1' && !this.character.hasSword) {
+        this.character.hasSword = true;
       }
       // Show milestone banner
       if (!this.milestoneShown.has(item.id)) {
@@ -1990,6 +2063,18 @@ class Game {
     } else if (item.icon === 'flag') {
       const flagWave = Math.sin(this.time * 0.1) * 2;
       ctx.drawImage(sprite, drawX, drawY - TILE_SIZE + flagWave);
+    } else if (item.icon === 'sword') {
+      // Only draw sword on map if character hasn't picked it up yet
+      if (!this.character.hasSword) {
+        const hover = Math.sin(this.time * 0.06) * 3;
+        // Glow pulse around sword
+        const glowAlpha = 0.15 + Math.sin(this.time * 0.04) * 0.1;
+        ctx.fillStyle = `rgba(255, 220, 80, ${glowAlpha})`;
+        ctx.beginPath();
+        ctx.arc(centerX, drawY - TILE_SIZE / 2 + hover, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawImage(sprite, drawX, drawY - TILE_SIZE + hover);
+      }
     }
 
     // Draw numbered circle on each stop (not milestones)
