@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DragonMap — Corti API Roadmap Quest</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      cursor: default;
+      user-select: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* HUD overlay */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #hud .title {
+      font-size: 20px;
+      color: #f0c040;
+      text-shadow: 2px 2px 0 #000;
+      letter-spacing: 2px;
+    }
+
+    #hud .subtitle {
+      font-size: 12px;
+      color: #a0a0b0;
+      margin-top: 6px;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    #hud .quest-info {
+      text-align: right;
+      font-size: 12px;
+      color: #80d080;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    /* Info panel for roadmap items */
+    #info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 800px;
+      width: 90%;
+      background: rgba(10, 10, 30, 0.95);
+      border: 4px solid #f0c040;
+      border-radius: 6px;
+      padding: 28px 32px;
+      z-index: 20;
+      display: none;
+      box-shadow: 0 0 40px rgba(240, 192, 64, 0.3), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    #info-panel.visible {
+      display: block;
+      animation: panelSlideUp 0.2s ease-out;
+    }
+
+    @keyframes panelSlideUp {
+      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+
+    #info-panel .panel-status {
+      font-size: 14px;
+      color: #80d080;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    #info-panel .panel-status.upcoming {
+      color: #f0c040;
+    }
+
+    #info-panel .panel-title {
+      font-size: 20px;
+      color: #fff;
+      margin-bottom: 16px;
+      text-shadow: 1px 1px 0 #000;
+      line-height: 1.8;
+    }
+
+    #info-panel .panel-desc {
+      font-size: 13px;
+      color: #c0c0d0;
+      line-height: 2.2;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    #info-panel .panel-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 14px;
+      color: #f0c040;
+      cursor: pointer;
+      pointer-events: all;
+    }
+
+    #info-panel .panel-number {
+      display: inline-block;
+      background: #f0c040;
+      color: #0a0a1a;
+      padding: 4px 10px;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    /* Milestone banner */
+    #milestone-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 25;
+      text-align: center;
+      display: none;
+      pointer-events: none;
+    }
+
+    #milestone-banner.visible {
+      display: block;
+      animation: milestonePulse 0.5s ease-out;
+    }
+
+    @keyframes milestonePulse {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      60% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    #milestone-banner .banner-text {
+      font-size: 28px;
+      color: #f0c040;
+      text-shadow: 3px 3px 0 #000, 0 0 20px rgba(240,192,64,0.5);
+      line-height: 2;
+      white-space: nowrap;
+    }
+
+    /* Dragon slaying screen */
+    #dragon-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 30;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #dragon-screen.visible {
+      display: flex;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #dragon-screen canvas {
+      margin-bottom: 20px;
+    }
+
+    /* Controls hint */
+    #controls-hint {
+      position: absolute;
+      bottom: 16px;
+      right: 24px;
+      font-size: 12px;
+      color: #606070;
+      text-shadow: 1px 1px 0 #000;
+      z-index: 10;
+      pointer-events: none;
+      line-height: 2.2;
+      text-align: right;
+    }
+
+    /* Minimap */
+    #minimap {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      border: 3px solid #f0c040;
+      z-index: 10;
+      background: rgba(0,0,0,0.7);
+      image-rendering: pixelated;
+    }
+
+    /* Title screen */
+    #title-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 26, 0.92);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      cursor: pointer;
+    }
+
+    /* Loading screen */
+    #loading {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0a0a1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #loading .load-title {
+      font-size: 32px;
+      color: #f0c040;
+      margin-bottom: 32px;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    #loading .load-bar-outer {
+      width: 400px;
+      height: 24px;
+      border: 3px solid #f0c040;
+      background: #1a1a2a;
+    }
+
+    #loading .load-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: #f0c040;
+      transition: width 0.3s;
+    }
+
+    #loading .load-text {
+      font-size: 14px;
+      color: #808090;
+      margin-top: 16px;
+    }
+
+    /* Interaction prompt above items */
+    .interact-prompt {
+      position: absolute;
+      font-size: 14px;
+      color: #f0c040;
+      text-shadow: 1px 1px 0 #000;
+      pointer-events: none;
+      z-index: 5;
+      animation: bobUpDown 1s ease-in-out infinite;
+    }
+
+    @keyframes bobUpDown {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <canvas id="minimap" width="200" height="150"></canvas>
+
+    <div id="hud">
+      <div>
+        <div class="title">DRAGONMAP</div>
+        <div class="subtitle">The Quest for Clinical Dictation</div>
+      </div>
+      <div class="quest-info">
+        <div id="quest-status">QUEST: Slay the Dragon</div>
+        <div id="quest-progress" style="margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <div id="info-panel">
+      <!-- Panel auto-closes when walking away -->
+      <div class="panel-status" id="panel-status"></div>
+      <div class="panel-title" id="panel-title"></div>
+      <div class="panel-desc" id="panel-desc"></div>
+    </div>
+
+    <div id="milestone-banner">
+      <div class="banner-text" id="banner-text"></div>
+    </div>
+
+    <div id="controls-hint">
+      WASD / ARROWS — Move
+    </div>
+
+    <!-- Title / Intro screen -->
+    <div id="title-screen" style="display:none;">
+      <div style="text-align:center;">
+        <div style="font-size:48px; color:#f0c040; text-shadow:4px 4px 0 #000, 0 0 40px rgba(240,192,64,0.4); margin-bottom:32px; line-height:1.6;">DRAGONMAP</div>
+        <div style="font-size:16px; color:#a0a0b0; text-shadow:2px 2px 0 #000; margin-bottom:40px; line-height:2.4; max-width:700px;">
+          The best foundation for building<br>clinical dictation products,<br>delivered as an API.
+        </div>
+        <div style="font-size:14px; color:#c0c0d0; text-shadow:1px 1px 0 #000; margin-bottom:8px; line-height:2.2;">Follow Bard the Bowman on an epic quest</div>
+        <div style="font-size:14px; color:#c0c0d0; text-shadow:1px 1px 0 #000; margin-bottom:48px; line-height:2.2;">down the Corti API roadmap.</div>
+        <div id="start-btn" style="font-size:20px; color:#f0c040; cursor:pointer; animation: bobUpDown 1.5s ease-in-out infinite; text-shadow:2px 2px 0 #000;">[ PRESS ANY KEY TO BEGIN ]</div>
+        <div style="font-size:12px; color:#505060; margin-top:24px; text-shadow:1px 1px 0 #000;">WASD or Arrow Keys to move</div>
+      </div>
+    </div>
+
+    <div id="loading">
+      <div class="load-title">DRAGONMAP</div>
+      <div class="load-bar-outer">
+        <div class="load-bar-inner" id="load-bar"></div>
+      </div>
+      <div class="load-text" id="load-text">Generating world...</div>
+    </div>
+  </div>
+
+  <script>
+// ============================================================
+// DRAGONMAP — 2D Pixel Art Roadmap Quest
+// ============================================================
+
+const TILE_SIZE = 32;
+const MAP_COLS = 80;
+const MAP_ROWS = 60;
+const CAMERA_SMOOTH = 0.1;
+const ZOOM = 2; // 2x zoom so the character is clearly visible
+
+// Directions: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW
+const DIR_NAMES = ['n','ne','e','se','s','sw','w','nw'];
+const DIR_OFFSETS = [
+  [0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]
+];
+
+// ============================================================
+// ROADMAP DATA
+// ============================================================
+// Winding adventure path layout:
+// Start(4,10) → East to item1(16,10) → East to item2(30,10) → South to item3(30,24)
+// → East to milestone1(44,24) → North to item4(44,12) → East to item5(58,12)
+// → South to item6(58,30) → West to item7(44,30) → South to dragon(44,44)
+const ROADMAP_ITEMS = [
+  {
+    id: 1,
+    title: 'Clinical-grade STT Models',
+    status: 'shipped',
+    description: 'Foundation. High-accuracy medical STT across supported languages, purpose-built for clinical terminology and high-stakes workflows.',
+    mapX: 16, mapY: 10,
+    icon: 'tower'
+  },
+  {
+    id: 2,
+    title: 'Command Framework',
+    status: 'shipped',
+    description: 'Define voice commands with dynamic parameters to navigate, edit, and control application workflows. Gives clinicians precise control without breaking dictation flow.',
+    mapX: 30, mapY: 10,
+    icon: 'tower'
+  },
+  {
+    id: 3,
+    title: 'Output Formatting',
+    status: 'shipped',
+    description: 'Configurable formatting for dates, times, numbers, units, measurements, ranges, and ordinals. Automatic capitalization and punctuation. Output reads like a clinical document, not a raw transcript.',
+    mapX: 30, mapY: 24,
+    icon: 'tower'
+  },
+  {
+    id: 'milestone1',
+    title: 'EMPOWERED TO BUILD\nA DRAGON REPLACEMENT',
+    status: 'milestone',
+    description: '',
+    mapX: 44, mapY: 24,
+    icon: 'flag'
+  },
+  {
+    id: 4,
+    title: 'Advanced Formatting',
+    status: 'upcoming',
+    description: 'Improved handling of key homophones (e.g., "period", "colon"). Better date and number localization.',
+    mapX: 44, mapY: 12,
+    icon: 'chest'
+  },
+  {
+    id: 5,
+    title: 'Advanced Speed',
+    status: 'upcoming',
+    description: 'Real-time partial transcription as the user speaks. Essential for building responsive dictation UIs where text appears on screen with minimal perceived latency.',
+    mapX: 58, mapY: 12,
+    icon: 'chest'
+  },
+  {
+    id: 6,
+    title: 'Advanced Commands',
+    status: 'upcoming',
+    description: 'Wildcard variables for templated command systems beyond static phrase matching. Non-verbal command anchors that map physical device inputs (foot pedals, hotkeys, button presses) to actions in the transcription stream.',
+    mapX: 58, mapY: 30,
+    icon: 'chest'
+  },
+  {
+    id: 7,
+    title: 'Advanced Customization',
+    status: 'upcoming',
+    description: 'Organization-specific tuning. Custom vocabulary handles recognition (getting the model to hear the right terms), replacement rules handle formatting (standardizing what appears in output). Together they let customers tailor the full pipeline to their environment.',
+    mapX: 44, mapY: 30,
+    icon: 'chest'
+  },
+  {
+    id: 'milestone2',
+    title: 'SLAY THE DRAGON\nONCE AND FOR ALL',
+    status: 'milestone',
+    description: '',
+    mapX: 44, mapY: 44,
+    icon: 'dragon'
+  }
+];
+
+// ============================================================
+// PIXEL ART GENERATOR — All sprites generated procedurally
+// ============================================================
+
+class PixelArt {
+  static createCanvas(w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    return { canvas: c, ctx: c.getContext('2d') };
+  }
+
+  // Draw a single pixel (scaled)
+  static px(ctx, x, y, color, scale = 1) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x * scale, y * scale, scale, scale);
+  }
+
+  // Character sprite — Bard the Bowman, 8 directions
+  // Returns object with sprites for each direction
+  static generateCharacter() {
+    const sprites = {};
+    const SCALE = 2;
+    const W = 16, H = 16;
+
+    const skin = '#f5c5a3';
+    const hair = '#5a3320';
+    const tunic = '#2a6e3f';
+    const tunicDk = '#1d5030';
+    const boots = '#4a3728';
+    const cape = '#8b2020';
+    const capeDk = '#6b1515';
+    const bow = '#a06030';
+    const quiver = '#704020';
+    const belt = '#c8a84a';
+
+    // Generate for each direction and each animation frame
+    for (let d = 0; d < 8; d++) {
+      const frames = [];
+      for (let frame = 0; frame < 4; frame++) {
+        const { canvas, ctx } = this.createCanvas(W * SCALE, H * SCALE);
+        const p = (x, y, c) => this.px(ctx, x, y, c, SCALE);
+
+        // Animation offsets
+        const walk = frame % 2 === 0 ? 0 : (frame === 1 ? -1 : 1);
+        const bob = frame % 2 === 0 ? 0 : -1;
+
+        if (d === 4) { // South (facing down)
+          // Cape behind
+          p(5,4+bob, capeDk); p(6,4+bob, cape); p(7,4+bob, cape); p(8,4+bob, cape); p(9,4+bob, capeDk);
+          p(5,5+bob, capeDk); p(6,5+bob, cape); p(7,5+bob, cape); p(8,5+bob, cape); p(9,5+bob, capeDk);
+          // Hair
+          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
+          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
+          // Face
+          p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, skin);
+          p(6,5+bob, skin); p(7,5+bob, skin); p(8,5+bob, skin);
+          // Eyes
+          p(6,4+bob, '#222'); p(8,4+bob, '#222');
+          // Body
+          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
+          p(5,7+bob, tunic); p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic); p(9,7+bob, tunic);
+          p(5,8+bob, tunic); p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic); p(9,8+bob, tunic);
+          p(5,9+bob, tunicDk); p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk); p(9,9+bob, tunicDk);
+          // Legs
+          p(6,10, boots); p(7,10, tunicDk); p(8,10, boots);
+          p(6+walk,11, boots); p(8-walk,11, boots);
+          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
+          // Arms
+          p(4,7+bob, skin); p(10,7+bob, skin);
+          // Bow on back
+          p(10,5+bob, bow); p(10,6+bob, bow); p(11,4+bob, bow);
+        } else if (d === 0) { // North (facing up)
+          // Hair (back of head)
+          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
+          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
+          p(6,4+bob, hair); p(7,4+bob, hair); p(8,4+bob, hair);
+          p(6,5+bob, hair); p(7,5+bob, hair); p(8,5+bob, hair);
+          // Cape
+          p(5,6+bob, cape); p(6,6+bob, cape); p(7,6+bob, cape); p(8,6+bob, cape); p(9,6+bob, cape);
+          p(5,7+bob, cape); p(6,7+bob, cape); p(7,7+bob, cape); p(8,7+bob, cape); p(9,7+bob, cape);
+          p(5,8+bob, cape); p(6,8+bob, capeDk); p(7,8+bob, capeDk); p(8,8+bob, capeDk); p(9,8+bob, cape);
+          p(5,9+bob, capeDk); p(6,9+bob, capeDk); p(7,9+bob, capeDk); p(8,9+bob, capeDk); p(9,9+bob, capeDk);
+          // Quiver
+          p(10,5+bob, quiver); p(10,6+bob, quiver); p(10,7+bob, quiver);
+          p(11,4+bob, bow); p(11,5+bob, bow);
+          // Legs
+          p(6,10, boots); p(8,10, boots);
+          p(6+walk,11, boots); p(8-walk,11, boots);
+          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
+        } else if (d === 2) { // East (facing right)
+          // Cape
+          p(4,5+bob, cape); p(4,6+bob, cape); p(4,7+bob, capeDk); p(4,8+bob, capeDk);
+          p(3,6+bob, capeDk); p(3,7+bob, capeDk);
+          // Hair
+          p(7,2+bob, hair); p(8,2+bob, hair);
+          p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
+          p(6,4+bob, hair); p(7,4+bob, skin); p(8,4+bob, skin); p(9,4+bob, hair);
+          // Face
+          p(7,5+bob, skin); p(8,5+bob, skin); p(9,5+bob, skin);
+          p(9,4+bob, '#222'); // Eye
+          // Body
+          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
+          p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic);
+          p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic);
+          p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk);
+          // Arm with bow
+          p(9,6+bob, skin); p(10,6+bob, bow); p(10,5+bob, bow); p(10,7+bob, bow);
+          // Legs
+          p(7,10, boots); p(7+walk,11, boots); p(7+walk,12, '#3a2718');
+        } else if (d === 6) { // West (facing left)
+          // Cape
+          p(10,5+bob, cape); p(10,6+bob, cape); p(10,7+bob, capeDk); p(10,8+bob, capeDk);
+          p(11,6+bob, capeDk); p(11,7+bob, capeDk);
+          // Hair
+          p(6,2+bob, hair); p(7,2+bob, hair);
+          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair);
+          p(5,4+bob, hair); p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, hair);
+          // Face
+          p(5,5+bob, skin); p(6,5+bob, skin); p(7,5+bob, skin);
+          p(5,4+bob, '#222'); // Eye
+          // Body
+          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
+          p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic);
+          p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic);
+          p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk);
+          // Arm with bow
+          p(5,6+bob, skin); p(4,6+bob, bow); p(4,5+bob, bow); p(4,7+bob, bow);
+          // Legs
+          p(7,10, boots); p(7+walk,11, boots); p(7+walk,12, '#3a2718');
+        } else {
+          // Diagonal directions — blend between cardinal sprites
+          // For simplicity, use a slight variation of the nearest cardinal
+          const base = d < 4 ? (d < 2 ? 0 : 2) : (d < 6 ? 4 : 6);
+          const { canvas: baseCanvas } = this.createCanvas(W * SCALE, H * SCALE);
+          // Just reuse the south-facing as a base and tint slightly
+          // Hair
+          p(6,2+bob, hair); p(7,2+bob, hair); p(8,2+bob, hair);
+          p(5,3+bob, hair); p(6,3+bob, hair); p(7,3+bob, hair); p(8,3+bob, hair); p(9,3+bob, hair);
+          p(6,4+bob, skin); p(7,4+bob, skin); p(8,4+bob, skin);
+          p(6,5+bob, skin); p(7,5+bob, skin); p(8,5+bob, skin);
+          // Cape hint
+          if (d === 1 || d === 7) { p(5,6+bob, cape); p(9,6+bob, cape); }
+          if (d === 3 || d === 5) { p(5,5+bob, capeDk); p(9,5+bob, capeDk); }
+          // Eyes based on direction
+          if (d === 1) { p(7,4+bob, '#222'); p(9,4+bob, '#222'); }
+          else if (d === 3) { p(7,5+bob, '#222'); p(9,4+bob, '#222'); }
+          else if (d === 5) { p(5,4+bob, '#222'); p(7,5+bob, '#222'); }
+          else if (d === 7) { p(5,4+bob, '#222'); p(7,4+bob, '#222'); }
+          // Body
+          p(6,6+bob, tunic); p(7,6+bob, tunic); p(8,6+bob, tunic);
+          p(5,7+bob, tunic); p(6,7+bob, tunic); p(7,7+bob, belt); p(8,7+bob, tunic); p(9,7+bob, tunic);
+          p(5,8+bob, tunic); p(6,8+bob, tunic); p(7,8+bob, tunic); p(8,8+bob, tunic); p(9,8+bob, tunic);
+          p(5,9+bob, tunicDk); p(6,9+bob, tunicDk); p(7,9+bob, tunicDk); p(8,9+bob, tunicDk); p(9,9+bob, tunicDk);
+          // Arms
+          p(4,7+bob, skin); p(10,7+bob, skin);
+          // Bow
+          if (d === 1 || d === 3) { p(10,5+bob, bow); p(10,6+bob, bow); p(11,4+bob, bow); }
+          else { p(4,5+bob, bow); p(4,6+bob, bow); p(3,4+bob, bow); }
+          // Legs
+          p(6,10, boots); p(8,10, boots);
+          p(6+walk,11, boots); p(8-walk,11, boots);
+          p(6+walk,12, '#3a2718'); p(8-walk,12, '#3a2718');
+        }
+
+        frames.push(canvas);
+      }
+      sprites[DIR_NAMES[d]] = frames;
+    }
+
+    return sprites;
+  }
+
+  // Generate tile sprites
+  static generateTiles() {
+    const tiles = {};
+    const S = TILE_SIZE;
+
+    // Grass tile (several variants)
+    for (let v = 0; v < 4; v++) {
+      const { canvas, ctx } = this.createCanvas(S, S);
+      const base = ['#3a7a3a','#2d6b2d','#358035','#2f722f'][v];
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, S, S);
+      // Random grass details
+      const rng = this.seededRandom(v * 1000);
+      for (let i = 0; i < 8; i++) {
+        const gx = Math.floor(rng() * S);
+        const gy = Math.floor(rng() * S);
+        ctx.fillStyle = rng() > 0.5 ? '#4a8a4a' : '#2a6a2a';
+        ctx.fillRect(gx, gy, 2, 2);
+      }
+      tiles[`grass${v}`] = canvas;
+    }
+
+    // Path tile
+    for (let v = 0; v < 2; v++) {
+      const { canvas, ctx } = this.createCanvas(S, S);
+      ctx.fillStyle = v === 0 ? '#a89060' : '#9a8555';
+      ctx.fillRect(0, 0, S, S);
+      const rng = this.seededRandom(v * 2000);
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = rng() > 0.5 ? '#b8a070' : '#908050';
+        ctx.fillRect(Math.floor(rng()*S), Math.floor(rng()*S), 3, 2);
+      }
+      tiles[`path${v}`] = canvas;
+    }
+
+    // Water tile
+    const { canvas: waterC, ctx: waterCtx } = this.createCanvas(S, S);
+    waterCtx.fillStyle = '#2050a0';
+    waterCtx.fillRect(0, 0, S, S);
+    for (let i = 0; i < 4; i++) {
+      waterCtx.fillStyle = '#3060b0';
+      waterCtx.fillRect(i*8, 4 + (i%2)*4, 6, 2);
+    }
+    tiles.water = waterC;
+
+    // Dark grass / forest floor
+    const { canvas: darkG, ctx: darkGCtx } = this.createCanvas(S, S);
+    darkGCtx.fillStyle = '#1a4a1a';
+    darkGCtx.fillRect(0, 0, S, S);
+    for (let i = 0; i < 6; i++) {
+      darkGCtx.fillStyle = i%2===0 ? '#0d3d0d' : '#225522';
+      darkGCtx.fillRect(Math.floor(Math.random()*S), Math.floor(Math.random()*S), 3, 2);
+    }
+    tiles.darkGrass = darkG;
+
+    // Stone tile
+    const { canvas: stoneC, ctx: stoneCtx } = this.createCanvas(S, S);
+    stoneCtx.fillStyle = '#606070';
+    stoneCtx.fillRect(0, 0, S, S);
+    stoneCtx.fillStyle = '#50505f';
+    stoneCtx.fillRect(0, 0, 15, 15);
+    stoneCtx.fillRect(17, 17, 15, 15);
+    stoneCtx.fillStyle = '#707080';
+    stoneCtx.fillRect(17, 0, 15, 15);
+    stoneCtx.fillRect(0, 17, 15, 15);
+    stoneCtx.fillStyle = '#555565';
+    stoneCtx.fillRect(0, 16, 32, 1);
+    stoneCtx.fillRect(16, 0, 1, 32);
+    tiles.stone = stoneC;
+
+    // Volcanic / dragon lair tile
+    const { canvas: volc, ctx: volcCtx } = this.createCanvas(S, S);
+    volcCtx.fillStyle = '#2a1515';
+    volcCtx.fillRect(0, 0, S, S);
+    for (let i = 0; i < 5; i++) {
+      volcCtx.fillStyle = ['#3a1a1a','#4a2020','#1a0a0a'][i%3];
+      volcCtx.fillRect(Math.floor(Math.random()*S), Math.floor(Math.random()*S), 4, 3);
+    }
+    tiles.volcanic = volc;
+
+    return tiles;
+  }
+
+  // Decorative sprites
+  static generateDecorations() {
+    const decos = {};
+    const S = TILE_SIZE;
+
+    // Tree (pine) — wider, more substantial
+    const drawTree = (variant) => {
+      const { canvas, ctx } = this.createCanvas(S, S*2);
+      const trunk = variant === 0 ? '#5a3a20' : '#4a3018';
+      const trunkDk = variant === 0 ? '#3a2a15' : '#342010';
+      const leaves = variant === 0 ? '#1a5a1a' : '#0d4d0d';
+      const leavesDk = variant === 0 ? '#104010' : '#083808';
+      const leavesLt = variant === 0 ? '#2a7a2a' : '#1a6a1a';
+      // Shadow on ground
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillRect(6, S+18, 20, 6);
+      // Trunk
+      ctx.fillStyle = trunk;
+      ctx.fillRect(13, S, 6, S-4);
+      ctx.fillStyle = trunkDk;
+      ctx.fillRect(13, S, 2, S-4);
+      // Foliage layers (wider triangular shape)
+      const layerData = [
+        { y: 4, w: 26 },
+        { y: 12, w: 22 },
+        { y: 20, w: 18 },
+        { y: 28, w: 14 },
+      ];
+      for (const layer of layerData) {
+        const x = (S - layer.w) / 2;
+        ctx.fillStyle = leavesDk;
+        ctx.fillRect(x, layer.y, layer.w, 12);
+        ctx.fillStyle = leaves;
+        ctx.fillRect(x+1, layer.y, layer.w-2, 10);
+        ctx.fillStyle = leavesLt;
+        ctx.fillRect(x+3, layer.y+1, layer.w-6, 4);
+      }
+      // Top point
+      ctx.fillStyle = leavesLt;
+      ctx.fillRect(14, 1, 4, 5);
+      ctx.fillRect(15, 0, 2, 3);
+      return canvas;
+    };
+    decos.tree0 = drawTree(0);
+    decos.tree1 = drawTree(1);
+
+    // Dead tree
+    const { canvas: deadTree, ctx: dtCtx } = this.createCanvas(S, S*2);
+    dtCtx.fillStyle = '#3a2a1a';
+    dtCtx.fillRect(14, 10, 4, S+14);
+    dtCtx.fillRect(10, 14, 4, 3);
+    dtCtx.fillRect(18, 8, 6, 3);
+    dtCtx.fillRect(8, 20, 3, 3);
+    dtCtx.fillRect(20, 16, 4, 3);
+    decos.deadTree = deadTree;
+
+    // Castle tower
+    const { canvas: towerC, ctx: tCtx } = this.createCanvas(S*2, S*2);
+    // Base
+    tCtx.fillStyle = '#808090';
+    tCtx.fillRect(8, 20, 48, 44);
+    tCtx.fillStyle = '#707080';
+    tCtx.fillRect(12, 24, 40, 36);
+    // Battlements
+    tCtx.fillStyle = '#909098';
+    for (let i = 0; i < 6; i++) {
+      tCtx.fillRect(8 + i*9, 14, 6, 8);
+    }
+    // Door
+    tCtx.fillStyle = '#4a3020';
+    tCtx.fillRect(24, 44, 16, 20);
+    tCtx.fillStyle = '#3a2010';
+    tCtx.fillRect(26, 46, 12, 18);
+    // Window
+    tCtx.fillStyle = '#f0d060';
+    tCtx.fillRect(22, 30, 6, 6);
+    tCtx.fillRect(36, 30, 6, 6);
+    // Flag
+    tCtx.fillStyle = '#333';
+    tCtx.fillRect(30, 2, 2, 14);
+    tCtx.fillStyle = '#f0c040';
+    tCtx.fillRect(32, 2, 10, 7);
+    tCtx.fillStyle = '#d0a030';
+    tCtx.fillRect(32, 5, 10, 4);
+    decos.tower = towerC;
+
+    // Treasure chest (power-up)
+    const { canvas: chestC, ctx: cCtx } = this.createCanvas(S, S);
+    cCtx.fillStyle = '#8a6020';
+    cCtx.fillRect(6, 12, 20, 14);
+    cCtx.fillStyle = '#a07030';
+    cCtx.fillRect(8, 8, 16, 6);
+    cCtx.fillStyle = '#f0c040';
+    cCtx.fillRect(10, 10, 12, 2);
+    cCtx.fillStyle = '#f0c040';
+    cCtx.fillRect(14, 16, 4, 4);
+    // Glow
+    cCtx.fillStyle = 'rgba(240,192,64,0.3)';
+    cCtx.fillRect(4, 6, 24, 22);
+    decos.chest = chestC;
+
+    // Flag / milestone marker
+    const { canvas: flagC, ctx: fCtx } = this.createCanvas(S, S*2);
+    fCtx.fillStyle = '#555';
+    fCtx.fillRect(14, 8, 3, S+16);
+    fCtx.fillStyle = '#f0c040';
+    fCtx.fillRect(17, 8, 16, 10);
+    fCtx.fillStyle = '#d0a030';
+    fCtx.fillRect(17, 12, 16, 6);
+    // Pennant cut
+    fCtx.clearRect(30, 10, 4, 6);
+    decos.flag = flagC;
+
+    // Dragon
+    const { canvas: dragonC, ctx: dCtx } = this.createCanvas(S*3, S*3);
+    const dragonRed = '#c03030';
+    const dragonDk = '#901818';
+    const dragonLt = '#e04040';
+    const belly = '#d0a040';
+    // Body
+    dCtx.fillStyle = dragonRed;
+    dCtx.fillRect(24, 40, 48, 30);
+    dCtx.fillStyle = dragonDk;
+    dCtx.fillRect(28, 44, 40, 22);
+    dCtx.fillStyle = belly;
+    dCtx.fillRect(34, 48, 28, 14);
+    // Head
+    dCtx.fillStyle = dragonRed;
+    dCtx.fillRect(60, 24, 24, 20);
+    dCtx.fillStyle = dragonLt;
+    dCtx.fillRect(64, 28, 16, 12);
+    // Eye
+    dCtx.fillStyle = '#ff0';
+    dCtx.fillRect(74, 30, 6, 4);
+    dCtx.fillStyle = '#000';
+    dCtx.fillRect(76, 31, 3, 2);
+    // Horns
+    dCtx.fillStyle = '#555';
+    dCtx.fillRect(66, 18, 4, 8);
+    dCtx.fillRect(76, 20, 4, 6);
+    // Wings
+    dCtx.fillStyle = dragonDk;
+    dCtx.fillRect(10, 20, 30, 24);
+    dCtx.fillStyle = dragonRed;
+    dCtx.fillRect(14, 24, 22, 16);
+    // Wing membrane lines
+    dCtx.fillStyle = dragonLt;
+    dCtx.fillRect(16, 26, 2, 12);
+    dCtx.fillRect(22, 24, 2, 14);
+    dCtx.fillRect(28, 26, 2, 12);
+    // Tail
+    dCtx.fillStyle = dragonDk;
+    dCtx.fillRect(8, 56, 20, 8);
+    dCtx.fillRect(2, 52, 10, 8);
+    dCtx.fillStyle = dragonRed;
+    dCtx.fillRect(0, 50, 6, 6);
+    // Legs
+    dCtx.fillStyle = dragonDk;
+    dCtx.fillRect(32, 68, 8, 14);
+    dCtx.fillRect(54, 68, 8, 14);
+    dCtx.fillRect(30, 78, 12, 6);
+    dCtx.fillRect(52, 78, 12, 6);
+    // Claws
+    dCtx.fillStyle = '#555';
+    dCtx.fillRect(30, 82, 4, 3);
+    dCtx.fillRect(36, 82, 4, 3);
+    dCtx.fillRect(52, 82, 4, 3);
+    dCtx.fillRect(58, 82, 4, 3);
+    // Mouth / fire hint
+    dCtx.fillStyle = '#f08020';
+    dCtx.fillRect(82, 34, 8, 4);
+    dCtx.fillStyle = '#f0c040';
+    dCtx.fillRect(88, 35, 4, 2);
+    decos.dragon = dragonC;
+
+    // Rocks
+    const { canvas: rockC, ctx: rCtx } = this.createCanvas(S, S);
+    rCtx.fillStyle = '#707070';
+    rCtx.fillRect(8, 18, 16, 10);
+    rCtx.fillStyle = '#808080';
+    rCtx.fillRect(10, 16, 12, 8);
+    rCtx.fillStyle = '#606060';
+    rCtx.fillRect(12, 20, 8, 6);
+    decos.rock = rockC;
+
+    // Flowers
+    const { canvas: flowerC, ctx: flCtx } = this.createCanvas(S, S);
+    flCtx.fillStyle = '#3a7a3a';
+    flCtx.fillRect(15, 20, 2, 8);
+    flCtx.fillStyle = '#e04080';
+    flCtx.fillRect(13, 16, 6, 6);
+    flCtx.fillStyle = '#f06090';
+    flCtx.fillRect(14, 17, 4, 4);
+    flCtx.fillStyle = '#ff0';
+    flCtx.fillRect(15, 18, 2, 2);
+    decos.flower = flowerC;
+
+    // Bridge section
+    const { canvas: bridgeC, ctx: brCtx } = this.createCanvas(S, S);
+    brCtx.fillStyle = '#6a4a30';
+    brCtx.fillRect(0, 8, S, 16);
+    brCtx.fillStyle = '#7a5a40';
+    for (let i = 0; i < 4; i++) {
+      brCtx.fillRect(i*8, 10, 6, 12);
+    }
+    brCtx.fillStyle = '#5a3a20';
+    brCtx.fillRect(0, 8, S, 2);
+    brCtx.fillRect(0, 22, S, 2);
+    decos.bridge = bridgeC;
+
+    // Campfire
+    const { canvas: fireC, ctx: fiCtx } = this.createCanvas(S, S);
+    fiCtx.fillStyle = '#5a3a20';
+    fiCtx.fillRect(8, 22, 16, 6);
+    fiCtx.fillStyle = '#f08020';
+    fiCtx.fillRect(12, 12, 8, 12);
+    fiCtx.fillStyle = '#f0c040';
+    fiCtx.fillRect(14, 8, 4, 10);
+    fiCtx.fillStyle = '#fff0a0';
+    fiCtx.fillRect(15, 10, 2, 4);
+    decos.campfire = fireC;
+
+    // Signpost
+    const { canvas: signC, ctx: siCtx } = this.createCanvas(S, S*2);
+    siCtx.fillStyle = '#5a3a20';
+    siCtx.fillRect(14, 16, 4, 32);
+    siCtx.fillStyle = '#7a5a40';
+    siCtx.fillRect(4, 16, 24, 10);
+    siCtx.fillStyle = '#6a4a30';
+    siCtx.fillRect(6, 18, 20, 6);
+    decos.signpost = signC;
+
+    // Skull (for dragon lair area)
+    const { canvas: skullC, ctx: skCtx } = this.createCanvas(S, S);
+    skCtx.fillStyle = '#d0d0c0';
+    skCtx.fillRect(10, 14, 12, 10);
+    skCtx.fillRect(12, 12, 8, 4);
+    skCtx.fillStyle = '#222';
+    skCtx.fillRect(12, 16, 3, 3);
+    skCtx.fillRect(17, 16, 3, 3);
+    skCtx.fillRect(14, 22, 4, 2);
+    decos.skull = skullC;
+
+    // Lava pool
+    const { canvas: lavaC, ctx: laCtx } = this.createCanvas(S, S);
+    laCtx.fillStyle = '#c03010';
+    laCtx.fillRect(4, 8, 24, 16);
+    laCtx.fillStyle = '#e06020';
+    laCtx.fillRect(8, 10, 16, 12);
+    laCtx.fillStyle = '#f0a040';
+    laCtx.fillRect(12, 12, 8, 8);
+    laCtx.fillStyle = '#ffe080';
+    laCtx.fillRect(14, 14, 4, 4);
+    decos.lava = lavaC;
+
+    // Checkmark for completed items
+    const { canvas: checkC, ctx: chkCtx } = this.createCanvas(16, 16);
+    chkCtx.fillStyle = '#40e040';
+    chkCtx.fillRect(2, 8, 3, 3);
+    chkCtx.fillRect(4, 10, 3, 3);
+    chkCtx.fillRect(6, 8, 3, 3);
+    chkCtx.fillRect(8, 6, 3, 3);
+    chkCtx.fillRect(10, 4, 3, 3);
+    chkCtx.fillRect(12, 2, 3, 3);
+    decos.checkmark = checkC;
+
+    return decos;
+  }
+
+  static seededRandom(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 16807 + 0) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
+  }
+}
+
+// ============================================================
+// MAP GENERATOR
+// ============================================================
+class WorldMap {
+  constructor() {
+    this.cols = MAP_COLS;
+    this.rows = MAP_ROWS;
+    this.grid = [];
+    this.decorations = [];
+    this.generate();
+  }
+
+  generate() {
+    // Initialize with grass
+    for (let y = 0; y < this.rows; y++) {
+      this.grid[y] = [];
+      for (let x = 0; x < this.cols; x++) {
+        this.grid[y][x] = 'grass';
+      }
+    }
+
+    // Winding right-angle path through all roadmap items
+    // We draw L-shaped segments between consecutive items
+    const waypoints = [
+      { x: 4, y: 10 },   // start
+      { x: 16, y: 10 },  // item 1 — East
+      { x: 30, y: 10 },  // item 2 — East
+      { x: 30, y: 24 },  // item 3 — South (turn!)
+      { x: 44, y: 24 },  // milestone1 — East
+      { x: 44, y: 12 },  // item 4 — North (turn!)
+      { x: 58, y: 12 },  // item 5 — East
+      { x: 58, y: 30 },  // item 6 — South (turn!)
+      { x: 44, y: 30 },  // item 7 — West (turn!)
+      { x: 44, y: 44 },  // dragon — South (turn!)
+    ];
+
+    // Draw right-angle path segments
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      this.drawStraightPath(waypoints[i], waypoints[i + 1]);
+    }
+
+    // Terrain zones ------------------------------------------------
+
+    // Forest zone (left side, start area)
+    for (let y = 0; y < 20; y++) {
+      for (let x = 0; x < 12; x++) {
+        if (this.grid[y][x] === 'grass') {
+          this.grid[y][x] = 'darkGrass';
+        }
+      }
+    }
+
+    // Water features
+    this.addWaterBody(8, 18, 5, 3);
+    this.addWaterBody(20, 4, 4, 3);
+    this.addWaterBody(50, 18, 5, 3);
+    this.addWaterBody(36, 36, 4, 3);
+    this.addWaterBody(10, 42, 5, 3);
+
+    // Stone / castle area near milestone1
+    for (let y = 20; y < 28; y++) {
+      for (let x = 38; x < 50; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'stone';
+      }
+    }
+
+    // Second stone area near power-ups north section
+    for (let y = 8; y < 16; y++) {
+      for (let x = 40; x < 48; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'stone';
+      }
+    }
+
+    // Volcanic area near dragon (south of map, around item at 44,44)
+    for (let y = 38; y < this.rows; y++) {
+      for (let x = 36; x < 56; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'volcanic';
+      }
+    }
+    for (let y = 42; y < this.rows; y++) {
+      for (let x = 32; x < 60; x++) {
+        if (this.grid[y][x] !== 'path') this.grid[y][x] = 'volcanic';
+      }
+    }
+
+    // Dark forest patches for variety
+    for (let y = 26; y < 38; y++) {
+      for (let x = 62; x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+    for (let y = 0; y < 8; y++) {
+      for (let x = 62; x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+
+    // Add decorations
+    this.addDecorations();
+  }
+
+  drawStraightPath(from, to) {
+    // Draw a straight horizontal or vertical path (right-angle segments)
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+
+    // Determine if we go horizontal first, then vertical
+    // For this layout, just draw straight since waypoints are axis-aligned
+    if (dx !== 0 && dy !== 0) {
+      // L-shaped: go horizontal first, then vertical
+      const mid = { x: to.x, y: from.y };
+      this.drawStraightPath(from, mid);
+      this.drawStraightPath(mid, to);
+      return;
+    }
+
+    const steps = Math.max(Math.abs(dx), Math.abs(dy));
+    for (let i = 0; i <= steps; i++) {
+      const px = Math.round(from.x + (dx * i / steps));
+      const py = Math.round(from.y + (dy * i / steps));
+      // Make path 3 tiles wide for the zoomed-in view
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          const nx = px + ox, ny = py + oy;
+          if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
+            this.grid[ny][nx] = 'path';
+          }
+        }
+      }
+    }
+  }
+
+  addWaterBody(x, y, w, h) {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
+          if (this.grid[ny][nx] !== 'path') {
+            this.grid[ny][nx] = 'water';
+          }
+        }
+      }
+    }
+  }
+
+  addDecorations() {
+    const rng = PixelArt.seededRandom(42);
+
+    const notTooClose = (x, y, minDist = 3) => {
+      return !ROADMAP_ITEMS.some(item =>
+        Math.abs(item.mapX - x) < minDist && Math.abs(item.mapY - y) < minDist
+      );
+    };
+
+    const canPlace = (x, y, allowedTiles) => {
+      if (!this.grid[y] || !this.grid[y][x]) return false;
+      return allowedTiles.includes(this.grid[y][x]);
+    };
+
+    // Trees in dark forest areas (left start area)
+    for (let i = 0; i < 30; i++) {
+      const x = Math.floor(rng() * 12);
+      const y = Math.floor(rng() * 20);
+      if (canPlace(x, y, ['darkGrass']) && notTooClose(x, y)) {
+        this.decorations.push({ type: rng() > 0.3 ? 'tree0' : 'tree1', x, y });
+      }
+    }
+
+    // Trees scattered across the whole map on grass
+    for (let i = 0; i < 80; i++) {
+      const x = Math.floor(rng() * this.cols);
+      const y = Math.floor(rng() * this.rows);
+      if (canPlace(x, y, ['grass', 'darkGrass']) && notTooClose(x, y, 4)) {
+        this.decorations.push({ type: rng() > 0.5 ? 'tree0' : 'tree1', x, y });
+      }
+    }
+
+    // Dead trees in volcanic area
+    for (let i = 0; i < 12; i++) {
+      const x = 34 + Math.floor(rng() * 24);
+      const y = 38 + Math.floor(rng() * 18);
+      if (canPlace(x, y, ['volcanic']) && notTooClose(x, y)) {
+        this.decorations.push({ type: 'deadTree', x, y });
+      }
+    }
+
+    // Rocks scattered
+    for (let i = 0; i < 25; i++) {
+      const x = Math.floor(rng() * this.cols);
+      const y = Math.floor(rng() * this.rows);
+      if (canPlace(x, y, ['grass', 'darkGrass', 'stone', 'volcanic']) && notTooClose(x, y)) {
+        this.decorations.push({ type: 'rock', x, y });
+      }
+    }
+
+    // Flowers scattered on grass
+    for (let i = 0; i < 35; i++) {
+      const x = Math.floor(rng() * this.cols);
+      const y = Math.floor(rng() * this.rows);
+      if (canPlace(x, y, ['grass', 'darkGrass'])) {
+        this.decorations.push({ type: 'flower', x, y });
+      }
+    }
+
+    // Skulls in volcanic area
+    for (let i = 0; i < 8; i++) {
+      const x = 36 + Math.floor(rng() * 20);
+      const y = 40 + Math.floor(rng() * 16);
+      if (canPlace(x, y, ['volcanic'])) {
+        this.decorations.push({ type: 'skull', x, y });
+      }
+    }
+
+    // Lava pools near dragon
+    this.decorations.push({ type: 'lava', x: 40, y: 46 });
+    this.decorations.push({ type: 'lava', x: 48, y: 48 });
+    this.decorations.push({ type: 'lava', x: 42, y: 50 });
+    this.decorations.push({ type: 'lava', x: 50, y: 42 });
+
+    // Campfire at start
+    this.decorations.push({ type: 'campfire', x: 6, y: 12 });
+
+    // Signposts at turns
+    this.decorations.push({ type: 'signpost', x: 8, y: 9 });
+    this.decorations.push({ type: 'signpost', x: 31, y: 16 });
+    this.decorations.push({ type: 'signpost', x: 45, y: 18 });
+    this.decorations.push({ type: 'signpost', x: 52, y: 29 });
+
+    // Sort decorations by Y for proper layering
+    this.decorations.sort((a, b) => a.y - b.y);
+  }
+
+  isWalkable(x, y) {
+    const col = Math.floor(x / TILE_SIZE);
+    const row = Math.floor(y / TILE_SIZE);
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return false;
+    const tile = this.grid[row][col];
+    return tile !== 'water';
+  }
+}
+
+// ============================================================
+// CHARACTER
+// ============================================================
+class Character {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.dir = 4; // facing south
+    this.speed = 3.5;
+    this.frame = 0;
+    this.frameTimer = 0;
+    this.moving = false;
+    this.sprites = null;
+    this.visitedItems = new Set();
+  }
+
+  loadSprites(sprites) {
+    this.sprites = sprites;
+  }
+
+  update(keys, worldMap) {
+    let dx = 0, dy = 0;
+
+    if (keys.up) dy -= 1;
+    if (keys.down) dy += 1;
+    if (keys.left) dx -= 1;
+    if (keys.right) dx += 1;
+
+    this.moving = dx !== 0 || dy !== 0;
+
+    if (this.moving) {
+      // Determine direction
+      if (dx === 0 && dy < 0) this.dir = 0;
+      else if (dx > 0 && dy < 0) this.dir = 1;
+      else if (dx > 0 && dy === 0) this.dir = 2;
+      else if (dx > 0 && dy > 0) this.dir = 3;
+      else if (dx === 0 && dy > 0) this.dir = 4;
+      else if (dx < 0 && dy > 0) this.dir = 5;
+      else if (dx < 0 && dy === 0) this.dir = 6;
+      else if (dx < 0 && dy < 0) this.dir = 7;
+
+      // Normalize diagonal speed
+      const len = Math.sqrt(dx * dx + dy * dy);
+      dx = (dx / len) * this.speed;
+      dy = (dy / len) * this.speed;
+
+      // Check collision
+      const newX = this.x + dx;
+      const newY = this.y + dy;
+
+      // Check multiple points around character
+      const halfW = 10, halfH = 6;
+      const canMoveX = worldMap.isWalkable(newX - halfW, this.y - halfH)
+        && worldMap.isWalkable(newX + halfW, this.y - halfH)
+        && worldMap.isWalkable(newX - halfW, this.y + halfH)
+        && worldMap.isWalkable(newX + halfW, this.y + halfH);
+
+      const canMoveY = worldMap.isWalkable(this.x - halfW, newY - halfH)
+        && worldMap.isWalkable(this.x + halfW, newY - halfH)
+        && worldMap.isWalkable(this.x - halfW, newY + halfH)
+        && worldMap.isWalkable(this.x + halfW, newY + halfH);
+
+      if (canMoveX) this.x = newX;
+      if (canMoveY) this.y = newY;
+
+      // Clamp to map
+      this.x = Math.max(12, Math.min(this.x, MAP_COLS * TILE_SIZE - 12));
+      this.y = Math.max(12, Math.min(this.y, MAP_ROWS * TILE_SIZE - 12));
+
+      // Animate
+      this.frameTimer++;
+      if (this.frameTimer > 8) {
+        this.frameTimer = 0;
+        this.frame = (this.frame + 1) % 4;
+      }
+    } else {
+      this.frame = 0;
+      this.frameTimer = 0;
+    }
+  }
+
+  draw(ctx, cameraX, cameraY) {
+    if (!this.sprites) return;
+    const dirName = DIR_NAMES[this.dir];
+    const sprite = this.sprites[dirName][this.frame];
+    const drawX = this.x - cameraX - 16;
+    const drawY = this.y - cameraY - 24;
+    ctx.drawImage(sprite, drawX, drawY);
+  }
+
+  getNearbyItem(range = 48) {
+    for (const item of ROADMAP_ITEMS) {
+      const ix = item.mapX * TILE_SIZE + TILE_SIZE / 2;
+      const iy = item.mapY * TILE_SIZE + TILE_SIZE / 2;
+      const dist = Math.sqrt((this.x - ix) ** 2 + (this.y - iy) ** 2);
+      if (dist < range) return item;
+    }
+    return null;
+  }
+}
+
+// ============================================================
+// PARTICLE SYSTEM
+// ============================================================
+class ParticleSystem {
+  constructor() {
+    this.particles = [];
+  }
+
+  emit(x, y, count, options = {}) {
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * (options.speed || 3),
+        vy: (Math.random() - 0.5) * (options.speed || 3) - (options.upward ? 2 : 0),
+        life: options.life || 30 + Math.random() * 30,
+        maxLife: options.life || 30 + Math.random() * 30,
+        color: options.colors ? options.colors[Math.floor(Math.random() * options.colors.length)] : '#f0c040',
+        size: options.size || 2 + Math.random() * 3,
+        gravity: options.gravity || 0
+      });
+    }
+  }
+
+  update() {
+    this.particles = this.particles.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.life--;
+      return p.life > 0;
+    });
+  }
+
+  draw(ctx, cameraX, cameraY) {
+    for (const p of this.particles) {
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(
+        Math.round(p.x - cameraX),
+        Math.round(p.y - cameraY),
+        Math.round(p.size),
+        Math.round(p.size)
+      );
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.minimapCanvas = document.getElementById('minimap');
+    this.minimapCtx = this.minimapCanvas.getContext('2d');
+
+    this.width = 0;
+    this.height = 0;
+
+    // Camera
+    this.cameraX = 0;
+    this.cameraY = 0;
+    this.targetCameraX = 0;
+    this.targetCameraY = 0;
+
+    // Input
+    this.keys = { up: false, down: false, left: false, right: false };
+
+    // Game state
+    this.loaded = false;
+    this.tiles = null;
+    this.decos = null;
+    this.worldMap = null;
+    this.character = null;
+    this.particles = new ParticleSystem();
+    this.activePanel = null;
+    this.milestoneShown = new Set();
+    this.shownMilestoneBanner = null;
+    this.milestoneBannerTimer = 0;
+    this.dragonSlain = false;
+    this.dragonFightActive = false;
+    this.dragonHP = 100;
+    this.dragonHitTimer = 0;
+    this.arrowsFired = [];
+    this.interactCooldown = 0;
+    this.itemGlowPhase = 0;
+    this.time = 0;
+
+    // Label visibility tracking
+    this.labelFadeIn = {};
+
+    this.init();
+  }
+
+  async init() {
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.setupInput();
+
+    // Simulate loading
+    const loadBar = document.getElementById('load-bar');
+    const loadText = document.getElementById('load-text');
+
+    loadText.textContent = 'Generating terrain...';
+    loadBar.style.width = '20%';
+    await this.sleep(300);
+
+    this.tiles = PixelArt.generateTiles();
+    loadText.textContent = 'Growing forests...';
+    loadBar.style.width = '40%';
+    await this.sleep(200);
+
+    this.decos = PixelArt.generateDecorations();
+    loadText.textContent = 'Summoning Bard the Bowman...';
+    loadBar.style.width = '60%';
+    await this.sleep(200);
+
+    const charSprites = PixelArt.generateCharacter();
+    loadText.textContent = 'Awakening the dragon...';
+    loadBar.style.width = '80%';
+    await this.sleep(200);
+
+    this.worldMap = new WorldMap();
+    this.character = new Character(4 * TILE_SIZE, 10 * TILE_SIZE);
+    this.character.loadSprites(charSprites);
+
+    loadText.textContent = 'Quest begins!';
+    loadBar.style.width = '100%';
+    await this.sleep(400);
+
+    document.getElementById('loading').style.display = 'none';
+
+    // Show title screen
+    const titleScreen = document.getElementById('title-screen');
+    titleScreen.style.display = 'flex';
+
+    // Pre-render minimap and a single frame so background is visible behind title
+    this.renderMinimap();
+    // Render one frame behind the title screen overlay
+    this.loaded = true;
+    this.draw();
+    this.loaded = false;
+
+    // Wait briefly then listen for any key or click to start
+    await this.sleep(500);
+    await new Promise(resolve => {
+      const start = (e) => {
+        // Ignore modifier keys alone
+        if (e instanceof KeyboardEvent && ['Shift','Control','Alt','Meta'].includes(e.key)) return;
+        titleScreen.style.display = 'none';
+        window.removeEventListener('keydown', start);
+        titleScreen.removeEventListener('click', start);
+        resolve();
+      };
+      window.addEventListener('keydown', start);
+      titleScreen.addEventListener('click', start);
+    });
+
+    this.loaded = true;
+
+    // Start game loop
+    this.loop();
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  resize() {
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this.ctx.imageSmoothingEnabled = false;
+  }
+
+  setupInput() {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); }
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.keys.right = true; e.preventDefault(); }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') this.keys.up = false;
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') this.keys.down = false;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
+    });
+
+    // No click-to-move — keyboard only
+  }
+
+  closePanel() {
+    this.activePanel = null;
+    const panel = document.getElementById('info-panel');
+    panel.classList.remove('visible');
+  }
+
+  interactWithItem(item) {
+    if (item.status === 'milestone') {
+      this.activePanel = item; // Track so we don't re-trigger every frame
+      if (item.id === 'milestone2' && !this.dragonSlain) {
+        this.startDragonFight();
+      }
+      // Show milestone banner
+      if (!this.milestoneShown.has(item.id)) {
+        this.milestoneShown.add(item.id);
+        this.showMilestoneBanner(item.title);
+      }
+      return;
+    }
+
+    this.character.visitedItems.add(item.id);
+    this.activePanel = item;
+
+    const panel = document.getElementById('info-panel');
+    const status = document.getElementById('panel-status');
+    const title = document.getElementById('panel-title');
+    const desc = document.getElementById('panel-desc');
+
+    if (item.status === 'shipped') {
+      status.textContent = '✓ SHIPPED — CONQUERED';
+      status.className = 'panel-status';
+    } else {
+      status.textContent = '★ POWER-UP — ON THE ROADMAP';
+      status.className = 'panel-status upcoming';
+    }
+
+    title.innerHTML = `<span class="panel-number">${item.id}</span>${item.title}`;
+    desc.textContent = item.description;
+    panel.classList.add('visible');
+  }
+
+  showMilestoneBanner(text) {
+    this.shownMilestoneBanner = text;
+    this.milestoneBannerTimer = 180;
+    const banner = document.getElementById('milestone-banner');
+    const bannerText = document.getElementById('banner-text');
+    bannerText.textContent = text.replace('\n', ' ');
+    banner.classList.add('visible');
+  }
+
+  startDragonFight() {
+    this.dragonFightActive = true;
+    this.dragonHP = 100;
+    this.arrowsFired = [];
+    this.dragonHitTimer = 0;
+    this.closePanel();
+  }
+
+  fireDragonArrow() {
+    const dragon = ROADMAP_ITEMS.find(i => i.id === 'milestone2');
+    const dx = dragon.mapX * TILE_SIZE + 48 - this.character.x;
+    const dy = dragon.mapY * TILE_SIZE + 48 - this.character.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    this.arrowsFired.push({
+      x: this.character.x,
+      y: this.character.y - 8,
+      vx: (dx / dist) * 8,
+      vy: (dy / dist) * 8,
+      life: 60
+    });
+  }
+
+  updateDragonFight() {
+    if (!this.dragonFightActive) return;
+
+    // Auto-fire arrows
+    if (this.time % 15 === 0) {
+      this.fireDragonArrow();
+    }
+
+    // Update arrows
+    const dragon = ROADMAP_ITEMS.find(i => i.id === 'milestone2');
+    const dragonX = dragon.mapX * TILE_SIZE + 48;
+    const dragonY = dragon.mapY * TILE_SIZE + 48;
+
+    this.arrowsFired = this.arrowsFired.filter(arrow => {
+      arrow.x += arrow.vx;
+      arrow.y += arrow.vy;
+      arrow.life--;
+
+      // Hit detection
+      const dist = Math.sqrt((arrow.x - dragonX) ** 2 + (arrow.y - dragonY) ** 2);
+      if (dist < 40) {
+        this.dragonHP -= 8;
+        this.dragonHitTimer = 10;
+        this.particles.emit(dragonX, dragonY, 10, {
+          colors: ['#ff4040', '#ff8040', '#ffff40'],
+          speed: 5,
+          gravity: 0.1
+        });
+        return false;
+      }
+
+      return arrow.life > 0;
+    });
+
+    // Dragon defeated
+    if (this.dragonHP <= 0 && !this.dragonSlain) {
+      this.dragonSlain = true;
+      this.dragonFightActive = false;
+      // Victory particles
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          this.particles.emit(dragonX + (Math.random()-0.5)*60, dragonY + (Math.random()-0.5)*60, 30, {
+            colors: ['#f0c040', '#ff8020', '#ff4040', '#fff', '#40e040'],
+            speed: 8,
+            upward: true,
+            life: 80,
+            gravity: -0.05
+          });
+        }, i * 200);
+      }
+      this.showMilestoneBanner('DRAGON SLAIN!\nTHE QUEST IS COMPLETE');
+    }
+  }
+
+  drawArrows(ctx) {
+    ctx.fillStyle = '#c08030';
+    for (const arrow of this.arrowsFired) {
+      const sx = arrow.x - this.cameraX;
+      const sy = arrow.y - this.cameraY;
+      // Draw arrow as a line
+      const angle = Math.atan2(arrow.vy, arrow.vx);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(angle);
+      ctx.fillRect(-6, -1, 12, 2);
+      ctx.fillStyle = '#888';
+      ctx.fillRect(4, -2, 3, 4);
+      ctx.fillStyle = '#c08030';
+      ctx.restore();
+    }
+  }
+
+  update() {
+    if (!this.loaded) return;
+
+    this.time++;
+    this.itemGlowPhase += 0.03;
+
+    // Update character with keyboard input only
+    this.character.update(this.keys, this.worldMap);
+
+    // Camera follow — account for zoom (viewport is smaller in world coords)
+    const viewW = this.width / ZOOM;
+    const viewH = this.height / ZOOM;
+    this.targetCameraX = this.character.x - viewW / 2;
+    this.targetCameraY = this.character.y - viewH / 2;
+
+    // Clamp camera
+    const maxCX = MAP_COLS * TILE_SIZE - viewW;
+    const maxCY = MAP_ROWS * TILE_SIZE - viewH;
+    this.targetCameraX = Math.max(0, Math.min(this.targetCameraX, maxCX));
+    this.targetCameraY = Math.max(0, Math.min(this.targetCameraY, maxCY));
+
+    this.cameraX += (this.targetCameraX - this.cameraX) * CAMERA_SMOOTH;
+    this.cameraY += (this.targetCameraY - this.cameraY) * CAMERA_SMOOTH;
+
+    // Auto-show info panel and milestones on proximity
+    const nearbyItem = this.character.getNearbyItem(60);
+    if (nearbyItem) {
+      if (nearbyItem !== this.activePanel) {
+        this.interactWithItem(nearbyItem);
+      }
+    } else if (this.activePanel) {
+      this.closePanel();
+    }
+
+    // Milestone banner timer
+    if (this.milestoneBannerTimer > 0) {
+      this.milestoneBannerTimer--;
+      if (this.milestoneBannerTimer === 0) {
+        document.getElementById('milestone-banner').classList.remove('visible');
+      }
+    }
+
+    // Dragon fight
+    this.updateDragonFight();
+
+    // Particles (only for dragon fight effects)
+    this.particles.update();
+
+    // Update quest progress
+    const visited = this.character.visitedItems.size;
+    const total = ROADMAP_ITEMS.filter(i => i.status !== 'milestone').length;
+    document.getElementById('quest-progress').textContent =
+      `Discoveries: ${visited}/${total}` + (this.dragonSlain ? ' | DRAGON SLAIN' : '');
+  }
+
+  draw() {
+    if (!this.loaded) return;
+
+    const ctx = this.ctx;
+    const cx = Math.round(this.cameraX);
+    const cy = Math.round(this.cameraY);
+    const viewW = this.width / ZOOM;
+    const viewH = this.height / ZOOM;
+
+    // Clear at full resolution
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Apply zoom
+    ctx.save();
+    ctx.scale(ZOOM, ZOOM);
+
+    // Calculate visible tile range (in zoomed view)
+    const startCol = Math.max(0, Math.floor(cx / TILE_SIZE) - 1);
+    const endCol = Math.min(this.worldMap.cols - 1, Math.ceil((cx + viewW) / TILE_SIZE) + 1);
+    const startRow = Math.max(0, Math.floor(cy / TILE_SIZE) - 1);
+    const endRow = Math.min(this.worldMap.rows - 1, Math.ceil((cy + viewH) / TILE_SIZE) + 1);
+
+    // Draw tiles
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const tile = this.worldMap.grid[row][col];
+        const drawX = col * TILE_SIZE - cx;
+        const drawY = row * TILE_SIZE - cy;
+
+        let tileImg;
+        if (tile === 'grass') {
+          tileImg = this.tiles[`grass${(col + row * 3) % 4}`];
+        } else if (tile === 'path') {
+          tileImg = this.tiles[`path${(col + row) % 2}`];
+        } else if (tile === 'water') {
+          tileImg = this.tiles.water;
+        } else if (tile === 'darkGrass') {
+          tileImg = this.tiles.darkGrass;
+        } else if (tile === 'stone') {
+          tileImg = this.tiles.stone;
+        } else if (tile === 'volcanic') {
+          tileImg = this.tiles.volcanic;
+        }
+
+        if (tileImg) {
+          ctx.drawImage(tileImg, drawX, drawY);
+        }
+      }
+    }
+
+    // Animate water shimmer
+    if (this.time % 40 < 20) {
+      ctx.fillStyle = 'rgba(100,160,255,0.1)';
+      for (let row = startRow; row <= endRow; row++) {
+        for (let col = startCol; col <= endCol; col++) {
+          if (this.worldMap.grid[row][col] === 'water') {
+            ctx.fillRect(col * TILE_SIZE - cx, row * TILE_SIZE - cy, TILE_SIZE, TILE_SIZE);
+          }
+        }
+      }
+    }
+
+    // Draw path direction dots (breadcrumbs following right-angle path)
+    ctx.globalAlpha = 0.25 + Math.sin(this.time * 0.04) * 0.1;
+    ctx.fillStyle = '#f0d080';
+    // Build waypoints matching the winding path
+    const breadcrumbWaypoints = [
+      { x: 4, y: 10 },   // start
+      { x: 16, y: 10 },  // item 1
+      { x: 30, y: 10 },  // item 2
+      { x: 30, y: 24 },  // item 3
+      { x: 44, y: 24 },  // milestone1
+      { x: 44, y: 12 },  // item 4
+      { x: 58, y: 12 },  // item 5
+      { x: 58, y: 30 },  // item 6
+      { x: 44, y: 30 },  // item 7
+      { x: 44, y: 44 },  // dragon
+    ].map(p => ({ x: p.x * TILE_SIZE + TILE_SIZE/2, y: p.y * TILE_SIZE + TILE_SIZE/2 }));
+
+    for (let i = 0; i < breadcrumbWaypoints.length - 1; i++) {
+      const from = breadcrumbWaypoints[i];
+      const to = breadcrumbWaypoints[i + 1];
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dots = Math.floor(dist / 40);
+      for (let d = 1; d < dots; d++) {
+        const t = d / dots;
+        const px = from.x + dx * t - cx;
+        const py = from.y + dy * t - cy;
+        ctx.fillRect(Math.round(px) - 2, Math.round(py) - 2, 4, 4);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Draw zone section labels on the terrain
+    this.drawZoneLabels(ctx, cx, cy);
+
+    // Draw decorations (behind character based on y-sort)
+    const charY = this.character.y;
+    for (const deco of this.worldMap.decorations) {
+      const decoWorldY = deco.y * TILE_SIZE + TILE_SIZE;
+      if (decoWorldY < charY + 4) {
+        this.drawDecoration(ctx, deco, cx, cy);
+      }
+    }
+
+    // Draw roadmap items (behind character)
+    for (const item of ROADMAP_ITEMS) {
+      const itemWorldY = item.mapY * TILE_SIZE + TILE_SIZE;
+      if (itemWorldY < charY + 4) {
+        this.drawRoadmapItem(ctx, item, cx, cy);
+      }
+    }
+
+    // Draw character
+    this.character.draw(ctx, cx, cy);
+
+    // Draw decorations (in front of character)
+    for (const deco of this.worldMap.decorations) {
+      const decoWorldY = deco.y * TILE_SIZE + TILE_SIZE;
+      if (decoWorldY >= charY + 4) {
+        this.drawDecoration(ctx, deco, cx, cy);
+      }
+    }
+
+    // Draw roadmap items (in front of character)
+    for (const item of ROADMAP_ITEMS) {
+      const itemWorldY = item.mapY * TILE_SIZE + TILE_SIZE;
+      if (itemWorldY >= charY + 4) {
+        this.drawRoadmapItem(ctx, item, cx, cy);
+      }
+    }
+
+    // Draw arrows
+    this.drawArrows(ctx);
+
+    // Draw particles on top (dragon fight only)
+    this.particles.draw(ctx, cx, cy);
+
+    // Draw item labels (in world space)
+    this.drawItemLabels(ctx, cx, cy);
+
+    // End zoom context
+    ctx.restore();
+
+    // --- HUD elements drawn at screen resolution (no zoom) ---
+
+    // Draw dragon HP bar
+    if (this.dragonFightActive) {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(this.width/2 - 152, 110, 304, 40);
+      ctx.fillStyle = '#600';
+      ctx.fillRect(this.width/2 - 150, 112, 300, 36);
+      ctx.fillStyle = '#c03030';
+      ctx.fillRect(this.width/2 - 150, 112, this.dragonHP * 3, 36);
+      ctx.fillStyle = '#e04040';
+      ctx.fillRect(this.width/2 - 150, 112, this.dragonHP * 3, 14);
+
+      ctx.font = '16px "Press Start 2P"';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText('THE DRAGON', this.width/2, 100);
+      ctx.textAlign = 'start';
+    }
+
+    // Update minimap
+    if (this.time % 10 === 0) {
+      this.updateMinimapDot();
+    }
+  }
+
+  drawZoneLabels(ctx, cx, cy) {
+    // Section 1: Foundation (shipped) — top-left area near start
+    const sec1X = 22 * TILE_SIZE - cx;
+    const sec1Y = 6 * TILE_SIZE - cy;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.font = '16px "Press Start 2P"';
+    ctx.fillStyle = '#40e040';
+    ctx.textAlign = 'center';
+    ctx.fillText('FOUNDATION', sec1X, sec1Y);
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillText('Shipped & Conquered', sec1X, sec1Y + 24);
+    ctx.restore();
+
+    // Section 2: Power-Ups (upcoming) — mid-right area
+    const sec2X = 52 * TILE_SIZE - cx;
+    const sec2Y = 20 * TILE_SIZE - cy;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.font = '16px "Press Start 2P"';
+    ctx.fillStyle = '#f0c040';
+    ctx.textAlign = 'center';
+    ctx.fillText('POWER-UPS', sec2X, sec2Y);
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillText('On the Roadmap', sec2X, sec2Y + 24);
+    ctx.restore();
+
+    // Dragon Lair label
+    const sec3X = 44 * TILE_SIZE - cx;
+    const sec3Y = 40 * TILE_SIZE - cy;
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.font = '14px "Press Start 2P"';
+    ctx.fillStyle = '#c03030';
+    ctx.textAlign = 'center';
+    ctx.fillText('DRAGON LAIR', sec3X, sec3Y);
+    ctx.restore();
+  }
+
+  drawDecoration(ctx, deco, cx, cy) {
+    const sprite = this.decos[deco.type];
+    if (!sprite) return;
+    const drawX = deco.x * TILE_SIZE - cx;
+    const drawY = deco.y * TILE_SIZE - cy - (sprite.height - TILE_SIZE);
+    ctx.drawImage(sprite, drawX, drawY);
+  }
+
+  drawRoadmapItem(ctx, item, cx, cy) {
+    const sprite = this.decos[item.icon];
+    if (!sprite) return;
+
+    const drawX = item.mapX * TILE_SIZE - cx;
+    const drawY = item.mapY * TILE_SIZE - cy;
+    const centerX = drawX + TILE_SIZE / 2;
+
+    // Dragon special handling
+    if (item.icon === 'dragon') {
+      if (this.dragonSlain) {
+        // Draw fallen dragon (flipped, faded)
+        ctx.globalAlpha = 0.5;
+        ctx.save();
+        ctx.translate(drawX + 48, drawY + 48);
+        ctx.scale(1, -1);
+        ctx.drawImage(sprite, -48, -48);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        // Victory flag
+        ctx.drawImage(this.decos.flag, drawX + 32, drawY - 32);
+      } else {
+        // Breathing animation
+        const breathOffset = Math.sin(this.time * 0.05) * 2;
+        const hitFlash = this.dragonHitTimer > 0;
+        if (hitFlash) {
+          ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+          this.dragonHitTimer--;
+        }
+        ctx.drawImage(sprite, drawX - 16, drawY - sprite.height + TILE_SIZE + breathOffset);
+        ctx.globalAlpha = 1;
+
+        // Fire breath particles
+        if (this.dragonFightActive && this.time % 8 === 0) {
+          this.particles.emit(
+            item.mapX * TILE_SIZE + 90,
+            item.mapY * TILE_SIZE + 36,
+            3,
+            { colors: ['#f08020', '#f0c040', '#ff4020'], speed: 4, life: 20 }
+          );
+        }
+      }
+      return;
+    }
+
+    // Draw the icon
+    if (item.icon === 'tower') {
+      ctx.drawImage(sprite, drawX - TILE_SIZE/2, drawY - sprite.height + TILE_SIZE);
+      // Checkmark for shipped
+      if (item.status === 'shipped') {
+        ctx.drawImage(this.decos.checkmark, drawX + TILE_SIZE - 4, drawY - 8);
+      }
+    } else if (item.icon === 'chest') {
+      ctx.drawImage(sprite, drawX, drawY);
+    } else if (item.icon === 'flag') {
+      const flagWave = Math.sin(this.time * 0.1) * 2;
+      ctx.drawImage(sprite, drawX, drawY - TILE_SIZE + flagWave);
+    }
+
+    // Draw numbered circle on each stop (not milestones)
+    if (typeof item.id === 'number') {
+      const numX = centerX;
+      const numY = item.icon === 'tower' ? drawY - sprite.height + TILE_SIZE - 6 : drawY - 6;
+      const radius = 10;
+
+      // Circle background
+      ctx.fillStyle = item.status === 'shipped' ? '#2a8a2a' : '#a07020';
+      ctx.beginPath();
+      ctx.arc(numX, numY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      // Circle border
+      ctx.strokeStyle = item.status === 'shipped' ? '#40e040' : '#f0c040';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(numX, numY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      // Number
+      ctx.font = '8px "Press Start 2P"';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(item.id), numX, numY);
+      ctx.textAlign = 'start';
+      ctx.textBaseline = 'alphabetic';
+    }
+  }
+
+  drawItemLabels(ctx, cx, cy) {
+    ctx.font = '8px "Press Start 2P"';
+    ctx.textAlign = 'center';
+
+    for (const item of ROADMAP_ITEMS) {
+      if (item.status === 'milestone') continue;
+
+      const drawX = item.mapX * TILE_SIZE + TILE_SIZE/2 - cx;
+      const drawY = item.mapY * TILE_SIZE - cy;
+
+      // Only show labels when somewhat nearby
+      const dist = Math.sqrt(
+        (this.character.x - item.mapX * TILE_SIZE) ** 2 +
+        (this.character.y - item.mapY * TILE_SIZE) ** 2
+      );
+
+      const maxDist = 500;
+      if (dist > maxDist) continue;
+
+      const alpha = Math.min(1, (maxDist - dist) / 200);
+
+      // Label background
+      const labelY = item.icon === 'tower' ? drawY - 52 : drawY - 22;
+      const label = item.title;
+      const metrics = ctx.measureText(label);
+      const labelW = metrics.width + 16;
+      const labelH = 18;
+
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fillRect(drawX - labelW/2, labelY - 10, labelW, labelH);
+
+      ctx.globalAlpha = alpha;
+
+      if (item.status === 'shipped') {
+        ctx.fillStyle = '#80ff80';
+        ctx.fillRect(drawX - labelW/2 + 3, labelY - 7, 4, 4);
+        ctx.fillStyle = '#40e040';
+        ctx.fillRect(drawX - labelW/2 + 3, labelY - 2, 4, 4);
+      } else {
+        ctx.fillStyle = '#f0c040';
+        ctx.fillRect(drawX - labelW/2 + 3, labelY - 5, 4, 4);
+      }
+
+      ctx.fillStyle = item.status === 'shipped' ? '#c0ffc0' : '#ffe080';
+      ctx.fillText(label, drawX, labelY + 2);
+
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.textAlign = 'start';
+  }
+
+  renderMinimap() {
+    const mCtx = this.minimapCtx;
+    const mW = this.minimapCanvas.width;
+    const mH = this.minimapCanvas.height;
+    const scaleX = mW / (MAP_COLS * TILE_SIZE);
+    const scaleY = mH / (MAP_ROWS * TILE_SIZE);
+
+    mCtx.fillStyle = '#1a1a2a';
+    mCtx.fillRect(0, 0, mW, mH);
+
+    // Draw simplified map
+    for (let y = 0; y < MAP_ROWS; y++) {
+      for (let x = 0; x < MAP_COLS; x++) {
+        const tile = this.worldMap.grid[y][x];
+        let color = '#2a5a2a';
+        if (tile === 'path') color = '#a08050';
+        else if (tile === 'water') color = '#2050a0';
+        else if (tile === 'darkGrass') color = '#1a3a1a';
+        else if (tile === 'stone') color = '#505060';
+        else if (tile === 'volcanic') color = '#3a1515';
+
+        mCtx.fillStyle = color;
+        mCtx.fillRect(
+          Math.floor(x * TILE_SIZE * scaleX),
+          Math.floor(y * TILE_SIZE * scaleY),
+          Math.ceil(TILE_SIZE * scaleX) + 1,
+          Math.ceil(TILE_SIZE * scaleY) + 1
+        );
+      }
+    }
+
+    // Draw roadmap items on minimap
+    for (const item of ROADMAP_ITEMS) {
+      const mx = item.mapX * TILE_SIZE * scaleX;
+      const my = item.mapY * TILE_SIZE * scaleY;
+      if (item.status === 'shipped') {
+        mCtx.fillStyle = '#40e040';
+      } else if (item.status === 'upcoming') {
+        mCtx.fillStyle = '#f0c040';
+      } else if (item.icon === 'dragon') {
+        mCtx.fillStyle = '#c03030';
+      } else {
+        mCtx.fillStyle = '#f0c040';
+      }
+      mCtx.fillRect(mx - 2, my - 2, 5, 5);
+    }
+  }
+
+  updateMinimapDot() {
+    // Refresh the static minimap, then draw the player dot
+    this.renderMinimap();
+
+    const mCtx = this.minimapCtx;
+    const scaleX = this.minimapCanvas.width / (MAP_COLS * TILE_SIZE);
+    const scaleY = this.minimapCanvas.height / (MAP_ROWS * TILE_SIZE);
+    const px = this.character.x * scaleX;
+    const py = this.character.y * scaleY;
+
+    // Player dot (blinking)
+    mCtx.fillStyle = this.time % 30 < 20 ? '#fff' : '#f0c040';
+    mCtx.fillRect(px - 2, py - 2, 4, 4);
+
+    // Camera viewport rectangle (accounting for zoom)
+    mCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+    mCtx.lineWidth = 1;
+    mCtx.strokeRect(
+      this.cameraX * scaleX,
+      this.cameraY * scaleY,
+      (this.width / ZOOM) * scaleX,
+      (this.height / ZOOM) * scaleY
+    );
+  }
+
+  loop() {
+    this.update();
+    this.draw();
+    requestAnimationFrame(() => this.loop());
+  }
+}
+
+// ============================================================
+// GLOBAL FUNCTIONS
+// ============================================================
+function closePanel() {
+  game.closePanel();
+}
+
+// Start the game
+const game = new Game();
+
+  </script>
+</body>
+</html>
