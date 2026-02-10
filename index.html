@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dictation Quest — Corti API Roadmap</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,6 +17,10 @@
       image-rendering: crisp-edges;
       cursor: default;
       user-select: none;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
     }
 
     #game-container {
@@ -30,6 +34,7 @@
       display: block;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+      touch-action: none;
     }
 
     /* HUD overlay */
@@ -201,7 +206,7 @@
       bottom: 16px;
       right: 24px;
       font-size: 12px;
-      color: #606070;
+      color: #ffffff;
       text-shadow: 1px 1px 0 #000;
       z-index: 10;
       pointer-events: none;
@@ -209,8 +214,9 @@
       text-align: right;
     }
 
-    /* Minimap */
+    /* Minimap — hidden by default */
     #minimap {
+      display: none;
       position: absolute;
       top: 80px;
       right: 20px;
@@ -286,6 +292,486 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
     }
+
+    /* Mobile hint hidden by default, desktop hint shown */
+    .mobile-hint { display: none; }
+    .desktop-hint { display: inline; }
+
+    /* ============================================================
+       RESPONSIVE — Tablets & smaller (≤768px)
+       ============================================================ */
+    @media (max-width: 768px) {
+      .mobile-hint { display: inline; }
+      .desktop-hint { display: none; }
+
+      #hud {
+        padding: 10px 12px;
+      }
+      #hud .title {
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+      #hud .subtitle {
+        font-size: 8px;
+        margin-top: 3px;
+      }
+      #hud .quest-info {
+        font-size: 8px;
+      }
+
+      #minimap {
+        width: 120px !important;
+        height: 90px !important;
+        top: 56px;
+        right: 8px;
+      }
+
+      #info-panel {
+        max-width: 95%;
+        padding: 16px 18px;
+        bottom: 12px;
+        border-width: 3px;
+      }
+      #info-panel .panel-status {
+        font-size: 10px;
+        margin-bottom: 8px;
+      }
+      #info-panel .panel-title {
+        font-size: 13px;
+        margin-bottom: 10px;
+        line-height: 1.6;
+      }
+      #info-panel .panel-desc {
+        font-size: 9px;
+        line-height: 2;
+      }
+      #info-panel .panel-number {
+        font-size: 11px;
+        padding: 3px 7px;
+        margin-right: 6px;
+      }
+      #info-panel .panel-close {
+        font-size: 11px;
+        top: 8px;
+        right: 10px;
+      }
+
+      #controls-hint {
+        font-size: 8px;
+        bottom: 10px;
+        right: 12px;
+      }
+
+      #milestone-banner .banner-text {
+        font-size: 18px;
+        line-height: 1.8;
+      }
+
+      /* Loading screen */
+      #loading .load-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+      #loading .load-bar-outer {
+        width: 70vw;
+        max-width: 300px;
+        height: 18px;
+      }
+      #loading .load-text {
+        font-size: 10px;
+        margin-top: 12px;
+      }
+    }
+
+    /* ============================================================
+       RESPONSIVE — Small phones (≤480px)
+       ============================================================ */
+    @media (max-width: 480px) {
+      #hud {
+        padding: 8px 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+      }
+      #hud .title {
+        font-size: 10px;
+      }
+      #hud .subtitle {
+        display: none;
+      }
+      #hud .quest-info {
+        font-size: 7px;
+        text-align: left;
+      }
+
+      #minimap {
+        width: 90px !important;
+        height: 68px !important;
+        top: 50px;
+        right: 6px;
+        border-width: 2px;
+      }
+
+      #info-panel {
+        padding: 12px 14px;
+        bottom: 8px;
+        border-width: 2px;
+      }
+      #info-panel .panel-title {
+        font-size: 11px;
+        line-height: 1.5;
+        margin-bottom: 8px;
+      }
+      #info-panel .panel-desc {
+        font-size: 8px;
+        line-height: 1.9;
+      }
+
+      #milestone-banner .banner-text {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      #controls-hint {
+        font-size: 7px;
+        bottom: 6px;
+        right: 8px;
+      }
+
+      /* Title screen */
+      #title-screen {
+        padding: 16px;
+      }
+    }
+
+    /* ============================================================
+       NEW UI ELEMENTS
+       ============================================================ */
+
+    /* Intro scroll (replaces title screen) */
+    #intro-scroll {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 50;
+      background: linear-gradient(135deg, #2a1a08 0%, #3a2510 40%, #2a1a08 100%);
+      border: 4px solid #c09030;
+      border-radius: 8px;
+      padding: 32px 40px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(192,144,48,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+      display: none;
+    }
+    #intro-scroll.visible {
+      display: block;
+      animation: panelSlideUp 0.4s ease-out;
+    }
+    #intro-scroll .scroll-title {
+      font-size: 14px;
+      color: #f0c040;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 20px;
+      line-height: 2.2;
+    }
+    #intro-scroll .scroll-text {
+      font-size: 10px;
+      color: #d0c0a0;
+      text-shadow: 1px 1px 0 #000;
+      line-height: 2.4;
+      margin-bottom: 24px;
+    }
+    #intro-scroll .go-btn {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      color: #0a0a1a;
+      background: #f0c040;
+      border: none;
+      padding: 12px 40px;
+      cursor: pointer;
+      text-shadow: none;
+      animation: bobUpDown 1.5s ease-in-out infinite;
+      transition: background 0.2s;
+    }
+    #intro-scroll .go-btn:hover {
+      background: #ffe070;
+    }
+
+    /* Panel explore button */
+    #info-panel .panel-explore {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #0a0a1a;
+      background: #f0c040;
+      padding: 8px 16px;
+      margin-top: 16px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #info-panel .panel-explore:hover {
+      background: #ffe070;
+    }
+    #info-panel .panel-explore.hidden {
+      display: none;
+    }
+
+    /* Slay button */
+    #slay-button {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      display: none;
+    }
+    #slay-button.visible {
+      display: block;
+      animation: milestonePulse 0.5s ease-out;
+    }
+    #slay-button button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 20px;
+      color: #fff;
+      background: linear-gradient(180deg, #c03030 0%, #801818 100%);
+      border: 4px solid #f04040;
+      padding: 16px 48px;
+      cursor: pointer;
+      text-shadow: 2px 2px 0 #000;
+      box-shadow: 0 0 30px rgba(255,60,60,0.4);
+      animation: bobUpDown 1s ease-in-out infinite;
+      transition: background 0.2s;
+    }
+    #slay-button button:hover {
+      background: linear-gradient(180deg, #e04040 0%, #a02020 100%);
+    }
+
+    /* Victory screen */
+    #victory-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 26, 0.88);
+      z-index: 50;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 24px;
+    }
+    #victory-screen.visible {
+      display: flex;
+      animation: fadeIn 1s ease;
+    }
+    #victory-screen .victory-title {
+      font-size: clamp(20px, 5vw, 40px);
+      color: #f0c040;
+      text-shadow: 3px 3px 0 #000, 0 0 40px rgba(240,192,64,0.4);
+      margin-bottom: 24px;
+    }
+    #victory-screen .victory-text {
+      font-size: clamp(8px, 2vw, 14px);
+      color: #c0c0d0;
+      text-shadow: 1px 1px 0 #000;
+      line-height: 2.4;
+      margin-bottom: 32px;
+      max-width: 600px;
+    }
+    #victory-screen .cta-btn {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(10px, 2.5vw, 16px);
+      color: #0a0a1a;
+      background: #f0c040;
+      padding: 14px 32px;
+      text-decoration: none;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: background 0.2s;
+    }
+    #victory-screen .cta-btn:hover {
+      background: #ffe070;
+    }
+    #victory-screen .secondary-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.5vw, 12px);
+      color: #f0c040;
+      background: none;
+      border: 2px solid #f0c040;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #victory-screen .secondary-btn:hover {
+      background: rgba(240,192,64,0.15);
+    }
+
+    /* Roadmap summary overlay */
+    #roadmap-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 26, 0.92);
+      z-index: 45;
+      display: none;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-y: auto;
+      padding: 40px 24px;
+    }
+    #roadmap-overlay.visible {
+      display: flex;
+      animation: fadeIn 0.4s ease;
+    }
+    #roadmap-overlay .roadmap-scroll {
+      background: linear-gradient(135deg, #2a1a08 0%, #3a2510 40%, #2a1a08 100%);
+      border: 4px solid #c09030;
+      border-radius: 8px;
+      padding: 32px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 0 60px rgba(192,144,48,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+    }
+    #roadmap-overlay .roadmap-title {
+      font-size: 18px;
+      color: #f0c040;
+      text-shadow: 2px 2px 0 #000;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    #roadmap-overlay .roadmap-close {
+      position: absolute;
+      top: 50px;
+      right: 40px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      color: #f0c040;
+      background: none;
+      border: none;
+      cursor: pointer;
+      z-index: 46;
+    }
+    #roadmap-overlay .roadmap-item {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(192,144,48,0.2);
+    }
+    #roadmap-overlay .roadmap-item:last-child {
+      border-bottom: none;
+    }
+    #roadmap-overlay .ri-status {
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+    #roadmap-overlay .ri-status.shipped { color: #80d080; }
+    #roadmap-overlay .ri-status.upcoming { color: #f0c040; }
+    #roadmap-overlay .ri-title {
+      font-size: 12px;
+      color: #fff;
+      text-shadow: 1px 1px 0 #000;
+      margin-bottom: 8px;
+    }
+    #roadmap-overlay .ri-desc {
+      font-size: 9px;
+      color: #a0a0b0;
+      line-height: 2;
+    }
+    #roadmap-overlay .ri-link {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: #f0c040;
+      margin-top: 8px;
+      text-decoration: none;
+    }
+    #roadmap-overlay .ri-link:hover {
+      color: #ffe070;
+    }
+
+    /* Zoom controls */
+    #zoom-controls {
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    #zoom-controls button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      background: rgba(0,0,0,0.6);
+      color: #f0c040;
+      border: 2px solid #f0c040;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    #zoom-controls button:hover {
+      background: rgba(240,192,64,0.2);
+    }
+
+    /* Roadmap HUD button */
+    #roadmap-btn {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      z-index: 10;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: #f0c040;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid #f0c040;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    #roadmap-btn:hover {
+      background: rgba(240,192,64,0.2);
+    }
+
+    /* Mobile banner */
+    #mobile-banner {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      background: rgba(240,192,64,0.95);
+      z-index: 100;
+      padding: 12px 16px;
+      text-align: center;
+      display: none;
+    }
+    #mobile-banner .mb-text {
+      font-size: 8px;
+      color: #0a0a1a;
+      line-height: 2;
+    }
+    #mobile-banner .mb-close {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: #0a0a1a;
+      background: none;
+      border: 1px solid #0a0a1a;
+      padding: 4px 8px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    /* Dragon speech bubble (canvas overlay during opening) */
+    #dragon-speech {
+      position: absolute;
+      z-index: 50;
+      display: none;
+      pointer-events: none;
+    }
+    #dragon-speech.visible {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -306,10 +792,11 @@
     </div>
 
     <div id="info-panel">
-      <!-- Panel auto-closes when walking away -->
+      <div class="panel-close" id="panel-close">X</div>
       <div class="panel-status" id="panel-status"></div>
       <div class="panel-title" id="panel-title"></div>
       <div class="panel-desc" id="panel-desc"></div>
+      <a class="panel-explore hidden" id="panel-explore" target="_blank">EXPLORE DOCS</a>
     </div>
 
     <div id="milestone-banner">
@@ -317,21 +804,55 @@
     </div>
 
     <div id="controls-hint">
-      WASD / ARROWS — Move
+      <span class="desktop-hint">WASD / ARROWS — Move</span>
+      <span class="mobile-hint">TAP TO MOVE</span>
     </div>
 
-    <!-- Title / Intro screen -->
-    <div id="title-screen" style="display:none;">
-      <div style="text-align:center;">
-        <div style="font-size:48px; color:#f0c040; text-shadow:4px 4px 0 #000, 0 0 40px rgba(240,192,64,0.4); margin-bottom:32px; line-height:1.6;">DICTATION QUEST</div>
-        <div style="font-size:16px; color:#a0a0b0; text-shadow:2px 2px 0 #000; margin-bottom:40px; line-height:2.4; max-width:700px;">
-          The best foundation for building<br>clinical dictation products,<br>delivered as an API.
-        </div>
-        <div style="font-size:14px; color:#c0c0d0; text-shadow:1px 1px 0 #000; margin-bottom:8px; line-height:2.2;">Follow Bard the Bowman on an epic quest</div>
-        <div style="font-size:14px; color:#c0c0d0; text-shadow:1px 1px 0 #000; margin-bottom:48px; line-height:2.2;">down the Corti API roadmap.</div>
-        <div id="start-btn" style="font-size:20px; color:#f0c040; cursor:pointer; animation: bobUpDown 1.5s ease-in-out infinite; text-shadow:2px 2px 0 #000;">[ PRESS ANY KEY TO BEGIN ]</div>
-        <div style="font-size:12px; color:#505060; margin-top:24px; text-shadow:1px 1px 0 #000;">WASD or Arrow Keys to move</div>
+    <!-- Intro scroll (replaces title screen) -->
+    <div id="intro-scroll">
+      <div class="scroll-title">DICTATION QUEST</div>
+      <div class="scroll-text">
+        Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.
+        <br><br>
+        Use <span style="color:#f0c040;">WASD</span> or <span style="color:#f0c040;">Arrow Keys</span> to move. Walk into landmarks to discover them.
       </div>
+      <button class="go-btn" id="go-btn">GO</button>
+    </div>
+
+    <!-- Slay dragon button -->
+    <div id="slay-button">
+      <button id="slay-btn">SLAY THE DRAGON</button>
+    </div>
+
+    <!-- Victory screen -->
+    <div id="victory-screen">
+      <div class="victory-title">QUEST COMPLETE</div>
+      <div class="victory-text">
+        Bard has slain the Dragon.<br>The Corti API roadmap awaits.
+      </div>
+      <a class="cta-btn" href="https://studio.corti.ai" target="_blank" id="studio-cta">Start Building in Corti Studio</a>
+      <button class="secondary-btn" id="review-roadmap-btn">Review the Roadmap</button>
+    </div>
+
+    <!-- Roadmap summary overlay -->
+    <div id="roadmap-overlay">
+      <button class="roadmap-close" id="roadmap-close">X</button>
+      <div class="roadmap-scroll" id="roadmap-scroll-content"></div>
+    </div>
+
+    <!-- Zoom controls -->
+    <div id="zoom-controls">
+      <button id="zoom-in">+</button>
+      <button id="zoom-out">-</button>
+    </div>
+
+    <!-- Roadmap HUD button -->
+    <button id="roadmap-btn">MAP</button>
+
+    <!-- Mobile banner -->
+    <div id="mobile-banner">
+      <div class="mb-text">This experience is optimized for desktop.<br>For the best experience, visit on a computer.</div>
+      <button class="mb-close" id="mobile-close">GOT IT</button>
     </div>
 
     <div id="loading">
@@ -349,10 +870,10 @@
 // ============================================================
 
 const TILE_SIZE = 32;
-const MAP_COLS = 80;
-const MAP_ROWS = 60;
+const MAP_COLS = 40;
+const MAP_ROWS = 35;
 const CAMERA_SMOOTH = 0.1;
-const ZOOM = 2; // 2x zoom so the character is clearly visible
+const DEFAULT_ZOOM = 2; // mutable zoom, initial value
 
 // Directions: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW
 const DIR_NAMES = ['n','ne','e','se','s','sw','w','nw'];
@@ -373,31 +894,34 @@ const ROADMAP_ITEMS = [
     title: 'Clinical-grade STT Models',
     status: 'shipped',
     description: 'Foundation. High-accuracy medical STT across supported languages, purpose-built for clinical terminology and high-stakes workflows.',
-    mapX: 16, mapY: 10,
-    icon: 'tower'
+    mapX: 9, mapY: 8,
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/about/languages'
   },
   {
     id: 2,
     title: 'Command Framework',
     status: 'shipped',
     description: 'Define voice commands with dynamic parameters to navigate, edit, and control application workflows. Gives clinicians precise control without breaking dictation flow.',
-    mapX: 30, mapY: 10,
-    icon: 'tower'
+    mapX: 15, mapY: 8,
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/stt/commands'
   },
   {
     id: 3,
     title: 'Output Formatting',
     status: 'shipped',
     description: 'Configurable formatting for dates, times, numbers, units, measurements, ranges, and ordinals. Automatic capitalization and punctuation. Output reads like a clinical document, not a raw transcript.',
-    mapX: 30, mapY: 24,
-    icon: 'tower'
+    mapX: 21, mapY: 8,
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/stt/formatting'
   },
   {
     id: 'milestone1',
     title: 'EMPOWERED TO BUILD\nA DRAGON REPLACEMENT',
     status: 'milestone',
     description: '',
-    mapX: 44, mapY: 24,
+    mapX: 27, mapY: 8,
     icon: 'bow'
   },
   {
@@ -405,7 +929,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Formatting',
     status: 'upcoming',
     description: 'Improved handling of key homophones (e.g., "period", "colon"). Better date and number localization.',
-    mapX: 44, mapY: 12,
+    mapX: 27, mapY: 15,
     icon: 'tent'
   },
   {
@@ -413,7 +937,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Speed',
     status: 'upcoming',
     description: 'Real-time partial transcription as the user speaks. Essential for building responsive dictation UIs where text appears on screen with minimal perceived latency.',
-    mapX: 58, mapY: 12,
+    mapX: 21, mapY: 15,
     icon: 'tent'
   },
   {
@@ -421,7 +945,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Commands',
     status: 'upcoming',
     description: 'Wildcard variables for templated command systems beyond static phrase matching. Non-verbal command anchors that map physical device inputs (foot pedals, hotkeys, button presses) to actions in the transcription stream.',
-    mapX: 58, mapY: 30,
+    mapX: 15, mapY: 15,
     icon: 'tent'
   },
   {
@@ -429,7 +953,7 @@ const ROADMAP_ITEMS = [
     title: 'Advanced Customization',
     status: 'upcoming',
     description: 'Organization-specific tuning. Custom vocabulary handles recognition (getting the model to hear the right terms), replacement rules handle formatting (standardizing what appears in output). Together they let customers tailor the full pipeline to their environment.',
-    mapX: 44, mapY: 30,
+    mapX: 9, mapY: 15,
     icon: 'tent'
   },
   {
@@ -437,7 +961,7 @@ const ROADMAP_ITEMS = [
     title: 'SLAY THE DRAGON\nONCE AND FOR ALL',
     status: 'milestone',
     description: '',
-    mapX: 44, mapY: 46,
+    mapX: 9, mapY: 24,
     icon: 'dragon'
   }
 ];
@@ -1127,6 +1651,29 @@ class PixelArt {
     chkCtx.fillRect(12, 2, 3, 3);
     decos.checkmark = checkC;
 
+    // Medkit (procedural fallback) — red box with white cross
+    const { canvas: medC, ctx: medCtx } = this.createCanvas(S, S);
+    medCtx.fillStyle = '#c03030';
+    medCtx.fillRect(8, 12, 16, 12);
+    medCtx.fillStyle = '#e04040';
+    medCtx.fillRect(9, 13, 14, 10);
+    medCtx.fillStyle = '#fff';
+    medCtx.fillRect(14, 15, 4, 6);
+    medCtx.fillRect(12, 17, 8, 2);
+    decos.medkit = medC;
+
+    // Potion (procedural fallback) — green bottle
+    const { canvas: potC, ctx: potCtx } = this.createCanvas(S, S);
+    potCtx.fillStyle = '#206020';
+    potCtx.fillRect(13, 10, 6, 14);
+    potCtx.fillStyle = '#30a030';
+    potCtx.fillRect(14, 12, 4, 10);
+    potCtx.fillStyle = '#40e040';
+    potCtx.fillRect(15, 14, 2, 6);
+    potCtx.fillStyle = '#805020';
+    potCtx.fillRect(14, 8, 4, 3);
+    decos.potion = potC;
+
     return decos;
   }
 
@@ -1160,19 +1707,18 @@ class WorldMap {
       }
     }
 
-    // Winding right-angle path through all roadmap items
-    // We draw L-shaped segments between consecutive items
+    // Compressed winding path — all shipped quests in first row, tight spacing
     const waypoints = [
-      { x: 4, y: 10 },   // start
-      { x: 16, y: 10 },  // item 1 — East
-      { x: 30, y: 10 },  // item 2 — East
-      { x: 30, y: 24 },  // item 3 — South (turn!)
-      { x: 44, y: 24 },  // milestone1 — East
-      { x: 44, y: 12 },  // item 4 — North (turn!)
-      { x: 58, y: 12 },  // item 5 — East
-      { x: 58, y: 30 },  // item 6 — South (turn!)
-      { x: 44, y: 30 },  // item 7 — West (turn!)
-      { x: 44, y: 46 },  // dragon — South (turn!)
+      { x: 3, y: 8 },    // start
+      { x: 9, y: 8 },    // item 1 — East
+      { x: 15, y: 8 },   // item 2 — East
+      { x: 21, y: 8 },   // item 3 — East
+      { x: 27, y: 8 },   // milestone1 — East
+      { x: 27, y: 15 },  // item 4 — South (turn!)
+      { x: 21, y: 15 },  // item 5 — West (turn!)
+      { x: 15, y: 15 },  // item 6 — West
+      { x: 9, y: 15 },   // item 7 — West
+      { x: 9, y: 24 },   // dragon — South (turn!)
     ];
 
     // Draw right-angle path segments
@@ -1181,55 +1727,45 @@ class WorldMap {
     }
 
     // Terrain zones ------------------------------------------------
-    // Use noise-based boundaries for organic, irregular shapes
-
+    // Adapted for compact 40x35 map
     const zoneRng = PixelArt.seededRandom(777);
-    // Pre-compute noise offsets for organic boundaries
     const noiseTable = [];
-    for (let i = 0; i < 200; i++) noiseTable.push(zoneRng() * 6 - 3); // -3 to +3 tile variance
-
+    for (let i = 0; i < 200; i++) noiseTable.push(zoneRng() * 4 - 2); // -2 to +2 tile variance (smaller map)
     const zoneNoise = (idx) => noiseTable[Math.abs(idx) % noiseTable.length];
 
-    // Forest zone — covers entire left side of map with organic right edge
-    // The dark forest runs the full height of the map on the left
+    // Dark forest — left edge of map
     for (let y = 0; y < this.rows; y++) {
-      // Right edge varies by vertical position — wider at top, narrows in middle, widens again at bottom
-      let forestRightEdge;
-      if (y < 8) {
-        forestRightEdge = 16 + zoneNoise(y * 3);        // Wide top
-      } else if (y < 22) {
-        forestRightEdge = 12 + zoneNoise(y * 3);        // Start area
-      } else if (y < 35) {
-        forestRightEdge = 10 + zoneNoise(y * 3 + 50);   // Mid section
-      } else {
-        forestRightEdge = 14 + zoneNoise(y * 3 + 80);   // Lower section wider
-      }
+      const forestRightEdge = y < 6 ? 6 + zoneNoise(y * 3) : (y < 20 ? 4 + zoneNoise(y * 3) : 5 + zoneNoise(y * 3 + 50));
       for (let x = 0; x < Math.min(Math.floor(forestRightEdge), this.cols); x++) {
-        if (this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'darkGrass';
-        }
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
 
-    // Top strip always dark — full width fading out
-    for (let y = 0; y < 4; y++) {
-      for (let x = 0; x < 20 + zoneNoise(y + 200); x++) {
+    // Top strip dark forest
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 14 + zoneNoise(y + 200); x++) {
         if (x < this.cols && this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
 
-    // Water features — positioned well within terrain zones
-    this.addWaterBody(5, 14, 6, 4, 101);    // Inside dark forest zone
-    this.addWaterBody(22, 2, 5, 4, 202);    // Upper grass zone
-    this.addWaterBody(50, 20, 6, 4, 303);   // Grass zone south
-    this.addWaterBody(36, 36, 5, 4, 404);   // Before volcanic
-    this.addWaterBody(8, 50, 6, 4, 505);    // Lower area
+    // Right-side dark forest
+    for (let y = 0; y < this.rows; y++) {
+      const rightForestLeftEdge = y < 12 ? 32 + zoneNoise(y * 4 + 600) : 30 + zoneNoise(y * 4 + 500);
+      for (let x = Math.max(0, Math.floor(rightForestLeftEdge)); x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
 
-    // Stone / castle area near milestone1 — organic circular-ish boundary
-    for (let y = 16; y < 32; y++) {
-      for (let x = 34; x < 54; x++) {
-        const cx = 44, cy = 22; // center of stone zone
-        const dist = Math.sqrt(((x - cx) / 10) ** 2 + ((y - cy) / 7) ** 2);
+    // Water features — smaller, fewer
+    this.addWaterBody(2, 12, 4, 3, 101);
+    this.addWaterBody(32, 4, 4, 3, 202);
+    this.addWaterBody(30, 20, 4, 3, 303);
+
+    // Stone zone near milestone1 (27,8)
+    for (let y = 3; y < 13; y++) {
+      for (let x = 23; x < 33; x++) {
+        const cx = 28, cy = 8;
+        const dist = Math.sqrt(((x - cx) / 5) ** 2 + ((y - cy) / 4) ** 2);
         const noiseOff = zoneNoise(x * 3 + y * 5 + 300) * 0.08;
         if (dist < 1.0 + noiseOff && this.grid[y][x] === 'grass') {
           this.grid[y][x] = 'stone';
@@ -1237,24 +1773,12 @@ class WorldMap {
       }
     }
 
-    // Second stone area near power-ups north section — organic ellipse
-    for (let y = 4; y < 20; y++) {
-      for (let x = 36; x < 52; x++) {
-        const cx = 44, cy = 12; // center near stop 4
-        const dist = Math.sqrt(((x - cx) / 8) ** 2 + ((y - cy) / 6) ** 2);
-        const noiseOff = zoneNoise(x * 4 + y * 3 + 350) * 0.08;
-        if (dist < 1.0 + noiseOff && this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'stone';
-        }
-      }
-    }
-
-    // Volcanic area near dragon — organic edges spreading from center (44,46)
-    for (let y = 36; y < this.rows; y++) {
-      for (let x = 28; x < 62; x++) {
-        const dist = Math.sqrt((x - 44) ** 2 + (y - 46) ** 2);
+    // Volcanic area near dragon (9,24)
+    for (let y = 19; y < this.rows; y++) {
+      for (let x = 0; x < 22; x++) {
+        const dist = Math.sqrt((x - 9) ** 2 + (y - 24) ** 2);
         const noiseOff = zoneNoise(x * 2 + y * 3 + 400);
-        const maxRadius = y >= 42 ? 18 : 10;
+        const maxRadius = y >= 22 ? 12 : 7;
         if (dist < maxRadius + noiseOff && this.grid[y][x] !== 'path') {
           if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
             this.grid[y][x] = 'volcanic';
@@ -1262,52 +1786,20 @@ class WorldMap {
         }
       }
     }
-    // Bottom rows — volcanic with noisy top boundary
-    for (let y = this.rows - 6; y < this.rows; y++) {
+    // Bottom rows volcanic
+    for (let y = this.rows - 4; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        const topEdge = this.rows - 6 + zoneNoise(x * 3 + 900) * 0.5;
+        const topEdge = this.rows - 4 + zoneNoise(x * 3 + 900) * 0.5;
         if (y >= topEdge && this.grid[y][x] !== 'path') {
           this.grid[y][x] = 'volcanic';
         }
       }
     }
 
-    // Dark forest patches — right side of map with organic edges on ALL sides
-    // Right-side dark forest (mid-lower region)
-    for (let y = 0; y < this.rows; y++) {
-      // The right edge of the map is always dark, with a noisy left boundary
-      let rightForestLeftEdge;
-      if (y < 10) {
-        rightForestLeftEdge = 56 + zoneNoise(y * 4 + 600); // Top-right area
-      } else if (y < 24) {
-        rightForestLeftEdge = 64 + zoneNoise(y * 4 + 500); // Near stops 4-5, pull back
-      } else if (y < 40) {
-        rightForestLeftEdge = 60 + zoneNoise(y * 4 + 500); // Mid-right area
-      } else {
-        rightForestLeftEdge = 58 + zoneNoise(y * 4 + 500); // Lower area
-      }
-      for (let x = Math.max(0, Math.floor(rightForestLeftEdge)); x < this.cols; x++) {
+    // Bottom dark forest on right side
+    for (let y = this.rows - 8; y < this.rows; y++) {
+      for (let x = 22; x < this.cols; x++) {
         if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-
-    // Top strip dark forest — full width with noisy bottom edge
-    for (let y = 0; y < this.rows; y++) {
-      const topEdgeLimit = 4 + zoneNoise(y * 7 + 700) * 0.5;
-      if (y < topEdgeLimit) {
-        for (let x = 0; x < this.cols; x++) {
-          if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-        }
-      }
-    }
-
-    // Bottom dark forest (below volcanic zone, left side) — noisy right edge
-    for (let y = this.rows - 12; y < this.rows; y++) {
-      const rightEdge = 16 + zoneNoise(y + 800) + (y - (this.rows - 12)) * 0.3;
-      for (let x = 0; x < Math.min(Math.floor(rightEdge), this.cols); x++) {
-        if (this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'darkGrass';
-        }
       }
     }
 
@@ -1403,35 +1895,35 @@ class WorldMap {
       return allowedTiles.includes(this.grid[y][x]);
     };
 
-    // Trees in dark forest areas (left start area)
-    for (let i = 0; i < 30; i++) {
-      const x = Math.floor(rng() * 12);
-      const y = Math.floor(rng() * 20);
+    // Trees in dark forest (left side)
+    for (let i = 0; i < 15; i++) {
+      const x = Math.floor(rng() * 5);
+      const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['darkGrass']) && notTooClose(x, y)) {
         this.decorations.push({ type: rng() > 0.3 ? 'tree0' : 'tree1', x, y });
       }
     }
 
-    // Trees scattered across the whole map on grass
-    for (let i = 0; i < 80; i++) {
+    // Trees scattered across the map
+    for (let i = 0; i < 30; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
-      if (canPlace(x, y, ['grass', 'darkGrass']) && notTooClose(x, y, 4)) {
+      if (canPlace(x, y, ['grass', 'darkGrass']) && notTooClose(x, y, 3)) {
         this.decorations.push({ type: rng() > 0.5 ? 'tree0' : 'tree1', x, y });
       }
     }
 
-    // Dead trees in volcanic area
-    for (let i = 0; i < 12; i++) {
-      const x = 34 + Math.floor(rng() * 24);
-      const y = 44 + Math.floor(rng() * 14);
+    // Dead trees in volcanic area near dragon (9,24)
+    for (let i = 0; i < 6; i++) {
+      const x = 2 + Math.floor(rng() * 16);
+      const y = 20 + Math.floor(rng() * 12);
       if (canPlace(x, y, ['volcanic']) && notTooClose(x, y)) {
         this.decorations.push({ type: 'deadTree', x, y });
       }
     }
 
-    // Small rocks scattered
-    for (let i = 0; i < 20; i++) {
+    // Small rocks
+    for (let i = 0; i < 12; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass', 'stone', 'volcanic']) && notTooClose(x, y)) {
@@ -1439,8 +1931,8 @@ class WorldMap {
       }
     }
 
-    // Boulders — larger, less frequent, on stone and volcanic
-    for (let i = 0; i < 12; i++) {
+    // Boulders
+    for (let i = 0; i < 6; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['stone', 'volcanic', 'darkGrass']) && notTooClose(x, y)) {
@@ -1448,8 +1940,8 @@ class WorldMap {
       }
     }
 
-    // Flowers scattered on grass
-    for (let i = 0; i < 30; i++) {
+    // Flowers
+    for (let i = 0; i < 15; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass'])) {
@@ -1457,8 +1949,8 @@ class WorldMap {
       }
     }
 
-    // Rose bushes — along path edges and in grass areas
-    for (let i = 0; i < 20; i++) {
+    // Rose bushes
+    for (let i = 0; i < 10; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass']) && notTooClose(x, y, 2)) {
@@ -1467,28 +1959,44 @@ class WorldMap {
     }
 
     // Skulls in volcanic area
-    for (let i = 0; i < 8; i++) {
-      const x = 36 + Math.floor(rng() * 20);
-      const y = 40 + Math.floor(rng() * 16);
+    for (let i = 0; i < 5; i++) {
+      const x = 2 + Math.floor(rng() * 14);
+      const y = 21 + Math.floor(rng() * 10);
       if (canPlace(x, y, ['volcanic'])) {
         this.decorations.push({ type: 'skull', x, y });
       }
     }
 
-    // Lava pools near dragon
-    this.decorations.push({ type: 'lava', x: 40, y: 46 });
-    this.decorations.push({ type: 'lava', x: 48, y: 48 });
-    this.decorations.push({ type: 'lava', x: 42, y: 50 });
-    this.decorations.push({ type: 'lava', x: 50, y: 42 });
+    // Lava pools near dragon (9,24)
+    this.decorations.push({ type: 'lava', x: 5, y: 24 });
+    this.decorations.push({ type: 'lava', x: 13, y: 26 });
+    this.decorations.push({ type: 'lava', x: 7, y: 28 });
+    this.decorations.push({ type: 'lava', x: 11, y: 22 });
 
     // Campfire at start
-    this.decorations.push({ type: 'campfire', x: 6, y: 12 });
+    this.decorations.push({ type: 'campfire', x: 5, y: 10 });
 
-    // Signposts at turns
-    this.decorations.push({ type: 'signpost', x: 8, y: 9 });
-    this.decorations.push({ type: 'signpost', x: 31, y: 16 });
-    this.decorations.push({ type: 'signpost', x: 45, y: 18 });
-    this.decorations.push({ type: 'signpost', x: 52, y: 29 });
+    // Signposts near turns (off-path)
+    this.decorations.push({ type: 'signpost', x: 6, y: 5 });
+    this.decorations.push({ type: 'signpost', x: 30, y: 11 });
+
+    // Medkits scattered off-path
+    for (let i = 0; i < 6; i++) {
+      const x = 3 + Math.floor(rng() * (this.cols - 6));
+      const y = 3 + Math.floor(rng() * (this.rows - 6));
+      if (canPlace(x, y, ['grass', 'stone']) && notTooClose(x, y, 2)) {
+        this.decorations.push({ type: 'medkit', x, y });
+      }
+    }
+
+    // Health potions scattered off-path
+    for (let i = 0; i < 6; i++) {
+      const x = 3 + Math.floor(rng() * (this.cols - 6));
+      const y = 3 + Math.floor(rng() * (this.rows - 6));
+      if (canPlace(x, y, ['grass', 'stone']) && notTooClose(x, y, 2)) {
+        this.decorations.push({ type: 'potion', x, y });
+      }
+    }
 
     // Sort decorations by Y for proper layering
     this.decorations.sort((a, b) => a.y - b.y);
@@ -1510,7 +2018,7 @@ class Character {
     this.x = x;
     this.y = y;
     this.dir = 4; // facing south
-    this.speed = 3.5;
+    this.speed = 1.2;
     this.frame = 0;
     this.frameTimer = 0;
     this.moving = false;
@@ -1518,6 +2026,8 @@ class Character {
     this.visitedItems = new Set();
     this.hasBow = false;
     this.jumpTimer = 0; // frames remaining in jump animation
+    this.powerLevel = 1.0; // scales up on power-up
+    this.targetPowerLevel = 1.0;
   }
 
   loadSprites(spriteData) {
@@ -1553,32 +2063,57 @@ class Character {
       dx = (dx / len) * this.speed;
       dy = (dy / len) * this.speed;
 
-      // Check collision
-      const newX = this.x + dx;
-      const newY = this.y + dy;
+      // Collision box — small footprint for smooth path navigation
+      const halfW = 5, halfH = 4;
 
-      // Check multiple points around character
-      const halfW = 10, halfH = 6;
-      const canMoveX = worldMap.isWalkable(newX - halfW, this.y - halfH)
-        && worldMap.isWalkable(newX + halfW, this.y - halfH)
-        && worldMap.isWalkable(newX - halfW, this.y + halfH)
-        && worldMap.isWalkable(newX + halfW, this.y + halfH);
+      const ok = (px, py) =>
+        worldMap.isWalkable(px - halfW, py - halfH) &&
+        worldMap.isWalkable(px + halfW, py - halfH) &&
+        worldMap.isWalkable(px - halfW, py + halfH) &&
+        worldMap.isWalkable(px + halfW, py + halfH);
 
-      const canMoveY = worldMap.isWalkable(this.x - halfW, newY - halfH)
-        && worldMap.isWalkable(this.x + halfW, newY - halfH)
-        && worldMap.isWalkable(this.x - halfW, newY + halfH)
-        && worldMap.isWalkable(this.x + halfW, newY + halfH);
+      const origX = this.x;
+      const origY = this.y;
+      const wantX = origX + dx;
+      const wantY = origY + dy;
 
-      if (canMoveX) this.x = newX;
-      if (canMoveY) this.y = newY;
+      if (ok(wantX, wantY)) {
+        // Best case: full diagonal / straight move
+        this.x = wantX;
+        this.y = wantY;
+      } else if (dx !== 0 && ok(wantX, origY)) {
+        // Slide along X (wall blocks Y)
+        this.x = wantX;
+      } else if (dy !== 0 && ok(origX, wantY)) {
+        // Slide along Y (wall blocks X)
+        this.y = wantY;
+      } else if (dx !== 0) {
+        // X blocked — try nudging perpendicular (Y) to slide around corner
+        for (let n = 1; n <= 16; n++) {
+          if (ok(wantX, origY - n)) { this.x = wantX; this.y = origY - n; break; }
+          if (ok(wantX, origY + n)) { this.x = wantX; this.y = origY + n; break; }
+        }
+      } else if (dy !== 0) {
+        // Y blocked — try nudging perpendicular (X) to slide around corner
+        for (let n = 1; n <= 16; n++) {
+          if (ok(origX - n, wantY)) { this.y = wantY; this.x = origX - n; break; }
+          if (ok(origX + n, wantY)) { this.y = wantY; this.x = origX + n; break; }
+        }
+      }
+
+      // Safety: never allow an invalid position
+      if (!ok(this.x, this.y)) {
+        this.x = origX;
+        this.y = origY;
+      }
 
       // Clamp to map
       this.x = Math.max(12, Math.min(this.x, MAP_COLS * TILE_SIZE - 12));
       this.y = Math.max(12, Math.min(this.y, MAP_ROWS * TILE_SIZE - 12));
 
-      // Animate
+      // Animate — slower cycle for Pokemon-like cadence
       this.frameTimer++;
-      if (this.frameTimer > 8) {
+      if (this.frameTimer > 12) {
         this.frameTimer = 0;
         this.frame = (this.frame + 1) % 6;
       }
@@ -1593,8 +2128,11 @@ class Character {
 
   draw(ctx, cameraX, cameraY) {
     if (!this.sprites) return;
+    // Smoothly animate power level
+    if (this.powerLevel < this.targetPowerLevel) {
+      this.powerLevel = Math.min(this.targetPowerLevel, this.powerLevel + 0.01);
+    }
     const dirName = DIR_NAMES[this.dir];
-    // Use walk animation when moving, idle rotation when standing
     let sprite;
     if (this.moving && this.walkSprites && this.walkSprites[dirName]) {
       sprite = this.walkSprites[dirName][this.frame];
@@ -1603,26 +2141,28 @@ class Character {
     } else {
       sprite = this.walkSprites[dirName][0];
     }
-    // Sprite is 48x48, center horizontally and anchor feet at character position
-    // Jump arc: peak at midpoint of jumpTimer (12 frames total, peak at 6)
     const jumpOffset = this.jumpTimer > 0 ? Math.sin((this.jumpTimer / 12) * Math.PI) * 14 : 0;
-    const drawX = this.x - cameraX - 24;
-    const drawY = this.y - cameraY - 40 - jumpOffset;
-    ctx.drawImage(sprite, drawX, drawY);
+    // Subtle walk bob — 2px bounce per step, Pokemon-style
+    const walkBob = this.moving ? Math.abs(Math.sin(this.frameTimer / 12 * Math.PI)) * 2 : 0;
+    const scale = this.powerLevel;
+    const sw = 48 * scale;
+    const sh = 48 * scale;
+    const drawX = this.x - cameraX - sw / 2;
+    const drawY = this.y - cameraY - (sh * 40 / 48) - jumpOffset - walkBob;
+    ctx.drawImage(sprite, drawX, drawY, sw, sh);
 
     // Draw held bow
     if (this.hasBow) {
       const d = this.dir;
-      // Offset bow position based on facing direction (adjusted for 48px sprite)
       let ox, oy, flip;
-      if (d === 2 || d === 1 || d === 3) {       // east-ish: bow on right side
-        ox = 28; oy = 0; flip = false;
-      } else if (d === 6 || d === 5 || d === 7) { // west-ish: bow on left side
-        ox = -8; oy = 0; flip = true;
-      } else if (d === 0) {                        // north: bow on right
-        ox = 26; oy = 2; flip = false;
-      } else {                                      // south: bow on left
-        ox = -6; oy = 2; flip = true;
+      if (d === 2 || d === 1 || d === 3) {
+        ox = 28 * scale; oy = 0; flip = false;
+      } else if (d === 6 || d === 5 || d === 7) {
+        ox = -8 * scale; oy = 0; flip = true;
+      } else if (d === 0) {
+        ox = 26 * scale; oy = 2; flip = false;
+      } else {
+        ox = -6 * scale; oy = 2; flip = true;
       }
       const bob = this.moving ? Math.sin(this.frameTimer * 0.6) * 1.5 : 0;
       const bx = drawX + ox;
@@ -1790,8 +2330,15 @@ class Game {
     this.targetCameraX = 0;
     this.targetCameraY = 0;
 
+    // Zoom (mutable)
+    this.zoom = DEFAULT_ZOOM;
+
     // Input
     this.keys = { up: false, down: false, left: false, right: false };
+
+    // Game phase state machine
+    // 'loading' -> 'opening_dragon' -> 'opening_pan' -> 'opening_bard' -> 'playing' -> 'dragon_fight' -> 'victory'
+    this.gamePhase = 'loading';
 
     // Game state
     this.loaded = false;
@@ -1810,7 +2357,7 @@ class Game {
     this.dragonHitTimer = 0;
     this.arrowsFired = [];
     this.interactCooldown = 0;
-    this.coins = [];        // {x, y, collected}
+    this.coins = [];
     this.coinsCollected = 0;
     this.totalCoins = 0;
     this.itemGlowPhase = 0;
@@ -1818,6 +2365,22 @@ class Game {
 
     // Label visibility tracking
     this.labelFadeIn = {};
+
+    // Opening scene state
+    this.openingTimer = 0;
+    this.openingTextIndex = 0;
+    this.openingText = "I have stolen all the attention of doctors!! No one can slay me!!";
+
+    // Doctor NPCs (celebrating after milestone 1)
+    this.doctors = [];
+    this.doctorSprites = [];
+    this.doctorsSpawned = false;
+
+    // Victory/CTA state
+    this.victoryTimer = 0;
+
+    // Roadmap overlay visible
+    this.roadmapOverlayVisible = false;
 
     this.init();
   }
@@ -1884,14 +2447,12 @@ class Game {
 
     // Load PixelLab decoration sprites (replace procedural fallbacks)
     const decoAssets = {
-      rock: 'assets/decorations/rock.png',
-      boulder: 'assets/decorations/boulder.png',
+      // rock, boulder, flower, roseBush, medkit, potion use procedural sprites
+      // (PixelLab PNGs had opaque isometric block bases)
       campfire: 'assets/decorations/campfire.png',
-      flower: 'assets/decorations/flower.png',
-      roseBush: 'assets/decorations/rosebush.png',
       skull: 'assets/decorations/skull.png',
       signpost: 'assets/decorations/signpost.png',
-      deadTree: 'assets/decorations/deadtree.png',
+      deadTree: 'assets/trees/dead_south.png',
       lava: 'assets/decorations/lava.png',
       flag: 'assets/decorations/flag.png',
       bridge: 'assets/decorations/bridge.png',
@@ -1972,12 +2533,12 @@ class Game {
     }
     this.coinSprite = this.coinFrames.length > 0 ? this.coinFrames[0] : null;
 
-    // Load PixelLab castle sprite (for shipped stops)
+    // Load PixelLab hospital sprite (for shipped stops)
     this.castleSprite = await new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = 'assets/items/castle/south.png';
+      img.src = 'assets/items/hospital_south.png';
     });
 
     // Load PixelLab tent sprite (for upcoming stops)
@@ -1997,8 +2558,11 @@ class Game {
     await this.sleep(200);
 
     this.worldMap = new WorldMap();
-    this.character = new Character(4 * TILE_SIZE, 10 * TILE_SIZE);
+    this.character = new Character(3 * TILE_SIZE + TILE_SIZE / 2, 8 * TILE_SIZE + TILE_SIZE / 2);
     this.character.loadSprites(charSprites);
+
+    // Load doctor sprites (graceful fallback if not found)
+    await this.loadDoctorSprites();
 
     // Generate coins along the path
     this.generateCoins();
@@ -2009,33 +2573,30 @@ class Game {
 
     document.getElementById('loading').style.display = 'none';
 
-    // Show title screen
-    const titleScreen = document.getElementById('title-screen');
-    titleScreen.style.display = 'flex';
+    // Show mobile banner if on mobile
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      const mobileBanner = document.getElementById('mobile-banner');
+      mobileBanner.style.display = 'block';
+      document.getElementById('mobile-close').addEventListener('click', () => {
+        mobileBanner.style.display = 'none';
+      });
+    }
 
-    // Pre-render minimap and a single frame so background is visible behind title
+    // Pre-render minimap and one frame
+    this.loaded = true;
     this.renderMinimap();
-    // Render one frame behind the title screen overlay
-    this.loaded = true;
-    this.draw();
-    this.loaded = false;
 
-    // Wait briefly then listen for any key or click to start
-    await this.sleep(500);
-    await new Promise(resolve => {
-      const start = (e) => {
-        // Ignore modifier keys alone
-        if (e instanceof KeyboardEvent && ['Shift','Control','Alt','Meta'].includes(e.key)) return;
-        titleScreen.style.display = 'none';
-        window.removeEventListener('keydown', start);
-        titleScreen.removeEventListener('click', start);
-        resolve();
-      };
-      window.addEventListener('keydown', start);
-      titleScreen.addEventListener('click', start);
-    });
+    // Start opening scene — camera on Bard, show intro scroll
+    const viewW = this.width / this.zoom;
+    const viewH = this.height / this.zoom;
+    this.cameraX = this.character.x - viewW / 2;
+    this.cameraY = this.character.y - viewH / 2;
+    this.targetCameraX = this.cameraX;
+    this.targetCameraY = this.cameraY;
 
-    this.loaded = true;
+    this.gamePhase = 'opening_bard';
+    this.openingTimer = 0;
+    document.getElementById('intro-scroll').classList.add('visible');
 
     // Start game loop
     this.loop();
@@ -2079,10 +2640,10 @@ class Game {
 
   setupInput() {
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); }
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); }
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); }
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.keys.right = true; e.preventDefault(); }
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); this.moveTarget = null; }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); this.moveTarget = null; }
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); this.moveTarget = null; }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.keys.right = true; e.preventDefault(); this.moveTarget = null; }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -2092,7 +2653,128 @@ class Game {
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
     });
 
-    // No click-to-move — keyboard only
+    // Tap/click-to-move for mobile & pointer
+    this.moveTarget = null; // {x, y} in world coords
+    this.tapIndicator = null; // {x, y, alpha} for visual feedback
+
+    const getWorldPos = (screenX, screenY) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const canvasX = screenX - rect.left;
+      const canvasY = screenY - rect.top;
+      // Convert screen coords to world coords (accounting for zoom and camera)
+      const worldX = canvasX / this.zoom + this.cameraX;
+      const worldY = canvasY / this.zoom + this.cameraY;
+      return { x: worldX, y: worldY };
+    };
+
+    const setMoveTarget = (screenX, screenY) => {
+      const pos = getWorldPos(screenX, screenY);
+      this.moveTarget = pos;
+      this.tapIndicator = { x: pos.x, y: pos.y, alpha: 1.0 };
+    };
+
+    // Touch events
+    this.canvas.addEventListener('touchstart', (e) => {
+      if (!this.loaded || this.gamePhase !== 'playing') return;
+      e.preventDefault();
+      const t = e.touches[0];
+      setMoveTarget(t.clientX, t.clientY);
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      if (!this.loaded || this.gamePhase !== 'playing') return;
+      e.preventDefault();
+      const t = e.touches[0];
+      setMoveTarget(t.clientX, t.clientY);
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      // Keep the move target — character continues to walk there
+    });
+
+    // Mouse click-to-move (also useful on desktop)
+    this.canvas.addEventListener('click', (e) => {
+      if (!this.loaded || this.gamePhase !== 'playing') return;
+      if (this.activePanel) return;
+      if (this.roadmapOverlayVisible) return;
+      setMoveTarget(e.clientX, e.clientY);
+    });
+
+    // Panel close button
+    document.getElementById('panel-close').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.closePanel();
+    });
+
+    // GO button — start the game
+    document.getElementById('go-btn').addEventListener('click', () => {
+      document.getElementById('intro-scroll').classList.remove('visible');
+      this.gamePhase = 'playing';
+    });
+
+    // Slay button — fire arrow at dragon
+    document.getElementById('slay-btn').addEventListener('click', () => {
+      if (this.dragonFightActive && !this.dragonSlain) {
+        this.fireDragonArrow();
+      }
+    });
+
+    // Zoom controls
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      this.zoom = Math.min(3.5, this.zoom + 0.25);
+    });
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      this.zoom = Math.max(1.5, this.zoom - 0.25);
+    });
+    window.addEventListener('wheel', (e) => {
+      if (this.gamePhase !== 'playing') return;
+      if (e.deltaY < 0) this.zoom = Math.min(3.5, this.zoom + 0.15);
+      else this.zoom = Math.max(1.5, this.zoom - 0.15);
+    }, { passive: true });
+
+    // Roadmap button
+    document.getElementById('roadmap-btn').addEventListener('click', () => {
+      this.showRoadmapOverlay();
+    });
+    document.getElementById('roadmap-close').addEventListener('click', () => {
+      this.hideRoadmapOverlay();
+    });
+
+    // Victory screen buttons
+    document.getElementById('review-roadmap-btn').addEventListener('click', () => {
+      document.getElementById('victory-screen').classList.remove('visible');
+      this.showRoadmapOverlay();
+    });
+
+    // Minimap click-to-navigate
+    this.minimapCanvas.addEventListener('click', (e) => {
+      if (this.gamePhase !== 'playing') return;
+      const rect = this.minimapCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const scaleX = this.minimapCanvas.width / (MAP_COLS * TILE_SIZE);
+      const scaleY = this.minimapCanvas.height / (MAP_ROWS * TILE_SIZE);
+      const worldX = mx / scaleX;
+      const worldY = my / scaleY;
+
+      // Snap to nearest milestone if close
+      let snapped = false;
+      for (const item of ROADMAP_ITEMS) {
+        const itemMX = item.mapX * TILE_SIZE * scaleX;
+        const itemMY = item.mapY * TILE_SIZE * scaleY;
+        if (Math.abs(mx - itemMX) < 10 && Math.abs(my - itemMY) < 10) {
+          this.moveTarget = { x: item.mapX * TILE_SIZE + TILE_SIZE / 2, y: item.mapY * TILE_SIZE + TILE_SIZE / 2 };
+          this.tapIndicator = { x: this.moveTarget.x, y: this.moveTarget.y, alpha: 1.0 };
+          snapped = true;
+          break;
+        }
+      }
+      if (!snapped) {
+        this.moveTarget = { x: worldX, y: worldY };
+        this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0 };
+      }
+    });
+    this.minimapCanvas.style.cursor = 'pointer';
   }
 
   closePanel() {
@@ -2103,15 +2785,27 @@ class Game {
 
   interactWithItem(item) {
     if (item.status === 'milestone') {
-      this.activePanel = item; // Track so we don't re-trigger every frame
+      this.activePanel = item;
       if (item.id === 'milestone2' && !this.dragonSlain) {
         this.startDragonFight();
       }
-      // Bow pickup
+      // Bow pickup + power-up
       if (item.id === 'milestone1' && !this.character.hasBow) {
         this.character.hasBow = true;
+        this.character.targetPowerLevel = 1.3;
+        // Power-up particle burst
+        this.particles.emit(this.character.x, this.character.y - 20, 25, {
+          colors: ['#f0c040', '#ffe070', '#fff8d0', '#40e040'],
+          speed: 6,
+          upward: true,
+          life: 50,
+          gravity: -0.05
+        });
+        // Spawn celebrating doctors
+        if (!this.doctorsSpawned) {
+          this.spawnDoctors(item.mapX, item.mapY);
+        }
       }
-      // Show milestone banner
       if (!this.milestoneShown.has(item.id)) {
         this.milestoneShown.add(item.id);
         this.showMilestoneBanner(item.title);
@@ -2126,6 +2820,7 @@ class Game {
     const status = document.getElementById('panel-status');
     const title = document.getElementById('panel-title');
     const desc = document.getElementById('panel-desc');
+    const explore = document.getElementById('panel-explore');
 
     if (item.status === 'shipped') {
       status.textContent = '✓ SHIPPED — CONQUERED';
@@ -2137,6 +2832,15 @@ class Game {
 
     title.innerHTML = `<span class="panel-number">${item.id}</span>${item.title}`;
     desc.textContent = item.description;
+
+    // Show/hide explore docs button
+    if (item.docsUrl) {
+      explore.href = item.docsUrl;
+      explore.classList.remove('hidden');
+    } else {
+      explore.classList.add('hidden');
+    }
+
     panel.classList.add('visible');
   }
 
@@ -2150,14 +2854,14 @@ class Game {
   }
 
   generateCoins() {
-    // Place coins along the path between waypoints, spaced ~4 tiles apart
+    // Place coins along the compressed path, spaced ~2 tiles apart
     const waypoints = [
-      { x: 4, y: 10 }, { x: 16, y: 10 }, { x: 30, y: 10 },
-      { x: 30, y: 24 }, { x: 44, y: 24 }, { x: 44, y: 12 },
-      { x: 58, y: 12 }, { x: 58, y: 38 }, { x: 44, y: 38 },
-      { x: 44, y: 52 }
+      { x: 3, y: 8 }, { x: 9, y: 8 }, { x: 15, y: 8 },
+      { x: 21, y: 8 }, { x: 27, y: 8 }, { x: 27, y: 15 },
+      { x: 21, y: 15 }, { x: 15, y: 15 }, { x: 9, y: 15 },
+      { x: 9, y: 24 }
     ];
-    const COIN_SPACING = 3; // tiles between coins
+    const COIN_SPACING = 2; // tighter spacing for compact map
     const coins = [];
 
     for (let i = 0; i < waypoints.length - 1; i++) {
@@ -2175,14 +2879,19 @@ class Game {
 
         // Skip if too close to any roadmap item
         const tooClose = ROADMAP_ITEMS.some(item =>
-          Math.abs(item.mapX - cx) < 2 && Math.abs(item.mapY - cy) < 2
+          Math.abs(item.mapX - cx) < 1.5 && Math.abs(item.mapY - cy) < 1.5
         );
-        if (!tooClose) {
+        if (tooClose) continue;
+
+        // Validate coin is on a path tile
+        const tileCol = Math.floor(cx);
+        const tileRow = Math.floor(cy);
+        if (this.worldMap.grid[tileRow] && this.worldMap.grid[tileRow][tileCol] === 'path') {
           coins.push({
             x: cx * TILE_SIZE + TILE_SIZE / 2,
             y: cy * TILE_SIZE + TILE_SIZE / 2,
             collected: false,
-            collectAnim: 0 // animation timer when collected
+            collectAnim: 0
           });
         }
       }
@@ -2247,12 +2956,10 @@ class Game {
 
         ctx.globalAlpha = 1;
       } else {
-        const hover = Math.sin(this.time * 0.05 + coin.x * 0.01 + coin.y * 0.005) * 2;
+        const hover = Math.sin(this.time * 0.05) * 2;
 
-        // Classic pixel rotation: cycle through pre-rendered frames
-        // Each coin starts at a different phase based on position
-        const phase = coin.x * 0.03 + coin.y * 0.02;
-        const frameIdx = Math.floor((this.time * 0.15 + phase) % frameCount);
+        // Classic pixel rotation: all coins spin in sync
+        const frameIdx = Math.floor(this.time * 0.12) % frameCount;
 
         // Shadow
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
@@ -2295,10 +3002,13 @@ class Game {
 
   startDragonFight() {
     this.dragonFightActive = true;
-    this.dragonHP = 100;
+    this.gamePhase = 'dragon_fight';
+    this.dragonHP = 40; // ~5 hits at 8 damage each
     this.arrowsFired = [];
     this.dragonHitTimer = 0;
     this.closePanel();
+    // Show slay button
+    document.getElementById('slay-button').classList.add('visible');
   }
 
   fireDragonArrow() {
@@ -2318,10 +3028,7 @@ class Game {
   updateDragonFight() {
     if (!this.dragonFightActive) return;
 
-    // Auto-fire arrows
-    if (this.time % 15 === 0) {
-      this.fireDragonArrow();
-    }
+    // NO auto-fire — player clicks the slay button
 
     // Update arrows
     const dragon = ROADMAP_ITEMS.find(i => i.id === 'milestone2');
@@ -2353,6 +3060,10 @@ class Game {
     if (this.dragonHP <= 0 && !this.dragonSlain) {
       this.dragonSlain = true;
       this.dragonFightActive = false;
+      this.gamePhase = 'victory';
+      this.victoryTimer = 120; // 2 seconds until victory screen
+      // Hide slay button
+      document.getElementById('slay-button').classList.remove('visible');
       // Victory particles
       for (let i = 0; i < 5; i++) {
         setTimeout(() => {
@@ -2404,12 +3115,108 @@ class Game {
     this.time++;
     this.itemGlowPhase += 0.03;
 
-    // Update character with keyboard input only
+    // === Opening scene state machine ===
+    if (this.gamePhase === 'opening_dragon') {
+      this.openingTimer++;
+      // Show dragon speech bubble via typewriter effect
+      this.openingTextIndex = Math.min(this.openingText.length, Math.floor(this.openingTimer / 2));
+      // Dragon laugh animation (oscillating particles)
+      if (this.openingTimer % 20 === 0) {
+        const dragon = ROADMAP_ITEMS.find(i => i.id === 'milestone2');
+        this.particles.emit(
+          dragon.mapX * TILE_SIZE + 48 + (Math.random() - 0.5) * 40,
+          dragon.mapY * TILE_SIZE + 20,
+          5,
+          { colors: ['#f08020', '#f0c040', '#ff4020'], speed: 3, life: 30, upward: true, gravity: -0.03 }
+        );
+      }
+      // After ~4 seconds, pan to Bard
+      if (this.openingTimer > 240) {
+        this.gamePhase = 'opening_pan';
+        this.openingTimer = 0;
+      }
+      this.particles.update();
+      return;
+    }
+
+    if (this.gamePhase === 'opening_pan') {
+      this.openingTimer++;
+      // Smoothly pan camera from dragon to Bard's start position
+      const viewW = this.width / this.zoom;
+      const viewH = this.height / this.zoom;
+      const bardX = this.character.x - viewW / 2;
+      const bardY = this.character.y - viewH / 2;
+      this.cameraX += (bardX - this.cameraX) * 0.03;
+      this.cameraY += (bardY - this.cameraY) * 0.03;
+      this.particles.update();
+      // Once camera is close enough to Bard, show intro scroll
+      const dist = Math.abs(this.cameraX - bardX) + Math.abs(this.cameraY - bardY);
+      if (dist < 5 || this.openingTimer > 180) {
+        this.cameraX = bardX;
+        this.cameraY = bardY;
+        this.gamePhase = 'opening_bard';
+        document.getElementById('intro-scroll').classList.add('visible');
+      }
+      return;
+    }
+
+    if (this.gamePhase === 'opening_bard') {
+      // Waiting for player to click GO — no game logic runs
+      this.particles.update();
+      return;
+    }
+
+    // === Victory timer ===
+    if (this.gamePhase === 'victory') {
+      if (this.victoryTimer > 0) {
+        this.victoryTimer--;
+        if (this.victoryTimer === 0) {
+          document.getElementById('victory-screen').classList.add('visible');
+        }
+      }
+      // Still update particles and character for background animation
+    }
+
+    // Tap-to-move: convert move target into directional keys
+    if (this.moveTarget) {
+      const dx = this.moveTarget.x - this.character.x;
+      const dy = this.moveTarget.y - this.character.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 8) {
+        // Arrived at target
+        this.moveTarget = null;
+        this.keys.up = false;
+        this.keys.down = false;
+        this.keys.left = false;
+        this.keys.right = false;
+      } else {
+        // Set directional keys toward target
+        const deadzone = 0.3; // prevents jittery micro-movements
+        this.keys.up = dy < -dist * deadzone;
+        this.keys.down = dy > dist * deadzone;
+        this.keys.left = dx < -dist * deadzone;
+        this.keys.right = dx > dist * deadzone;
+      }
+    }
+
+    // Cancel move target if real keyboard input detected
+    if (!this.moveTarget) {
+      // keys are handled directly from keyboard events
+    }
+
+    // Fade tap indicator
+    if (this.tapIndicator) {
+      this.tapIndicator.alpha -= 0.02;
+      if (this.tapIndicator.alpha <= 0) this.tapIndicator = null;
+    }
+
+    // Update character
     this.character.update(this.keys, this.worldMap);
 
     // Camera follow — account for zoom (viewport is smaller in world coords)
-    const viewW = this.width / ZOOM;
-    const viewH = this.height / ZOOM;
+    const viewW = this.width / this.zoom;
+    const viewH = this.height / this.zoom;
     this.targetCameraX = this.character.x - viewW / 2;
     this.targetCameraY = this.character.y - viewH / 2;
 
@@ -2464,8 +3271,8 @@ class Game {
     const ctx = this.ctx;
     const cx = Math.round(this.cameraX);
     const cy = Math.round(this.cameraY);
-    const viewW = this.width / ZOOM;
-    const viewH = this.height / ZOOM;
+    const viewW = this.width / this.zoom;
+    const viewH = this.height / this.zoom;
 
     // Clear at full resolution
     ctx.fillStyle = '#0a0a1a';
@@ -2473,7 +3280,7 @@ class Game {
 
     // Apply zoom
     ctx.save();
-    ctx.scale(ZOOM, ZOOM);
+    ctx.scale(this.zoom, this.zoom);
 
     // Calculate visible tile range (in zoomed view)
     const startCol = Math.max(0, Math.floor(cx / TILE_SIZE) - 1);
@@ -2531,16 +3338,16 @@ class Game {
     ctx.fillStyle = '#f0d080';
     // Build waypoints matching the winding path
     const breadcrumbWaypoints = [
-      { x: 4, y: 10 },   // start
-      { x: 16, y: 10 },  // item 1
-      { x: 30, y: 10 },  // item 2
-      { x: 30, y: 24 },  // item 3
-      { x: 44, y: 24 },  // milestone1
-      { x: 44, y: 12 },  // item 4
-      { x: 58, y: 12 },  // item 5
-      { x: 58, y: 30 },  // item 6
-      { x: 44, y: 30 },  // item 7
-      { x: 44, y: 46 },  // dragon
+      { x: 3, y: 8 },    // start
+      { x: 9, y: 8 },    // item 1
+      { x: 15, y: 8 },   // item 2
+      { x: 21, y: 8 },   // item 3
+      { x: 27, y: 8 },   // milestone1
+      { x: 27, y: 15 },  // item 4
+      { x: 21, y: 15 },  // item 5
+      { x: 15, y: 15 },  // item 6
+      { x: 9, y: 15 },   // item 7
+      { x: 9, y: 24 },   // dragon
     ].map(p => ({ x: p.x * TILE_SIZE + TILE_SIZE/2, y: p.y * TILE_SIZE + TILE_SIZE/2 }));
 
     for (let i = 0; i < breadcrumbWaypoints.length - 1; i++) {
@@ -2601,35 +3408,68 @@ class Game {
       }
     }
 
+    // Draw doctor NPCs (celebrating)
+    this.drawDoctors(ctx, cx, cy);
+
     // Draw arrows
     this.drawArrows(ctx);
 
     // Draw particles on top (dragon fight only)
     this.particles.draw(ctx, cx, cy);
 
+    // Draw dragon speech bubble during opening
+    this.drawDragonSpeech(ctx, cx, cy);
+
     // Draw item labels (in world space)
     this.drawItemLabels(ctx, cx, cy);
+
+    // Draw tap-to-move indicator
+    if (this.tapIndicator) {
+      const ti = this.tapIndicator;
+      const ix = ti.x - cx;
+      const iy = ti.y - cy;
+      const pulse = Math.sin(this.time * 0.15) * 2;
+      ctx.globalAlpha = ti.alpha * 0.6;
+      ctx.strokeStyle = '#f0c040';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(ix, iy, 6 + pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner dot
+      ctx.fillStyle = '#f0c040';
+      ctx.globalAlpha = ti.alpha * 0.8;
+      ctx.beginPath();
+      ctx.arc(ix, iy, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
 
     // End zoom context
     ctx.restore();
 
     // --- HUD elements drawn at screen resolution (no zoom) ---
 
-    // Draw dragon HP bar
+    // Draw dragon HP bar (responsive)
     if (this.dragonFightActive) {
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(this.width/2 - 152, 110, 304, 40);
-      ctx.fillStyle = '#600';
-      ctx.fillRect(this.width/2 - 150, 112, 300, 36);
-      ctx.fillStyle = '#c03030';
-      ctx.fillRect(this.width/2 - 150, 112, this.dragonHP * 3, 36);
-      ctx.fillStyle = '#e04040';
-      ctx.fillRect(this.width/2 - 150, 112, this.dragonHP * 3, 14);
+      const barW = Math.min(300, this.width * 0.6);
+      const barH = Math.min(36, this.height * 0.05);
+      const barX = this.width / 2 - barW / 2;
+      const barY = Math.min(112, this.height * 0.14);
+      const fontSize = Math.max(10, Math.min(16, this.width * 0.02));
 
-      ctx.font = '16px "Press Start 2P"';
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+      ctx.fillStyle = '#600';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = '#c03030';
+      ctx.fillRect(barX, barY, (this.dragonHP / 100) * barW, barH);
+      ctx.fillStyle = '#e04040';
+      ctx.fillRect(barX, barY, (this.dragonHP / 100) * barW, barH * 0.4);
+
+      ctx.font = `${fontSize}px "Press Start 2P"`;
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
-      ctx.fillText('THE DRAGON', this.width/2, 100);
+      ctx.fillText('THE DRAGON', this.width / 2, barY - 10);
       ctx.textAlign = 'start';
     }
 
@@ -2640,38 +3480,38 @@ class Game {
   }
 
   drawZoneLabels(ctx, cx, cy) {
-    // Section 1: Foundation (shipped) — top-left area near start
-    const sec1X = 22 * TILE_SIZE - cx;
-    const sec1Y = 6 * TILE_SIZE - cy;
+    // Section 1: Foundation (shipped) — top row
+    const sec1X = 15 * TILE_SIZE - cx;
+    const sec1Y = 5 * TILE_SIZE - cy;
     ctx.save();
     ctx.globalAlpha = 0.12;
-    ctx.font = '16px "Press Start 2P"';
+    ctx.font = '12px "Press Start 2P"';
     ctx.fillStyle = '#40e040';
     ctx.textAlign = 'center';
     ctx.fillText('FOUNDATION', sec1X, sec1Y);
-    ctx.font = '7px "Press Start 2P"';
-    ctx.fillText('Shipped & Conquered', sec1X, sec1Y + 24);
+    ctx.font = '6px "Press Start 2P"';
+    ctx.fillText('Shipped & Conquered', sec1X, sec1Y + 20);
     ctx.restore();
 
-    // Section 2: Power-Ups (upcoming) — mid-right area
-    const sec2X = 52 * TILE_SIZE - cx;
-    const sec2Y = 20 * TILE_SIZE - cy;
+    // Section 2: Power-Ups (upcoming) — second row
+    const sec2X = 18 * TILE_SIZE - cx;
+    const sec2Y = 13 * TILE_SIZE - cy;
     ctx.save();
     ctx.globalAlpha = 0.12;
-    ctx.font = '16px "Press Start 2P"';
+    ctx.font = '12px "Press Start 2P"';
     ctx.fillStyle = '#f0c040';
     ctx.textAlign = 'center';
     ctx.fillText('POWER-UPS', sec2X, sec2Y);
-    ctx.font = '7px "Press Start 2P"';
-    ctx.fillText('On the Roadmap', sec2X, sec2Y + 24);
+    ctx.font = '6px "Press Start 2P"';
+    ctx.fillText('On the Roadmap', sec2X, sec2Y + 20);
     ctx.restore();
 
     // Dragon Lair label
-    const sec3X = 44 * TILE_SIZE - cx;
-    const sec3Y = 42 * TILE_SIZE - cy;
+    const sec3X = 9 * TILE_SIZE - cx;
+    const sec3Y = 21 * TILE_SIZE - cy;
     ctx.save();
     ctx.globalAlpha = 0.15;
-    ctx.font = '14px "Press Start 2P"';
+    ctx.font = '10px "Press Start 2P"';
     ctx.fillStyle = '#c03030';
     ctx.textAlign = 'center';
     ctx.fillText('DRAGON LAIR', sec3X, sec3Y);
@@ -2699,7 +3539,7 @@ class Game {
 
     // Dragon special handling
     if (item.icon === 'dragon') {
-      const dragonScale = 2.0; // Scale up the dragon for boss presence
+      const dragonScale = 1.5; // Scale up the dragon for boss presence
       const dw = sprite.width * dragonScale;
       const dh = sprite.height * dragonScale;
       const dragonCX = drawX + TILE_SIZE / 2;
@@ -2744,35 +3584,48 @@ class Game {
     // Draw the icon
     if (item.icon === 'tower') {
       // Use PixelLab castle sprite if available
+      let castleDrawX, castleDrawY, castleW, castleH;
       if (this.castleSprite) {
         const cW = this.castleSprite.width;
         const cH = this.castleSprite.height;
         const scale = 1.4; // Scale up slightly for visibility
-        ctx.drawImage(this.castleSprite,
-          centerX - (cW * scale) / 2,
-          drawY - (cH * scale) + TILE_SIZE + 4,
-          cW * scale, cH * scale);
+        castleW = cW * scale;
+        castleH = cH * scale;
+        castleDrawX = centerX - castleW / 2;
+        castleDrawY = drawY - castleH + TILE_SIZE + 4;
+        ctx.drawImage(this.castleSprite, castleDrawX, castleDrawY, castleW, castleH);
       } else {
         ctx.drawImage(sprite, drawX - TILE_SIZE/2, drawY - sprite.height + TILE_SIZE);
+        castleDrawX = drawX - TILE_SIZE/2;
+        castleDrawY = drawY - sprite.height + TILE_SIZE;
+        castleW = sprite.width;
+        castleH = sprite.height;
       }
+
       // Checkmark for shipped
       if (item.status === 'shipped') {
         ctx.drawImage(this.decos.checkmark, drawX + TILE_SIZE - 4, drawY - 8);
       }
     } else if (item.icon === 'tent') {
       // Use PixelLab tent sprite if available
+      let tentDrawX, tentDrawY, tentW, tentH;
       if (this.tentSprite) {
         const tW = this.tentSprite.width;
         const tH = this.tentSprite.height;
         const scale = 1.2;
-        ctx.drawImage(this.tentSprite,
-          centerX - (tW * scale) / 2,
-          drawY - (tH * scale) + TILE_SIZE + 4,
-          tW * scale, tH * scale);
+        tentW = tW * scale;
+        tentH = tH * scale;
+        tentDrawX = centerX - tentW / 2;
+        tentDrawY = drawY - tentH + TILE_SIZE + 4;
+        ctx.drawImage(this.tentSprite, tentDrawX, tentDrawY, tentW, tentH);
       } else {
         // Fallback to old chest sprite
         const fallbackSprite = this.decos['chest'];
         if (fallbackSprite) ctx.drawImage(fallbackSprite, drawX, drawY);
+        tentDrawX = drawX;
+        tentDrawY = drawY;
+        tentW = TILE_SIZE;
+        tentH = TILE_SIZE;
       }
     } else if (item.icon === 'chest') {
       ctx.drawImage(sprite, drawX, drawY);
@@ -2870,7 +3723,7 @@ class Game {
   }
 
   drawItemLabels(ctx, cx, cy) {
-    ctx.font = '8px "Press Start 2P"';
+    ctx.font = '10px Silkscreen';
     ctx.textAlign = 'center';
 
     for (const item of ROADMAP_ITEMS) {
@@ -2894,27 +3747,27 @@ class Game {
       const labelY = item.icon === 'tower' ? drawY - 36 : drawY - 18;
       const label = item.title;
       const metrics = ctx.measureText(label);
-      const labelW = metrics.width + 16;
-      const labelH = 18;
+      const labelW = metrics.width + 12;
+      const labelH = 16;
 
-      ctx.globalAlpha = alpha * 0.85;
-      ctx.fillStyle = 'rgba(0,0,0,0.75)';
-      ctx.fillRect(drawX - labelW/2, labelY - 10, labelW, labelH);
+      ctx.globalAlpha = alpha * 0.8;
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      // Rounded-ish label pill
+      ctx.fillRect(drawX - labelW/2, labelY - 8, labelW, labelH);
 
       ctx.globalAlpha = alpha;
 
+      // Small status dot
       if (item.status === 'shipped') {
-        ctx.fillStyle = '#80ff80';
-        ctx.fillRect(drawX - labelW/2 + 3, labelY - 7, 4, 4);
         ctx.fillStyle = '#40e040';
-        ctx.fillRect(drawX - labelW/2 + 3, labelY - 2, 4, 4);
+        ctx.fillRect(drawX - labelW/2 + 4, labelY - 2, 3, 3);
       } else {
         ctx.fillStyle = '#f0c040';
-        ctx.fillRect(drawX - labelW/2 + 3, labelY - 5, 4, 4);
+        ctx.fillRect(drawX - labelW/2 + 4, labelY - 2, 3, 3);
       }
 
       ctx.fillStyle = item.status === 'shipped' ? '#c0ffc0' : '#ffe080';
-      ctx.fillText(label, drawX, labelY + 2);
+      ctx.fillText(label, drawX, labelY + 4);
 
       ctx.globalAlpha = 1;
     }
@@ -2990,9 +3843,192 @@ class Game {
     mCtx.strokeRect(
       this.cameraX * scaleX,
       this.cameraY * scaleY,
-      (this.width / ZOOM) * scaleX,
-      (this.height / ZOOM) * scaleY
+      (this.width / this.zoom) * scaleX,
+      (this.height / this.zoom) * scaleY
     );
+  }
+
+  // Load doctor NPC sprites from assets (generated by PixelLab)
+  async loadDoctorSprites() {
+    const loadImg = (src) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    // Try to load doctor sprites — graceful fallback if not found
+    const doctorDirs = ['assets/npcs/doctor1', 'assets/npcs/doctor2', 'assets/npcs/doctor3'];
+    for (const dir of doctorDirs) {
+      const south = await loadImg(`${dir}/south.png`);
+      if (south) {
+        this.doctorSprites.push(south);
+      }
+    }
+  }
+
+  // Spawn celebrating doctor NPCs near a milestone
+  spawnDoctors(milestoneX, milestoneY) {
+    this.doctorsSpawned = true;
+    const positions = [
+      { x: milestoneX + 3, y: milestoneY - 2 },
+      { x: milestoneX + 4, y: milestoneY + 1 },
+      { x: milestoneX + 2, y: milestoneY + 3 },
+      { x: milestoneX - 2, y: milestoneY + 2 },
+    ];
+    const messages = [
+      "We love your app!",
+      "Thank you, Bard!",
+      "Our hero!",
+      "Amazing work!"
+    ];
+    for (let i = 0; i < positions.length; i++) {
+      this.doctors.push({
+        x: positions[i].x * TILE_SIZE + TILE_SIZE / 2,
+        y: positions[i].y * TILE_SIZE + TILE_SIZE / 2,
+        message: messages[i],
+        spriteIdx: i % Math.max(1, this.doctorSprites.length),
+        bouncePhase: Math.random() * Math.PI * 2,
+        spawnTime: this.time
+      });
+    }
+  }
+
+  // Draw doctor NPCs with speech bubbles
+  drawDoctors(ctx, cx, cy) {
+    for (const doc of this.doctors) {
+      const sx = doc.x - cx;
+      const sy = doc.y - cy;
+      const bounce = Math.sin(this.time * 0.08 + doc.bouncePhase) * 2;
+
+      // Draw doctor sprite or fallback circle
+      if (this.doctorSprites[doc.spriteIdx]) {
+        const sprite = this.doctorSprites[doc.spriteIdx];
+        ctx.drawImage(sprite, sx - 24, sy - 40 + bounce);
+      } else {
+        // Fallback: simple doctor pixel art
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(sx - 8, sy - 24 + bounce, 16, 20);
+        ctx.fillStyle = '#f0d0a0';
+        ctx.fillRect(sx - 6, sy - 32 + bounce, 12, 10);
+        ctx.fillStyle = '#e03030';
+        ctx.fillRect(sx - 2, sy - 18 + bounce, 4, 6);
+        ctx.fillRect(sx - 4, sy - 16 + bounce, 8, 2);
+      }
+
+      // Speech bubble
+      const fadeIn = Math.min(1, (this.time - doc.spawnTime) / 60);
+      if (fadeIn > 0.5) {
+        ctx.globalAlpha = Math.min(1, (fadeIn - 0.5) * 2);
+        const msg = doc.message;
+        ctx.font = '5px "Press Start 2P"';
+        const tw = ctx.measureText(msg).width;
+        const bw = tw + 8;
+        const bh = 14;
+        const bx = sx - bw / 2;
+        const by = sy - 50 + bounce;
+
+        // Bubble background
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(bx - 1, by + 1, 1, bh - 2);
+        ctx.fillRect(bx + bw, by + 1, 1, bh - 2);
+        ctx.fillRect(bx + 1, by - 1, bw - 2, 1);
+        ctx.fillRect(bx + 1, by + bh, bw - 2, 1);
+        // Tail
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(sx - 2, by + bh, 4, 3);
+
+        // Text
+        ctx.fillStyle = '#222';
+        ctx.textAlign = 'center';
+        ctx.fillText(msg, sx, by + 9);
+        ctx.textAlign = 'start';
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // Draw dragon speech bubble during opening scene
+  drawDragonSpeech(ctx, cx, cy) {
+    if (this.gamePhase !== 'opening_dragon') return;
+    const dragon = ROADMAP_ITEMS.find(i => i.id === 'milestone2');
+    const dx = dragon.mapX * TILE_SIZE + TILE_SIZE / 2 - cx;
+    const dy = dragon.mapY * TILE_SIZE - cy - 30;
+
+    const text = this.openingText.substring(0, this.openingTextIndex);
+    if (text.length === 0) return;
+
+    // Word wrap
+    ctx.font = '6px "Press Start 2P"';
+    const maxW = 180;
+    const words = text.split(' ');
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW) {
+        if (line) lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+
+    const lineH = 12;
+    const bw = maxW + 16;
+    const bh = lines.length * lineH + 16;
+    const bx = dx - bw / 2;
+    const by = dy - bh;
+
+    // Bubble
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(bx - 1, by + 1, 1, bh - 2);
+    ctx.fillRect(bx + bw, by + 1, 1, bh - 2);
+    ctx.fillRect(bx + 1, by - 1, bw - 2, 1);
+    ctx.fillRect(bx + 1, by + bh, bw - 2, 1);
+    // Tail pointing down to dragon
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(dx - 4, by + bh, 8, 6);
+    ctx.fillRect(dx - 2, by + bh + 6, 4, 4);
+
+    // Text
+    ctx.fillStyle = '#c03030';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], dx, by + 12 + i * lineH);
+    }
+    ctx.textAlign = 'start';
+  }
+
+  // Show/hide roadmap summary overlay
+  showRoadmapOverlay() {
+    this.roadmapOverlayVisible = true;
+    const container = document.getElementById('roadmap-scroll-content');
+    let html = '<div class="roadmap-title">THE ROADMAP</div>';
+    for (const item of ROADMAP_ITEMS) {
+      if (item.status === 'milestone') continue;
+      const statusClass = item.status === 'shipped' ? 'shipped' : 'upcoming';
+      const statusText = item.status === 'shipped' ? '✓ SHIPPED' : '★ UPCOMING';
+      html += `<div class="roadmap-item">`;
+      html += `<div class="ri-status ${statusClass}">${statusText}</div>`;
+      html += `<div class="ri-title">${item.id}. ${item.title}</div>`;
+      html += `<div class="ri-desc">${item.description}</div>`;
+      if (item.docsUrl) {
+        html += `<a class="ri-link" href="${item.docsUrl}" target="_blank">EXPLORE DOCS →</a>`;
+      }
+      html += `</div>`;
+    }
+    container.innerHTML = html;
+    document.getElementById('roadmap-overlay').classList.add('visible');
+  }
+
+  hideRoadmapOverlay() {
+    this.roadmapOverlayVisible = false;
+    document.getElementById('roadmap-overlay').classList.remove('visible');
   }
 
   loop() {
