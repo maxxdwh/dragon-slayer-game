@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Dictation Quest — Corti API Roadmap</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a1a;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      cursor: default;
+      user-select: none;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+
+    /* ---- HUD ---- */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #hud .left-hud {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #hud .title {
+      font-size: 16px;
+      color: #f0c040;
+      text-shadow: 2px 2px 0 #000;
+      letter-spacing: 2px;
+    }
+
+    #hud .subtitle {
+      font-size: 10px;
+      color: #b0b0c0;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    #health-bar {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .heart {
+      width: 24px;
+      height: 24px;
+      position: relative;
+    }
+
+    .heart svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(1px 1px 0 #000);
+    }
+
+    .heart.full svg { fill: #e03030; }
+    .heart.empty svg { fill: #401010; opacity: 0.5; }
+    .heart.damage { animation: heartShake 0.3s ease-out; }
+
+    @keyframes heartShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px) rotate(-5deg); }
+      75% { transform: translateX(3px) rotate(5deg); }
+    }
+
+    #hud .quest-info {
+      text-align: right;
+      font-size: 11px;
+      color: #90e090;
+      text-shadow: 1px 1px 0 #000;
+      pointer-events: auto;
+    }
+
+    #heart-counter {
+      font-size: 11px;
+      color: #ff6060;
+      text-shadow: 1px 1px 0 #000;
+      margin-top: 4px;
+    }
+
+    #view-roadmap-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #f0c040;
+      background: rgba(0,0,0,0.4);
+      border: 2px solid #f0c040;
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-top: 8px;
+      pointer-events: auto;
+    }
+    #view-roadmap-btn:hover {
+      background: rgba(240,192,64,0.2);
+    }
+
+    /* ---- Info Panel (scroll popup) ---- */
+    #info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 40%, #dcc498 100%);
+      border: 4px solid #8a6a3a;
+      padding: 20px 24px;
+      max-width: 480px;
+      width: 90%;
+      z-index: 20;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    #info-panel.visible {
+      display: block;
+      animation: panelSlideUp 0.25s ease-out;
+    }
+
+    @keyframes panelSlideUp {
+      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+
+    #info-panel .panel-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: #6a4a2a;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    #info-panel .panel-close:hover { color: #c03030; }
+
+    #info-panel .panel-status {
+      font-size: 9px;
+      color: #3d5c2e;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+    #info-panel .panel-status.upcoming {
+      color: #6b5020;
+    }
+
+    #info-panel .panel-title {
+      font-size: 11px;
+      color: #2a1f14;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    #info-panel .panel-desc {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #4a3520;
+      line-height: 2;
+      margin-bottom: 14px;
+    }
+
+    #info-panel .panel-number {
+      display: inline-block;
+      background: #4a3520;
+      color: #f5e6c8;
+      padding: 3px 10px;
+      margin-right: 10px;
+      font-size: 10px;
+    }
+
+    #info-panel .panel-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    #info-panel .panel-explore {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #f5e6c8;
+      background: linear-gradient(180deg, #6a5440 0%, #4a3520 100%);
+      border: 2px solid #8a6a3a;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    #info-panel .panel-explore:hover {
+      background: linear-gradient(180deg, #7b6354 0%, #5a4530 100%);
+      color: #fff;
+    }
+    #info-panel .panel-explore.hidden { display: none; }
+
+    /* ---- Milestone Banner ---- */
+    #milestone-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      background: rgba(0,0,0,0.85);
+      border: 3px solid #f0c040;
+      padding: 24px 40px;
+      z-index: 30;
+      text-align: center;
+    }
+
+    #milestone-banner.visible {
+      display: block;
+      animation: milestoneFadeIn 0.4s ease-out;
+    }
+
+    @keyframes milestoneFadeIn {
+      from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    #milestone-banner .banner-title {
+      font-size: 14px;
+      color: #f0c040;
+      margin-bottom: 12px;
+      text-shadow: 0 0 8px rgba(240,192,64,0.5);
+      white-space: pre-line;
+      line-height: 1.8;
+    }
+
+    #milestone-banner .banner-text {
+      font-size: 9px;
+      color: #d0d0e0;
+      line-height: 2.2;
+      white-space: pre-line;
+      margin-bottom: 16px;
+    }
+
+    #milestone-banner .banner-dismiss {
+      font-size: 8px;
+      color: #888;
+    }
+
+    /* ---- Intro Scroll ---- */
+    #intro-backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 40;
+      display: none;
+    }
+    #intro-backdrop.visible { display: block; }
+
+    #intro-scroll {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 40%, #dcc498 100%);
+      border: 5px solid #8a6a3a;
+      padding: 32px 40px;
+      max-width: 520px;
+      width: 90%;
+      z-index: 41;
+      text-align: center;
+      display: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    #intro-scroll.visible {
+      display: block;
+      animation: scrollAppear 0.5s ease-out;
+    }
+
+    @keyframes scrollAppear {
+      from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    .scroll-title {
+      font-size: 18px;
+      color: #4a3520;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+      letter-spacing: 3px;
+    }
+
+    .scroll-text {
+      font-size: 9px;
+      color: #5a4530;
+      line-height: 2.4;
+      margin-bottom: 24px;
+    }
+
+    .scroll-paragraph {
+      margin-bottom: 12px;
+    }
+
+    .go-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: #fff;
+      background: linear-gradient(180deg, #4a8a30 0%, #2a6a18 100%);
+      border: 3px solid #60b040;
+      padding: 14px 40px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .go-btn:hover {
+      background: linear-gradient(180deg, #5a9a40 0%, #3a7a28 100%);
+    }
+
+    /* ---- Dragon Speech ---- */
+    #dragon-speech {
+      position: absolute;
+      display: none;
+      background: #fff;
+      border: 3px solid #c03030;
+      padding: 16px 20px;
+      font-size: 8px;
+      color: #c03030;
+      line-height: 2;
+      max-width: 320px;
+      z-index: 35;
+      text-align: center;
+    }
+    #dragon-speech.visible { display: block; }
+    #dragon-speech::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #fff;
+    }
+
+    /* ---- Slay Button ---- */
+    #slay-button {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      z-index: 25;
+    }
+    #slay-button.visible { display: block; }
+
+    #slay-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: #fff;
+      background: linear-gradient(180deg, #c04040 0%, #802020 100%);
+      border: 3px solid #ff6040;
+      padding: 16px 32px;
+      cursor: pointer;
+      animation: slayPulse 1.5s ease-in-out infinite;
+      box-shadow: 0 4px 16px rgba(192,48,48,0.4);
+    }
+    @keyframes slayPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(192,48,48,0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 6px 24px rgba(192,48,48,0.6); }
+    }
+
+    /* ---- Victory Screen ---- */
+    #victory-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(10,10,26,0.92);
+      z-index: 50;
+      text-align: center;
+      padding: 24px;
+      gap: 16px;
+    }
+    #victory-screen.visible {
+      display: flex;
+      animation: fadeIn 1s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .victory-title {
+      font-size: 24px;
+      color: #f0c040;
+      text-shadow: 0 0 16px rgba(240,192,64,0.5);
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+    }
+
+    .victory-text {
+      font-size: 10px;
+      color: #d0d0e0;
+      line-height: 2;
+      margin-bottom: 16px;
+    }
+
+    .cta-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: #fff;
+      background: linear-gradient(180deg, #4a8a30 0%, #2a6a18 100%);
+      border: 3px solid #60b040;
+      padding: 16px 32px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .cta-btn:hover {
+      background: linear-gradient(180deg, #5a9a40 0%, #3a7a28 100%);
+    }
+
+    .secondary-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: #b0b0c0;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid #606080;
+      padding: 12px 24px;
+      cursor: pointer;
+    }
+    .secondary-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    /* ---- Roadmap Overlay ---- */
+    #roadmap-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(10,10,26,0.92);
+      z-index: 55;
+      padding: 24px;
+    }
+    #roadmap-overlay.visible {
+      display: flex;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    #roadmap-overlay .roadmap-scroll {
+      background: linear-gradient(135deg, #2a1a08 0%, #3a2510 40%, #2a1a08 100%);
+      border: 4px solid #c09030;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .roadmap-close {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      color: #c09030;
+      background: none;
+      border: 2px solid #c09030;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 56;
+    }
+    .roadmap-close:hover { background: rgba(192,144,48,0.2); }
+
+    .roadmap-title {
+      font-size: 16px;
+      color: #f0c040;
+      text-align: center;
+      margin-bottom: 24px;
+      letter-spacing: 3px;
+    }
+
+    .roadmap-item {
+      border-bottom: 1px solid rgba(192,144,48,0.3);
+      padding: 16px 0;
+    }
+
+    .ri-status {
+      font-size: 8px;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+    .ri-status.shipped { color: #40e040; }
+    .ri-status.upcoming { color: #f0c040; }
+
+    .ri-title {
+      font-size: 10px;
+      color: #e8d4a8;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    .ri-desc {
+      font-size: 8px;
+      color: #a09070;
+      line-height: 2;
+      margin-bottom: 8px;
+    }
+
+    .ri-link {
+      font-size: 8px;
+      color: #f0c040;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .ri-link:hover { color: #ffe080; }
+
+    /* ---- Loading Screen ---- */
+    #loading-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #0a0a1a;
+      z-index: 100;
+      gap: 24px;
+    }
+    #loading-screen .load-title {
+      font-size: 14px;
+      color: #f0c040;
+      letter-spacing: 3px;
+    }
+    #load-bar-container {
+      width: 240px;
+      height: 12px;
+      background: #1a1a3a;
+      border: 2px solid #404060;
+    }
+    #load-bar {
+      height: 100%;
+      width: 0%;
+      background: #f0c040;
+      transition: width 0.3s ease;
+    }
+    #load-text {
+      font-size: 8px;
+      color: #808090;
+    }
+
+    /* ---- Mobile Banner ---- */
+    #mobile-banner {
+      display: none;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.9);
+      color: #f0c040;
+      font-size: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      line-height: 2;
+      z-index: 60;
+    }
+
+    /* ---- Mobile Controls ---- */
+    #mobile-controls {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      left: 0; right: 0;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .mobile-dpad {
+      position: absolute;
+      bottom: 10px;
+      left: 20px;
+      pointer-events: auto;
+    }
+
+    .mobile-dpad button {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      font-size: 20px;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-dpad .btn-left { left: 0; top: 52px; }
+    .mobile-dpad .btn-right { left: 104px; top: 52px; }
+
+    .mobile-jump {
+      position: absolute;
+      bottom: 20px;
+      right: 30px;
+      pointer-events: auto;
+    }
+
+    .mobile-jump button {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      #hud .title { font-size: 12px; }
+      #hud .subtitle { font-size: 8px; }
+      .heart { width: 18px; height: 18px; }
+      .scroll-title { font-size: 14px; }
+      #info-panel { max-width: 95%; padding: 16px 18px; }
+      #info-panel .panel-title { font-size: 9px; }
+      #info-panel .panel-desc { font-size: 8px; }
+      .victory-title { font-size: 16px; }
+    }
+
+    @media (max-width: 480px) {
+      #hud { padding: 8px 12px; }
+      #hud .title { font-size: 10px; }
+      .heart { width: 14px; height: 14px; }
+      #info-panel { padding: 12px 14px; bottom: 8px; }
+      .scroll-title { font-size: 12px; }
+    }
+
+    @media (pointer: coarse) {
+      #mobile-controls { display: block; }
+      .desktop-hint { display: none; }
+      .mobile-hint { display: inline; }
+    }
+    @media (pointer: fine) {
+      .mobile-hint { display: none; }
+      .desktop-hint { display: inline; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="left-hud">
+        <div class="title">DICTATION QUEST</div>
+        <div class="subtitle">Corti API Roadmap</div>
+        <div id="health-bar"></div>
+        <div id="heart-counter">Hearts: 0/0</div>
+      </div>
+      <div class="quest-info">
+        <div id="quest-progress">Quest: 0/7</div>
+        <button id="view-roadmap-btn">VIEW ROADMAP</button>
+      </div>
+    </div>
+
+    <!-- Info Panel (scroll popup for roadmap items) -->
+    <div id="info-panel">
+      <button class="panel-close" id="panel-close">X</button>
+      <div class="panel-status" id="panel-status"></div>
+      <div class="panel-title" id="panel-title"></div>
+      <div class="panel-desc" id="panel-desc"></div>
+      <div class="panel-actions">
+        <a class="panel-explore hidden" id="panel-explore" target="_blank">Explore Docs</a>
+      </div>
+    </div>
+
+    <!-- Milestone Banner -->
+    <div id="milestone-banner">
+      <div class="banner-title" id="banner-title"></div>
+      <div class="banner-text" id="banner-text"></div>
+      <div class="banner-dismiss"><span class="desktop-hint">Press any key to continue</span><span class="mobile-hint">Tap to continue</span></div>
+    </div>
+
+    <!-- Dragon Speech Bubble -->
+    <div id="dragon-speech"></div>
+
+    <!-- Intro Scroll -->
+    <div id="intro-backdrop"></div>
+    <div id="intro-scroll">
+      <div class="scroll-title">DICTATION QUEST</div>
+      <div class="scroll-text">
+        <p class="scroll-paragraph">Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.</p>
+        <p class="scroll-paragraph"><span class="desktop-hint">Use <span style="color:#4a3520;">Arrow Keys</span> to move. Press <span style="color:#4a3520;">Space</span> to jump.</span><span class="mobile-hint">Use the <span style="color:#4a3520;">D-pad</span> to move. Tap <span style="color:#4a3520;">Jump</span> to leap.</span> Collect hearts and avoid pitfalls!</p>
+      </div>
+      <button class="go-btn" id="go-btn">GO</button>
+    </div>
+
+    <!-- Slay Dragon Button -->
+    <div id="slay-button">
+      <button id="slay-btn">SLAY THE DRAGON</button>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen">
+      <div class="victory-title">QUEST COMPLETE</div>
+      <div class="victory-text">
+        Bard has slain the Dragon.<br>The Corti API roadmap awaits.
+      </div>
+      <a class="cta-btn" href="https://console.corti.app/signup" target="_blank" id="studio-cta">Start Building in Corti Console</a>
+      <button class="secondary-btn" id="review-roadmap-btn">Review the Roadmap</button>
+      <button class="secondary-btn" id="play-again-btn">Play Again</button>
+    </div>
+
+    <!-- Roadmap Summary Overlay -->
+    <div id="roadmap-overlay">
+      <button class="roadmap-close" id="roadmap-close">X</button>
+      <div class="roadmap-scroll">
+        <div id="roadmap-scroll-content"></div>
+      </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="load-title">DICTATION QUEST</div>
+      <div id="load-bar-container"><div id="load-bar"></div></div>
+      <div id="load-text">Loading...</div>
+    </div>
+
+    <!-- Mobile Banner -->
+    <div id="mobile-banner">
+      This experience is optimized for desktop.<br>For the best experience, visit on a computer.
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+      <div class="mobile-dpad">
+        <button class="btn-left" id="m-left">&#9664;</button>
+        <button class="btn-right" id="m-right">&#9654;</button>
+      </div>
+      <div class="mobile-jump">
+        <button id="m-jump">JUMP</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const TILE = 32;
+const GRAVITY = 0.35;
+const MAX_FALL = 8;
+const JUMP_FORCE = -8.5;
+const MOVE_SPEED = 3.0;
+const PLAYER_W = 36;
+const PLAYER_H = 52;
+const CAMERA_SMOOTH = 0.08;
+const LOOK_AHEAD = 100;
+
+// Mario-like physics helpers
+const COYOTE_FRAMES = 8;     // frames after leaving ground you can still jump
+const JUMP_BUFFER_FRAMES = 8; // frames before landing where jump input is remembered
+const JUMP_CUT_MULT = 0.45;  // multiply vy by this when releasing jump early
+
+// Level dimensions (tighter spacing)
+const LEVEL_COLS = 200;
+const LEVEL_ROWS = 20;
+const LEVEL_W = LEVEL_COLS * TILE;
+const LEVEL_H = LEVEL_ROWS * TILE;
+
+// Ground row (baseline for platforms — rows 14-19 are solid ground)
+const GROUND_ROW = 14;
+
+const DIR_NAMES = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+
+// ============================================================
+// ROADMAP DATA (same as original)
+// ============================================================
+const ROADMAP_ITEMS = [
+  {
+    id: 1,
+    title: 'Clinical-grade STT Models',
+    status: 'shipped',
+    description: 'Foundation. High-accuracy medical STT across supported languages, purpose-built for clinical terminology and high-stakes workflows.',
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/about/languages'
+  },
+  {
+    id: 2,
+    title: 'Command Framework',
+    status: 'shipped',
+    description: 'Define voice commands with dynamic parameters to navigate, edit, and control application workflows. Gives clinicians precise control without breaking dictation flow.',
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/stt/commands'
+  },
+  {
+    id: 3,
+    title: 'Output Formatting',
+    status: 'shipped',
+    description: 'Configurable formatting for dates, times, numbers, units, measurements, ranges, and ordinals. Automatic capitalization and punctuation. Output reads like a clinical document, not a raw transcript.',
+    icon: 'tower',
+    docsUrl: 'https://docs.corti.ai/stt/formatting'
+  },
+  {
+    id: 'milestone1',
+    title: 'EMPOWERED TO BUILD\nA DRAGON REPLACEMENT',
+    status: 'milestone',
+    description: '',
+    icon: 'bow'
+  },
+  {
+    id: 4,
+    title: 'Advanced Formatting',
+    status: 'upcoming',
+    description: 'Improved handling of key homophones (e.g., "period", "colon"). Better date and number localization.',
+    icon: 'tent'
+  },
+  {
+    id: 5,
+    title: 'Advanced Speed',
+    status: 'upcoming',
+    description: 'Real-time partial transcription as the user speaks. Essential for building responsive dictation UIs where text appears on screen with minimal perceived latency.',
+    icon: 'tent'
+  },
+  {
+    id: 6,
+    title: 'Advanced Commands',
+    status: 'upcoming',
+    description: 'Wildcard variables for templated command systems beyond static phrase matching. Non-verbal command anchors that map physical device inputs (foot pedals, hotkeys, button presses) to actions in the transcription stream.',
+    icon: 'tent'
+  },
+  {
+    id: 7,
+    title: 'Advanced Customization',
+    status: 'upcoming',
+    description: 'Organization-specific tuning. Custom vocabulary handles recognition (getting the model to hear the right terms), replacement rules handle formatting (standardizing what appears in output). Together they let customers tailor the full pipeline to their environment.',
+    icon: 'tent'
+  },
+  {
+    id: 'milestone2',
+    title: 'SLAY THE DRAGON\nONCE AND FOR ALL',
+    status: 'milestone',
+    description: '',
+    icon: 'dragon'
+  }
+];
+
+// Zone definitions — tighter spacing so landmarks come fast
+const ZONES = [
+  { startCol: 0,   terrain: 'grass',    item: null,         label: 'THE JOURNEY BEGINS' },
+  { startCol: 14,  terrain: 'grass',    item: ROADMAP_ITEMS[0], label: 'FOUNDATION' },
+  { startCol: 32,  terrain: 'grass',    item: ROADMAP_ITEMS[1], label: null },
+  { startCol: 50,  terrain: 'grass',    item: ROADMAP_ITEMS[2], label: null },
+  { startCol: 68,  terrain: 'grass',    item: ROADMAP_ITEMS[3], label: 'EMPOWERMENT' },  // milestone1
+  { startCol: 86,  terrain: 'stone',    item: ROADMAP_ITEMS[4], label: 'POWER-UPS' },
+  { startCol: 104, terrain: 'stone',    item: ROADMAP_ITEMS[5], label: null },
+  { startCol: 122, terrain: 'stone',    item: ROADMAP_ITEMS[6], label: null },
+  { startCol: 140, terrain: 'stone',    item: ROADMAP_ITEMS[7], label: null },
+  { startCol: 162, terrain: 'volcanic', item: ROADMAP_ITEMS[8], label: 'DRAGON LAIR' }  // milestone2/dragon
+];
+
+// ============================================================
+// PARTICLE SYSTEM
+// ============================================================
+class ParticleSystem {
+  constructor() { this.particles = []; }
+
+  emit(x, y, count, opts = {}) {
+    const { colors = ['#f0c040', '#ffe070'], speed = 3, life = 30, upward = false, gravity = 0.05 } = opts;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = (Math.random() * 0.6 + 0.4) * speed;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: upward ? -Math.abs(Math.sin(angle) * spd) : Math.sin(angle) * spd,
+        life,
+        maxLife: life,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: Math.random() * 3 + 1,
+        gravity
+      });
+    }
+  }
+
+  update() {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.life--;
+      if (p.life <= 0) this.particles.splice(i, 1);
+    }
+  }
+
+  draw(ctx, cx, cy) {
+    for (const p of this.particles) {
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(
+        Math.round(p.x - cx - p.size / 2),
+        Math.round(p.y - cy - p.size / 2),
+        Math.round(p.size),
+        Math.round(p.size)
+      );
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ============================================================
+// LEVEL GENERATOR
+// ============================================================
+class Level {
+  constructor() {
+    // Grid: 0 = air, 1 = solid ground, 2 = one-way platform
+    this.grid = [];
+    for (let r = 0; r < LEVEL_ROWS; r++) {
+      this.grid[r] = new Array(LEVEL_COLS).fill(0);
+    }
+
+    this.platforms = [];    // {x, y, w, h, type, ...}
+    this.hearts = [];       // {x, y, collected, anim}
+    this.hazards = [];      // {x, y, w, h, type, ...}
+    this.landmarks = [];    // {x, y, item, visited}
+    this.decorations = [];  // {x, y, type}
+    this.terrainMap = [];   // terrain type per column: 'grass'|'stone'|'volcanic'
+
+    this.generate();
+  }
+
+  generate() {
+    // Assign terrain type per column
+    this.terrainMap = new Array(LEVEL_COLS).fill('grass');
+    for (const zone of ZONES) {
+      const nextZone = ZONES[ZONES.indexOf(zone) + 1];
+      const endCol = nextZone ? nextZone.startCol : LEVEL_COLS;
+      for (let c = zone.startCol; c < endCol; c++) {
+        this.terrainMap[c] = zone.terrain;
+      }
+    }
+
+    // Build ground and platforms zone by zone
+    for (let zi = 0; zi < ZONES.length; zi++) {
+      const zone = ZONES[zi];
+      const nextZone = ZONES[zi + 1];
+      const startCol = zone.startCol;
+      const endCol = nextZone ? nextZone.startCol : LEVEL_COLS;
+      const zoneWidth = endCol - startCol;
+
+      // Landmark position (centered in zone)
+      const landmarkCol = startCol + Math.floor(zoneWidth / 2);
+
+      if (zone.item) {
+        this.landmarks.push({
+          x: landmarkCol * TILE + TILE / 2,
+          y: (GROUND_ROW - 1) * TILE,
+          item: zone.item,
+          visited: false,
+          col: landmarkCol
+        });
+      }
+
+      // Build ground
+      this.buildZoneGround(startCol, endCol, zi);
+
+      // Place floating platforms between landmarks
+      if (zi > 0 && zi < ZONES.length) {
+        this.buildPlatforms(startCol, Math.min(startCol + 12, endCol), zi);
+      }
+
+      // Place hearts in the zone
+      this.placeHearts(startCol, endCol, zi);
+
+      // Place hazards (not in first zone or at landmarks)
+      if (zi >= 2) {
+        this.placeHazards(startCol, endCol, zi);
+      }
+
+      // Place decorations
+      this.placeDecorations(startCol, endCol, zi);
+    }
+  }
+
+  buildZoneGround(startCol, endCol, zoneIdx) {
+    // Fill ground rows
+    for (let c = startCol; c < endCol; c++) {
+      // Create gaps (HIPAA holes) - but not in first zone, not at landmark positions, and not at very end
+      const isLandmarkArea = this.landmarks.some(l => Math.abs(l.col - c) < 4);
+      const isStartArea = c < 8;
+      const isDragonArea = c > LEVEL_COLS - 15;
+
+      if (!isStartArea && !isLandmarkArea && !isDragonArea && zoneIdx >= 3) {
+        // Chance of a gap (less frequent, narrower)
+        const gapSeed = (c * 7 + zoneIdx * 13) % 53;
+        if (gapSeed < 2 && c > startCol + 6 && c < endCol - 6) {
+          // Skip this column (gap) - only 2 cols wide (easy to jump)
+          const gapW = 2;
+          if (c + gapW < endCol - 5) {
+            // Register as HIPAA Hole hazard
+            this.hazards.push({
+              type: 'hipaa_hole',
+              x: c * TILE,
+              y: GROUND_ROW * TILE,
+              w: gapW * TILE,
+              h: 4 * TILE,
+              col: c,
+              gapW
+            });
+            c += gapW; // skip these cols
+            continue;
+          }
+        }
+      }
+
+      // Solid ground from GROUND_ROW to bottom
+      for (let r = GROUND_ROW; r < LEVEL_ROWS; r++) {
+        this.grid[r][c] = 1;
+      }
+    }
+  }
+
+  buildPlatforms(startCol, endCol, zoneIdx) {
+    // Floating platforms between zones — wider and easier to land on
+    const numPlats = 1 + (zoneIdx % 2);
+    for (let i = 0; i < numPlats; i++) {
+      const px = startCol + 3 + Math.floor((i / numPlats) * (endCol - startCol - 6));
+      const py = GROUND_ROW - 3 - (i % 2);
+      const pw = 4 + (i % 2) * 2; // wider: 4-6 tiles
+
+      if (py < 2 || py >= GROUND_ROW) continue;
+
+      // One-way platform (can jump through from below)
+      for (let c = px; c < px + pw && c < endCol; c++) {
+        if (c >= 0 && c < LEVEL_COLS && py >= 0 && py < LEVEL_ROWS) {
+          this.grid[py][c] = 2; // one-way
+        }
+      }
+
+      this.platforms.push({
+        x: px * TILE,
+        y: py * TILE,
+        w: pw * TILE,
+        h: TILE,
+        type: zoneIdx >= 8 ? 'crumbling' : 'normal',
+        crumbleTimer: -1,
+        active: true,
+        col: px,
+        row: py,
+        pw
+      });
+    }
+  }
+
+  placeHearts(startCol, endCol, zoneIdx) {
+    // 2-3 hearts per zone, placed just above ground level (easy to grab)
+    const count = 2 + (zoneIdx % 2);
+    for (let i = 0; i < count; i++) {
+      const col = startCol + 3 + Math.floor((i / count) * (endCol - startCol - 6));
+      // Place heart 2 tiles above ground level
+      const heartRow = GROUND_ROW - 3;
+      this.hearts.push({
+        x: col * TILE + TILE / 2,
+        y: heartRow * TILE + TILE / 2,
+        collected: false,
+        anim: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  placeHazards(startCol, endCol, zoneIdx) {
+    const terrain = ZONES[zoneIdx].terrain;
+
+    // Compliance Spikes
+    if (zoneIdx >= 3 && zoneIdx <= 6) {
+      const spikeCol = startCol + 8 + (zoneIdx * 3) % 7;
+      if (spikeCol < endCol - 3) {
+        const spikeW = 2;
+        this.hazards.push({
+          type: 'spikes',
+          x: spikeCol * TILE,
+          y: (GROUND_ROW - 1) * TILE + 16,
+          w: spikeW * TILE,
+          h: 16,
+          col: spikeCol
+        });
+      }
+    }
+
+    // Vendor Lock-in Tar (stone zones)
+    if (terrain === 'stone' && zoneIdx >= 5) {
+      const tarCol = startCol + 15 + (zoneIdx * 5) % 9;
+      if (tarCol < endCol - 5) {
+        this.hazards.push({
+          type: 'tar',
+          x: tarCol * TILE,
+          y: (GROUND_ROW - 1) * TILE,
+          w: 4 * TILE,
+          h: TILE,
+          col: tarCol
+        });
+      }
+    }
+
+    // Data Breach Fire (volcanic zone)
+    if (terrain === 'volcanic') {
+      for (let i = 0; i < 3; i++) {
+        const fireCol = startCol + 5 + i * 12;
+        if (fireCol < endCol - 3) {
+          this.hazards.push({
+            type: 'fire',
+            x: fireCol * TILE,
+            y: (GROUND_ROW - 2) * TILE,
+            w: TILE,
+            h: 2 * TILE,
+            col: fireCol,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+    }
+
+    // Regulatory Fog (pre-dragon)
+    if (zoneIdx === ZONES.length - 1) {
+      this.hazards.push({
+        type: 'fog',
+        x: (startCol + 3) * TILE,
+        y: 0,
+        w: 20 * TILE,
+        h: LEVEL_H,
+        col: startCol + 3
+      });
+    }
+  }
+
+  placeDecorations(startCol, endCol, zoneIdx) {
+    const terrain = ZONES[zoneIdx].terrain;
+    // Scatter decorations
+    for (let c = startCol + 1; c < endCol - 1; c += 3 + (c % 5)) {
+      const isLandmark = this.landmarks.some(l => Math.abs(l.col - c) < 3);
+      if (isLandmark) continue;
+
+      if (terrain === 'grass') {
+        const types = ['tree', 'bush', 'flower', 'rock'];
+        const t = types[(c * 3 + zoneIdx) % types.length];
+        this.decorations.push({
+          type: t,
+          x: c * TILE,
+          y: (GROUND_ROW - 1) * TILE,
+          col: c
+        });
+      } else if (terrain === 'stone') {
+        const types = ['boulder', 'skull', 'signpost'];
+        const t = types[(c * 7 + zoneIdx) % types.length];
+        this.decorations.push({
+          type: t,
+          x: c * TILE,
+          y: (GROUND_ROW - 1) * TILE,
+          col: c
+        });
+      } else if (terrain === 'volcanic') {
+        const types = ['skull', 'deadtree', 'lava'];
+        const t = types[(c * 11 + zoneIdx) % types.length];
+        this.decorations.push({
+          type: t,
+          x: c * TILE,
+          y: (GROUND_ROW - 1) * TILE,
+          col: c
+        });
+      }
+    }
+  }
+
+  // Check if a column/row is solid (for collision)
+  isSolid(col, row) {
+    if (row < 0 || row >= LEVEL_ROWS || col < 0 || col >= LEVEL_COLS) return row >= LEVEL_ROWS;
+    return this.grid[row][col] === 1;
+  }
+
+  isOneWay(col, row) {
+    if (row < 0 || row >= LEVEL_ROWS || col < 0 || col >= LEVEL_COLS) return false;
+    return this.grid[row][col] === 2;
+  }
+
+  getTerrainAt(col) {
+    if (col < 0 || col >= LEVEL_COLS) return 'grass';
+    return this.terrainMap[col];
+  }
+}
+
+// ============================================================
+// CHARACTER
+// ============================================================
+class Character {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.onGround = false;
+    this.facingRight = true;
+    this.walking = false;
+    this.jumping = false;
+
+    // Mario-like jump helpers
+    this.coyoteTimer = 0;    // frames since last on ground
+    this.jumpBufferTimer = 0; // frames since jump was pressed
+    this.jumpHeld = false;    // is jump key held?
+    this.wasOnGround = false;
+
+    // Animation
+    this.walkFrame = 0;
+    this.walkTimer = 0;
+    this.idleTimer = 0;
+
+    // Health
+    this.maxHP = 5;
+    this.hp = 5;
+    this.invincible = false;
+    this.invincibleTimer = 0;
+    this.flashTimer = 0;
+
+    // Power-up
+    this.powerLevel = 1.0;
+    this.targetPowerLevel = 1.0;
+    this.hasBow = false;
+
+    // State
+    this.visitedItems = new Set();
+    this.lastCheckpointX = x;
+    this.lastCheckpointY = y;
+    this.dead = false;
+    this.respawnTimer = 0;
+
+    // Movement modifier (for tar hazard)
+    this.speedMult = 1.0;
+
+    // Sprites
+    this.sprites = null; // {walk: {dir: [Image]}, idle: {dir: Image}}
+  }
+
+  update(keys, level) {
+    if (this.dead) {
+      this.respawnTimer--;
+      if (this.respawnTimer <= 0) {
+        this.respawn();
+      }
+      return;
+    }
+
+    // Invincibility timer
+    if (this.invincible) {
+      this.invincibleTimer--;
+      this.flashTimer++;
+      if (this.invincibleTimer <= 0) {
+        this.invincible = false;
+        this.flashTimer = 0;
+      }
+    }
+
+    // Power-up interpolation
+    if (this.powerLevel !== this.targetPowerLevel) {
+      this.powerLevel += (this.targetPowerLevel - this.powerLevel) * 0.05;
+      if (Math.abs(this.powerLevel - this.targetPowerLevel) < 0.01) {
+        this.powerLevel = this.targetPowerLevel;
+      }
+    }
+
+    // Reset speed modifier each frame
+    this.speedMult = 1.0;
+
+    // Check tar hazard
+    for (const h of level.hazards) {
+      if (h.type === 'tar') {
+        if (this.x + PLAYER_W / 2 > h.x && this.x - PLAYER_W / 2 < h.x + h.w &&
+            this.y + PLAYER_H > h.y && this.y < h.y + h.h) {
+          this.speedMult = 0.4;
+        }
+      }
+    }
+
+    // Horizontal movement (smooth acceleration)
+    this.walking = false;
+    const targetVX = keys.left ? -MOVE_SPEED * this.speedMult :
+                     keys.right ? MOVE_SPEED * this.speedMult : 0;
+    if (targetVX !== 0) {
+      this.vx += (targetVX - this.vx) * 0.2; // smooth accel
+      this.facingRight = targetVX > 0;
+      this.walking = true;
+    } else {
+      this.vx *= 0.8; // smooth decel (friction)
+      if (Math.abs(this.vx) < 0.1) this.vx = 0;
+    }
+
+    // Coyote time — track how long since we left ground
+    if (this.onGround) {
+      this.coyoteTimer = COYOTE_FRAMES;
+      this.wasOnGround = true;
+    } else {
+      if (this.coyoteTimer > 0) this.coyoteTimer--;
+    }
+
+    // Jump buffer — track how recently jump was pressed
+    this.jumpHeld = keys.jump;
+    if (keys.jump && !this._prevJump) {
+      this.jumpBufferTimer = JUMP_BUFFER_FRAMES;
+    }
+    if (this.jumpBufferTimer > 0) this.jumpBufferTimer--;
+    this._prevJump = keys.jump;
+
+    // Jumping — with coyote time and jump buffer
+    const canJump = this.onGround || this.coyoteTimer > 0;
+    if (this.jumpBufferTimer > 0 && canJump) {
+      this.vy = JUMP_FORCE;
+      this.onGround = false;
+      this.coyoteTimer = 0;
+      this.jumpBufferTimer = 0;
+      this.jumping = true;
+    }
+
+    // Variable jump height — releasing jump early cuts upward velocity
+    if (!keys.jump && this.vy < 0) {
+      this.vy *= JUMP_CUT_MULT + 0.55; // softer cut
+    }
+
+    // Gravity
+    this.vy += GRAVITY;
+    if (this.vy > MAX_FALL) this.vy = MAX_FALL;
+
+    // Move X with collision
+    this.x += this.vx;
+    this.resolveCollisionX(level);
+
+    // Move Y with collision
+    this.y += this.vy;
+    this.resolveCollisionY(level);
+
+    // Clamp to level bounds
+    if (this.x < PLAYER_W / 2) this.x = PLAYER_W / 2;
+    if (this.x > LEVEL_W - PLAYER_W / 2) this.x = LEVEL_W - PLAYER_W / 2;
+
+    // Fall off bottom
+    if (this.y > LEVEL_H + 100) {
+      this.takeDamage(1);
+      if (!this.dead) {
+        this.x = this.lastCheckpointX;
+        this.y = this.lastCheckpointY - PLAYER_H;
+        this.vy = 0;
+      }
+    }
+
+    // Walking animation
+    if (this.walking && this.onGround) {
+      this.walkTimer++;
+      if (this.walkTimer >= 6) {
+        this.walkTimer = 0;
+        this.walkFrame = (this.walkFrame + 1) % 6;
+      }
+    } else if (!this.walking) {
+      this.walkFrame = 0;
+      this.walkTimer = 0;
+      this.idleTimer++;
+    }
+
+    this.jumping = !this.onGround;
+  }
+
+  resolveCollisionX(level) {
+    const left = Math.floor((this.x - PLAYER_W / 2) / TILE);
+    const right = Math.floor((this.x + PLAYER_W / 2 - 1) / TILE);
+    const top = Math.floor(this.y / TILE);
+    const bottom = Math.floor((this.y + PLAYER_H - 1) / TILE);
+
+    for (let r = top; r <= bottom; r++) {
+      for (let c = left; c <= right; c++) {
+        if (level.isSolid(c, r)) {
+          if (this.vx > 0) {
+            this.x = c * TILE - PLAYER_W / 2;
+          } else if (this.vx < 0) {
+            this.x = (c + 1) * TILE + PLAYER_W / 2;
+          }
+          this.vx = 0;
+          return;
+        }
+      }
+    }
+  }
+
+  resolveCollisionY(level) {
+    const left = Math.floor((this.x - PLAYER_W / 2) / TILE);
+    const right = Math.floor((this.x + PLAYER_W / 2 - 1) / TILE);
+    const top = Math.floor(this.y / TILE);
+    const bottom = Math.floor((this.y + PLAYER_H - 1) / TILE);
+
+    this.onGround = false;
+
+    for (let r = top; r <= bottom; r++) {
+      for (let c = left; c <= right; c++) {
+        if (level.isSolid(c, r)) {
+          if (this.vy > 0) {
+            this.y = r * TILE - PLAYER_H;
+            this.vy = 0;
+            this.onGround = true;
+          } else if (this.vy < 0) {
+            this.y = (r + 1) * TILE;
+            this.vy = 0;
+          }
+          return;
+        }
+        // One-way platforms: only collide from above
+        if (level.isOneWay(c, r) && this.vy > 0) {
+          const playerBottom = this.y + PLAYER_H;
+          const platTop = r * TILE;
+          // Only land on it if we were above the platform last frame
+          if (playerBottom >= platTop && playerBottom - this.vy <= platTop + 4) {
+            this.y = platTop - PLAYER_H;
+            this.vy = 0;
+            this.onGround = true;
+            return;
+          }
+        }
+      }
+    }
+
+    // Also check crumbling platforms from the level.platforms array
+    for (const plat of level.platforms) {
+      if (!plat.active) continue;
+      if (this.vy > 0) {
+        const playerBottom = this.y + PLAYER_H;
+        const platTop = plat.y;
+        if (this.x + PLAYER_W / 2 > plat.x && this.x - PLAYER_W / 2 < plat.x + plat.w) {
+          if (playerBottom >= platTop && playerBottom - this.vy <= platTop + 4) {
+            this.y = platTop - PLAYER_H;
+            this.vy = 0;
+            this.onGround = true;
+            // Trigger crumble
+            if (plat.type === 'crumbling' && plat.crumbleTimer < 0) {
+              plat.crumbleTimer = 30; // ~0.5 seconds
+            }
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  takeDamage(amount) {
+    if (this.invincible || this.dead) return;
+    this.hp -= amount;
+    this.invincible = true;
+    this.invincibleTimer = 90; // 1.5 seconds at 60fps
+    this.flashTimer = 0;
+
+    if (this.hp <= 0) {
+      this.hp = 0;
+      this.dead = true;
+      this.respawnTimer = 60;
+    }
+  }
+
+  respawn() {
+    this.dead = false;
+    this.hp = this.maxHP;
+    this.x = this.lastCheckpointX;
+    this.y = this.lastCheckpointY - PLAYER_H;
+    this.vx = 0;
+    this.vy = 0;
+    this.invincible = true;
+    this.invincibleTimer = 120;
+  }
+
+  heal(amount) {
+    this.hp = Math.min(this.maxHP, this.hp + amount);
+  }
+
+  draw(ctx, cx, cy) {
+    if (this.dead) return;
+    // Invincibility flash
+    if (this.invincible && this.flashTimer % 6 < 3) return;
+
+    const drawX = Math.round(this.x - cx - PLAYER_W / 2);
+    const drawY = Math.round(this.y - cy);
+    const scale = this.powerLevel;
+    const sw = 64 * scale;
+    const sh = 64 * scale;
+
+    const spriteDir = this.facingRight ? 'e' : 'w';
+
+    ctx.save();
+
+    // Try to draw loaded sprites
+    if (this.sprites) {
+      let sprite;
+      if (this.jumping) {
+        // Use walk frame 2 for jump pose
+        sprite = this.sprites.walk[spriteDir] && this.sprites.walk[spriteDir][2];
+      } else if (this.walking) {
+        sprite = this.sprites.walk[spriteDir] && this.sprites.walk[spriteDir][this.walkFrame % this.sprites.walk[spriteDir].length];
+      } else {
+        sprite = this.sprites.idle[spriteDir];
+      }
+
+      if (sprite) {
+        const ox = drawX + PLAYER_W / 2 - sw / 2;
+        const oy = drawY + PLAYER_H - sh;
+        ctx.drawImage(sprite, ox, oy, sw, sh);
+
+        // Draw bow if has it
+        if (this.hasBow) {
+          ctx.fillStyle = '#8a5a20';
+          const bx = this.facingRight ? ox + sw - 4 : ox - 6;
+          ctx.fillRect(bx, oy + sh * 0.3, 4, sh * 0.3);
+          ctx.fillStyle = '#c0a040';
+          ctx.fillRect(bx + 1, oy + sh * 0.3, 2, sh * 0.3);
+        }
+        ctx.restore();
+        return;
+      }
+    }
+
+    // Fallback procedural drawing (bigger, more visible)
+    const px = drawX + PLAYER_W / 2;
+    const py = drawY + PLAYER_H;
+    const s = 1.6 * scale; // base scale for fallback
+
+    // Body (green tunic)
+    ctx.fillStyle = '#2a6a2a';
+    ctx.fillRect(px - 10 * s, py - 36 * s, 20 * s, 22 * s);
+    ctx.fillStyle = '#3a8a3a';
+    ctx.fillRect(px - 8 * s, py - 34 * s, 16 * s, 4 * s);
+    // Head
+    ctx.fillStyle = '#f0c090';
+    ctx.fillRect(px - 8 * s, py - 46 * s, 16 * s, 12 * s);
+    // Hair
+    ctx.fillStyle = '#6a3020';
+    ctx.fillRect(px - 9 * s, py - 48 * s, 18 * s, 5 * s);
+    // Eyes
+    ctx.fillStyle = '#222';
+    ctx.fillRect(px - 4 * s, py - 42 * s, 3 * s, 3 * s);
+    ctx.fillRect(px + 1 * s, py - 42 * s, 3 * s, 3 * s);
+    // Legs
+    ctx.fillStyle = '#4a3020';
+    const legOffset = this.walking ? Math.sin(this.walkTimer * 0.5) * 4 * s : 0;
+    ctx.fillRect(px - 6 * s, py - 14 * s + legOffset, 5 * s, 14 * s);
+    ctx.fillRect(px + 1 * s, py - 14 * s - legOffset, 5 * s, 14 * s);
+    // Boots
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(px - 7 * s, py - 2 * s + legOffset, 6 * s, 3 * s);
+    ctx.fillRect(px + 0 * s, py - 2 * s - legOffset, 6 * s, 3 * s);
+    // Bow
+    if (this.hasBow) {
+      ctx.fillStyle = '#8a5a20';
+      const bx = this.facingRight ? px + 10 * s : px - 14 * s;
+      ctx.fillRect(bx, py - 34 * s, 4 * s, 20 * s);
+      ctx.fillStyle = '#c0a040';
+      ctx.fillRect(bx + 1, py - 32 * s, 2 * s, 16 * s);
+    }
+
+    ctx.restore();
+  }
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx = this.canvas.getContext('2d');
+
+    this.width = 0;
+    this.height = 0;
+
+    // Camera
+    this.cameraX = 0;
+    this.cameraY = 0;
+
+    // Input
+    this.keys = { left: false, right: false, jump: false };
+    this.jumpPressed = false;
+
+    // Game phases: 'loading' -> 'opening_dragon' -> 'opening_pan' -> 'opening_bard' -> 'playing' -> 'dragon_fight' -> 'victory'
+    this.gamePhase = 'loading';
+
+    // Core state
+    this.loaded = false;
+    this.level = null;
+    this.character = null;
+    this.particles = new ParticleSystem();
+
+    // Audio
+    this.audioCtx = null;
+    this.audioUnlocked = false;
+    this.musicGain = null;
+    this.currentMusic = null;
+
+    // UI state
+    this.activePanel = null;
+    this.milestoneShown = new Set();
+    this.shownMilestoneBanner = null;
+    this.milestoneBannerTimer = 0;
+    this.milestoneDialogActive = false;
+    this.milestoneDialogCallback = null;
+
+    // Dragon fight
+    this.dragonSlain = false;
+    this.dragonFightActive = false;
+    this.dragonMaxHP = 40;
+    this.dragonHP = 40;
+    this.dragonHitTimer = 0;
+    this.hitFlashTimer = 0;
+    this.arrowsFired = [];
+    this.victoryFlashTimer = 0;
+    this.victoryTimer = 0;
+
+    // Hearts collected
+    this.heartsCollected = 0;
+    this.totalHearts = 0;
+
+    // Opening scene
+    this.openingTimer = 0;
+    this.openingTextIndex = 0;
+    this.openingText = "I have stolen all the attention of doctors!! No one can slay me!!";
+
+    // Doctors
+    this.doctors = [];
+    this.doctorSprites = [];
+    this.doctorsSpawned = false;
+
+    // Roadmap overlay
+    this.roadmapOverlayVisible = false;
+
+    // Time
+    this.time = 0;
+
+    // Sprite caches
+    this.decoSprites = {};
+    this.castleSprite = null;
+    this.castleSprites = {};
+    this.tentSprite = null;
+    this.tentSprites = {};
+    this.dragonSprite = null;
+    this.bowSprite = null;
+    this.tilesetImages = {};  // terrain -> {img, meta}
+
+    // Parallax clouds
+    this.clouds = [];
+    for (let i = 0; i < 12; i++) {
+      this.clouds.push({
+        x: Math.random() * LEVEL_W,
+        y: 20 + Math.random() * 120,
+        w: 40 + Math.random() * 80,
+        h: 16 + Math.random() * 24,
+        speed: 0.1 + Math.random() * 0.3,
+        alpha: 0.15 + Math.random() * 0.2
+      });
+    }
+
+    // Mountains for parallax
+    this.mountains = [];
+    for (let i = 0; i < 20; i++) {
+      this.mountains.push({
+        x: i * 600 + Math.random() * 200,
+        height: 60 + Math.random() * 100,
+        width: 150 + Math.random() * 200,
+        color: i % 2 === 0 ? '#1a2a1a' : '#152015'
+      });
+    }
+
+    this.init();
+  }
+
+  async init() {
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.setupInput();
+
+    const loadBar = document.getElementById('load-bar');
+    const loadText = document.getElementById('load-text');
+
+    // Step 1: Generate level
+    loadText.textContent = 'Generating terrain...';
+    loadBar.style.width = '15%';
+    await this.sleep(100);
+
+    this.level = new Level();
+    this.totalHearts = this.level.hearts.length;
+
+    // Step 2: Load assets
+    loadText.textContent = 'Loading sprites...';
+    loadBar.style.width = '30%';
+
+    await this.loadAssets(loadBar, loadText);
+
+    // Step 3: Create character
+    loadText.textContent = 'Summoning Bard...';
+    loadBar.style.width = '85%';
+    await this.sleep(100);
+
+    this.character = new Character(3 * TILE, (GROUND_ROW) * TILE - PLAYER_H);
+    this.character.lastCheckpointX = 3 * TILE;
+    this.character.lastCheckpointY = (GROUND_ROW) * TILE;
+
+    // Try to load character sprites
+    try {
+      this.character.sprites = await this.loadCharacterSprites();
+    } catch (e) {
+      console.warn('Could not load character sprites, using fallback:', e);
+    }
+
+    // Load doctor sprites
+    await this.loadDoctorSprites();
+
+    // Step 4: Ready
+    loadText.textContent = 'Quest begins!';
+    loadBar.style.width = '100%';
+    await this.sleep(300);
+
+    // Initialize HUD
+    this.updateHUD();
+
+    // Hide loading screen, start opening
+    document.getElementById('loading-screen').style.display = 'none';
+    this.loaded = true;
+
+    // Position camera at dragon for opening
+    const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
+    if (dragonLandmark) {
+      this.cameraX = dragonLandmark.x - this.width / 2;
+      this.cameraY = dragonLandmark.y - this.height / 2;
+    }
+
+    this.gamePhase = 'opening_dragon';
+    this.loop();
+  }
+
+  async loadAssets(loadBar, loadText) {
+    const loadImg = (src) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+
+    // Load decoration sprites
+    loadText.textContent = 'Loading decorations...';
+    loadBar.style.width = '40%';
+
+    const decoNames = [
+      'boulder', 'bush', 'flower', 'rock', 'skull', 'signpost',
+      'deadtree', 'lava', 'campfire', 'flag'
+    ];
+    const decoPromises = decoNames.map(name =>
+      loadImg(`assets/decorations/${name}.png`).then(img => { if (img) this.decoSprites[name] = img; })
+    );
+
+    // Load tree
+    decoPromises.push(
+      loadImg('assets/trees/pine_south.png').then(img => { if (img) this.decoSprites['tree'] = img; })
+    );
+
+    // Load castle grid (4x4 grid, 64px cells) and slice individual castles
+    decoPromises.push(
+      loadImg('assets/items/castle/castle-grid.png').then(img => {
+        if (img) {
+          const cols = 4, rows = 4;
+          const cellW = img.width / cols;
+          const cellH = img.height / rows;
+          // Pick 3 distinct castles for the 3 shipped items [row, col]
+          const picks = [[0, 0], [0, 2], [1, 2]];
+          const shippedIds = [1, 2, 3];
+          for (let i = 0; i < shippedIds.length; i++) {
+            const [r, c] = picks[i];
+            const canvas = document.createElement('canvas');
+            canvas.width = cellW;
+            canvas.height = cellH;
+            const ctx2 = canvas.getContext('2d');
+            ctx2.drawImage(img, c * cellW, r * cellH, cellW, cellH, 0, 0, cellW, cellH);
+            this.castleSprites[shippedIds[i]] = canvas;
+          }
+          this.castleSprite = this.castleSprites[1] || null;
+        }
+      })
+    );
+
+    // Load tent grid (4x4 grid) and slice individual tents
+    decoPromises.push(
+      loadImg('assets/decorations/tents-grid.png').then(img => {
+        if (img) {
+          const cols = 4, rows = 4;
+          const cellW = img.width / cols;
+          const cellH = img.height / rows;
+          const picks = [[0, 0], [0, 2], [1, 1], [2, 0]];
+          const upcomingIds = [4, 5, 6, 7];
+          for (let i = 0; i < upcomingIds.length; i++) {
+            const [r, c] = picks[i];
+            const canvas = document.createElement('canvas');
+            canvas.width = cellW;
+            canvas.height = cellH;
+            const ctx2 = canvas.getContext('2d');
+            ctx2.drawImage(img, c * cellW, r * cellH, cellW, cellH, 0, 0, cellW, cellH);
+            this.tentSprites[upcomingIds[i]] = canvas;
+          }
+          this.tentSprite = this.tentSprites[4] || null;
+        }
+      })
+    );
+
+    // Also load single tent sprite fallback
+    decoPromises.push(
+      loadImg('assets/decorations/tent.png').then(img => {
+        if (img && !this.tentSprite) this.tentSprite = img;
+      })
+    );
+
+    // Load dragon
+    decoPromises.push(
+      loadImg('assets/dragon/south.png').then(img => { if (img) this.dragonSprite = img; })
+    );
+
+    // Load bow
+    decoPromises.push(
+      loadImg('assets/decorations/bow.png').then(img => { if (img) this.bowSprite = img; })
+    );
+
+    // Load medkit as heart reference
+    decoPromises.push(
+      loadImg('assets/decorations/medkit.png').then(img => { if (img) this.decoSprites['medkit'] = img; })
+    );
+
+    await Promise.all(decoPromises);
+
+    // Load tileset images (for rendering ground tiles with actual tilesets)
+    loadText.textContent = 'Loading tilesets...';
+    loadBar.style.width = '60%';
+
+    const tilesetConfigs = [
+      { terrain: 'grass', png: 'assets/tilesets/sidescroller_grass.png', meta: 'assets/tilesets/sidescroller_grass_meta.json' },
+      { terrain: 'stone', png: 'assets/tilesets/sidescroller_stone.png', meta: 'assets/tilesets/sidescroller_stone_meta.json' },
+      { terrain: 'volcanic', png: 'assets/tilesets/sidescroller_volcanic.png', meta: 'assets/tilesets/sidescroller_volcanic_meta.json' }
+    ];
+
+    for (const tc of tilesetConfigs) {
+      try {
+        const img = await loadImg(tc.png);
+        const resp = await fetch(tc.meta);
+        const meta = await resp.json();
+        if (img && meta) {
+          this.tilesetImages[tc.terrain] = { img, meta };
+        }
+      } catch (e) {
+        console.warn(`Could not load tileset ${tc.terrain}:`, e);
+      }
+    }
+
+    loadBar.style.width = '80%';
+  }
+
+  async loadCharacterSprites() {
+    const PIXELLAB_DIR_MAP = {
+      'n': 'north', 'ne': 'north-east', 'e': 'east', 'se': 'south-east',
+      's': 'south', 'sw': 'south-west', 'w': 'west', 'nw': 'north-west'
+    };
+    const WALK_FRAMES = 6;
+    const basePath = 'assets/character';
+
+    const loadImg = (src) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed: ' + src));
+      img.src = src;
+    });
+
+    const walkSprites = {};
+    const idleSprites = {};
+    const promises = [];
+
+    for (const dir of DIR_NAMES) {
+      const plDir = PIXELLAB_DIR_MAP[dir];
+      walkSprites[dir] = [];
+      for (let f = 0; f < WALK_FRAMES; f++) {
+        const frameStr = String(f).padStart(3, '0');
+        const path = `${basePath}/animations/walking-4-frames/${plDir}/frame_${frameStr}.png`;
+        const idx = f; const d = dir;
+        promises.push(loadImg(path).then(img => { walkSprites[d][idx] = img; }));
+      }
+      // Idle
+      const idlePath = `${basePath}/rotations/${plDir}.png`;
+      promises.push(loadImg(idlePath).then(img => { idleSprites[dir] = img; }));
+    }
+
+    await Promise.all(promises);
+    return { walk: walkSprites, idle: idleSprites };
+  }
+
+  async loadDoctorSprites() {
+    const loadImg = (src) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    for (const dir of ['assets/npcs/doctor1', 'assets/npcs/doctor2', 'assets/npcs/doctor3']) {
+      const south = await loadImg(`${dir}/south.png`);
+      if (south) this.doctorSprites.push(south);
+    }
+  }
+
+  sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  resize() {
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+  }
+
+  setupInput() {
+    const keyMap = {
+      'ArrowLeft': 'left', 'a': 'left', 'A': 'left',
+      'ArrowRight': 'right', 'd': 'right', 'D': 'right',
+      'ArrowUp': 'jump', 'w': 'jump', 'W': 'jump', ' ': 'jump'
+    };
+
+    window.addEventListener('keydown', (e) => {
+      // Dismiss milestone dialog
+      if (this.milestoneDialogActive) {
+        this.dismissMilestoneDialog();
+        e.preventDefault();
+        return;
+      }
+
+      const k = keyMap[e.key];
+      if (k) {
+        this.keys[k] = true;
+        if (k === 'jump') this.jumpPressed = true;
+        e.preventDefault();
+      }
+
+      // Unlock audio on first interaction
+      if (!this.audioUnlocked) this.initAudio();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = keyMap[e.key];
+      if (k) {
+        this.keys[k] = false;
+        e.preventDefault();
+      }
+    });
+
+    // Touch / click for canvas
+    this.canvas.addEventListener('click', () => {
+      if (this.milestoneDialogActive) {
+        this.dismissMilestoneDialog();
+        return;
+      }
+      if (!this.audioUnlocked) this.initAudio();
+    });
+
+    // GO button
+    document.getElementById('go-btn').addEventListener('click', () => {
+      document.getElementById('intro-backdrop').classList.remove('visible');
+      document.getElementById('intro-scroll').classList.remove('visible');
+      this.gamePhase = 'playing';
+      if (!this.audioUnlocked) this.initAudio();
+      this.startExploreMusic();
+    });
+
+    // Panel close
+    document.getElementById('panel-close').addEventListener('click', () => {
+      this.closePanel();
+    });
+
+    // Slay button
+    document.getElementById('slay-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (this.dragonFightActive && !this.dragonSlain) {
+        this.fireDragonArrow();
+      }
+    });
+
+    // Victory buttons
+    document.getElementById('review-roadmap-btn').addEventListener('click', () => {
+      document.getElementById('victory-screen').classList.remove('visible');
+      this.showRoadmapOverlay();
+    });
+
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // Roadmap overlay
+    document.getElementById('view-roadmap-btn').addEventListener('click', () => {
+      this.showRoadmapOverlay();
+    });
+    document.getElementById('roadmap-close').addEventListener('click', () => {
+      this.hideRoadmapOverlay();
+    });
+
+    // Mobile controls
+    const setupTouch = (id, key, isJump) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.keys[key] = true;
+        if (isJump) this.jumpPressed = true;
+        if (!this.audioUnlocked) this.initAudio();
+      });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.keys[key] = false;
+      });
+    };
+    setupTouch('m-left', 'left', false);
+    setupTouch('m-right', 'right', false);
+    setupTouch('m-jump', 'jump', true);
+
+    // Mobile banner
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      document.getElementById('mobile-banner').style.display = 'block';
+    }
+  }
+
+  // ---- Audio System ----
+  initAudio() {
+    if (this.audioUnlocked) return;
+    try {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.musicGain = this.audioCtx.createGain();
+      this.musicGain.gain.value = 0.15;
+      this.musicGain.connect(this.audioCtx.destination);
+      this.audioUnlocked = true;
+    } catch (e) { /* silent */ }
+  }
+
+  playTone(freq, duration, type = 'square', volume = 0.1) {
+    if (!this.audioCtx) return;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = volume;
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + duration);
+  }
+
+  playHeartSound() {
+    this.playTone(880, 0.1, 'square', 0.08);
+    setTimeout(() => this.playTone(1100, 0.15, 'square', 0.06), 80);
+  }
+
+  playDamageSound() {
+    this.playTone(150, 0.2, 'sawtooth', 0.12);
+    setTimeout(() => this.playTone(100, 0.15, 'sawtooth', 0.08), 100);
+  }
+
+  playShippedSound() {
+    this.playTone(523, 0.12, 'square', 0.08);
+    setTimeout(() => this.playTone(659, 0.12, 'square', 0.08), 100);
+    setTimeout(() => this.playTone(784, 0.15, 'square', 0.08), 200);
+  }
+
+  playUpcomingSound() {
+    this.playTone(440, 0.12, 'triangle', 0.08);
+    setTimeout(() => this.playTone(554, 0.15, 'triangle', 0.06), 120);
+  }
+
+  playLevelUpSound() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((n, i) => {
+      setTimeout(() => this.playTone(n, 0.2, 'square', 0.08), i * 100);
+    });
+  }
+
+  playJumpSound() {
+    this.playTone(300, 0.08, 'square', 0.04);
+    setTimeout(() => this.playTone(500, 0.06, 'square', 0.03), 40);
+  }
+
+  playArrowSound() {
+    this.playTone(800, 0.05, 'sawtooth', 0.06);
+    setTimeout(() => this.playTone(600, 0.08, 'sawtooth', 0.04), 30);
+  }
+
+  playDragonHitSound() {
+    this.playTone(200, 0.15, 'sawtooth', 0.1);
+    setTimeout(() => this.playTone(150, 0.2, 'sawtooth', 0.08), 80);
+  }
+
+  playVictoryFanfare() {
+    const notes = [523, 659, 784, 1047, 784, 1047, 1319];
+    notes.forEach((n, i) => {
+      setTimeout(() => this.playTone(n, 0.25, 'square', 0.08), i * 150);
+    });
+  }
+
+  startExploreMusic() {
+    if (!this.audioCtx || this.currentMusic) return;
+    // Simple looping melody
+    const melody = [262, 294, 330, 349, 330, 294, 262, 247, 262, 294, 330, 349, 392, 349, 330, 294];
+    let idx = 0;
+    const intervalId = setInterval(() => {
+      if (this.gamePhase === 'dragon_fight' || this.gamePhase === 'victory') {
+        clearInterval(intervalId);
+        this.currentMusic = null;
+        return;
+      }
+      this.playTone(melody[idx % melody.length], 0.2, 'triangle', 0.03);
+      idx++;
+    }, 400);
+    this.currentMusic = intervalId;
+  }
+
+  startBossMusic() {
+    if (this.currentMusic) clearInterval(this.currentMusic);
+    const melody = [165, 175, 196, 175, 165, 147, 131, 147];
+    let idx = 0;
+    const intervalId = setInterval(() => {
+      if (this.gamePhase === 'victory') {
+        clearInterval(intervalId);
+        this.currentMusic = null;
+        return;
+      }
+      this.playTone(melody[idx % melody.length], 0.15, 'sawtooth', 0.04);
+      idx++;
+    }, 250);
+    this.currentMusic = intervalId;
+  }
+
+  // ---- Update ----
+  update() {
+    this.time++;
+
+    // Pause during milestone dialog
+    if (this.milestoneDialogActive) {
+      this.particles.update();
+      return;
+    }
+
+    // === Opening Scene State Machine ===
+    if (this.gamePhase === 'opening_dragon') {
+      this.openingTimer++;
+      this.openingTextIndex = Math.min(this.openingText.length, Math.floor(this.openingTimer / 2));
+
+      // Position dragon speech bubble
+      const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
+      if (dragonLandmark) {
+        const speechEl = document.getElementById('dragon-speech');
+        const screenX = dragonLandmark.x - this.cameraX;
+        const screenY = dragonLandmark.y - this.cameraY - 120;
+        speechEl.style.left = Math.round(screenX - 160) + 'px';
+        speechEl.style.top = Math.round(screenY) + 'px';
+        speechEl.textContent = this.openingText.substring(0, this.openingTextIndex);
+        if (this.openingTextIndex > 0 && !speechEl.classList.contains('visible')) {
+          speechEl.classList.add('visible');
+        }
+
+        // Dragon laugh particles
+        if (this.openingTimer % 20 === 0) {
+          this.particles.emit(dragonLandmark.x, dragonLandmark.y - 40, 5, {
+            colors: ['#f08020', '#f0c040', '#ff4020'], speed: 3, life: 30, upward: true, gravity: -0.03
+          });
+        }
+      }
+
+      // After ~4 seconds, pan to Bard
+      if (this.openingTimer > 240) {
+        document.getElementById('dragon-speech').classList.remove('visible');
+        this.gamePhase = 'opening_pan';
+        this.openingTimer = 0;
+      }
+      this.particles.update();
+      return;
+    }
+
+    if (this.gamePhase === 'opening_pan') {
+      this.openingTimer++;
+      // Pan camera to Bard
+      const targetX = this.character.x - this.width / 2;
+      const targetY = this.character.y - this.height / 2;
+      this.cameraX += (targetX - this.cameraX) * 0.03;
+      this.cameraY += (targetY - this.cameraY) * 0.03;
+
+      const dist = Math.abs(this.cameraX - targetX) + Math.abs(this.cameraY - targetY);
+      if (dist < 5 || this.openingTimer > 180) {
+        this.cameraX = targetX;
+        this.cameraY = targetY;
+        this.gamePhase = 'opening_bard';
+        document.getElementById('intro-backdrop').classList.add('visible');
+        document.getElementById('intro-scroll').classList.add('visible');
+      }
+      this.particles.update();
+      return;
+    }
+
+    if (this.gamePhase === 'opening_bard') {
+      this.particles.update();
+      return;
+    }
+
+    // === Victory ===
+    if (this.gamePhase === 'victory') {
+      if (this.victoryFlashTimer > 0) this.victoryFlashTimer--;
+      if (this.victoryTimer > 0) {
+        this.victoryTimer--;
+        if (this.victoryTimer === 0) {
+          document.getElementById('victory-screen').classList.add('visible');
+        }
+      }
+      this.particles.update();
+      this.updateArrows();
+      return;
+    }
+
+    // === Playing / Dragon Fight ===
+    // Handle jump press (only once per press)
+    if (this.jumpPressed) {
+      if (this.character.onGround) {
+        this.playJumpSound();
+      }
+      this.jumpPressed = false;
+    }
+
+    this.character.update(this.keys, this.level);
+
+    // Camera follow
+    this.updateCamera();
+
+    // Heart pickup
+    this.updateHearts();
+
+    // Hazard collision
+    this.updateHazards();
+
+    // Crumbling platforms
+    this.updateCrumblingPlatforms();
+
+    // Landmark interaction
+    this.updateLandmarks();
+
+    // Arrows
+    this.updateArrows();
+
+    // Particles
+    this.particles.update();
+
+    // Clouds
+    for (const cloud of this.clouds) {
+      cloud.x += cloud.speed;
+      if (cloud.x > LEVEL_W + 100) cloud.x = -cloud.w;
+    }
+
+    // Update HUD
+    this.updateHUD();
+  }
+
+  updateCamera() {
+    const lookAhead = this.character.facingRight ? LOOK_AHEAD : -LOOK_AHEAD;
+    const targetX = this.character.x - this.width / 2 + lookAhead;
+    const targetY = this.character.y - this.height * 0.35; // keep character in upper third, show more ground
+
+    this.cameraX += (targetX - this.cameraX) * CAMERA_SMOOTH;
+    this.cameraY += (targetY - this.cameraY) * CAMERA_SMOOTH * 0.5;
+
+    // Clamp camera
+    this.cameraX = Math.max(0, Math.min(LEVEL_W - this.width, this.cameraX));
+    this.cameraY = Math.max(0, Math.min(LEVEL_H - this.height, this.cameraY));
+  }
+
+  updateHearts() {
+    const pickupRadius = 24;
+    for (const heart of this.level.hearts) {
+      if (heart.collected) continue;
+      const dx = this.character.x - heart.x;
+      const dy = (this.character.y + PLAYER_H / 2) - heart.y;
+      if (dx * dx + dy * dy < pickupRadius * pickupRadius) {
+        heart.collected = true;
+        this.heartsCollected++;
+        this.character.heal(1);
+        this.playHeartSound();
+        this.particles.emit(heart.x, heart.y, 8, {
+          colors: ['#ff4060', '#ff80a0', '#ffc0d0'], speed: 2, life: 20, upward: true
+        });
+      }
+    }
+  }
+
+  updateHazards() {
+    if (this.character.dead || this.character.invincible) return;
+
+    for (const h of this.level.hazards) {
+      if (h.type === 'hipaa_hole') continue; // Handled by falling off
+      if (h.type === 'tar') continue; // Handled in character update
+      if (h.type === 'fog') continue; // Visual only
+
+      // AABB collision check
+      const cx = this.character.x;
+      const cy = this.character.y;
+      const cw = PLAYER_W;
+      const ch = PLAYER_H;
+
+      if (cx + cw / 2 > h.x && cx - cw / 2 < h.x + h.w &&
+          cy + ch > h.y && cy < h.y + h.h) {
+        this.character.takeDamage(1);
+        this.playDamageSound();
+        this.particles.emit(this.character.x, this.character.y + PLAYER_H / 2, 10, {
+          colors: ['#ff2020', '#ff6040', '#ff8060'], speed: 4, life: 20
+        });
+        // Knockback
+        this.character.vy = -5;
+        this.character.vx = this.character.facingRight ? -3 : 3;
+      }
+    }
+  }
+
+  updateCrumblingPlatforms() {
+    for (const plat of this.level.platforms) {
+      if (plat.type !== 'crumbling' || !plat.active) continue;
+      if (plat.crumbleTimer > 0) {
+        plat.crumbleTimer--;
+        if (plat.crumbleTimer <= 0) {
+          plat.active = false;
+          // Remove from grid
+          for (let c = plat.col; c < plat.col + plat.pw; c++) {
+            if (this.level.grid[plat.row]) {
+              this.level.grid[plat.row][c] = 0;
+            }
+          }
+          // Crumble particles
+          this.particles.emit(plat.x + plat.w / 2, plat.y, 15, {
+            colors: ['#8a6a40', '#6a5030', '#a08060'], speed: 3, life: 30
+          });
+        }
+      }
+    }
+  }
+
+  updateLandmarks() {
+    if (this.character.dead) return;
+    const interactDist = 48;
+
+    for (const lm of this.level.landmarks) {
+      const dx = this.character.x - lm.x;
+      const dy = (this.character.y + PLAYER_H / 2) - lm.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < interactDist && !lm.visited) {
+        // Set checkpoint
+        this.character.lastCheckpointX = lm.x;
+        this.character.lastCheckpointY = lm.y;
+
+        this.interactWithItem(lm);
+      }
+
+      // Close panel when moving away
+      if (this.activePanel === lm.item && dist > 120) {
+        this.closePanel();
+      }
+    }
+  }
+
+  interactWithItem(landmark) {
+    const item = landmark.item;
+    if (!item) return;
+
+    if (item.status === 'milestone') {
+      landmark.visited = true;
+
+      // Bow pickup
+      if (item.id === 'milestone1' && !this.character.hasBow) {
+        this.character.hasBow = true;
+        this.character.targetPowerLevel = 1.3;
+        this.playLevelUpSound();
+        this.particles.emit(this.character.x, this.character.y - 20, 25, {
+          colors: ['#f0c040', '#ffe070', '#fff8d0', '#40e040'], speed: 6, upward: true, life: 50, gravity: -0.05
+        });
+        if (!this.doctorsSpawned) {
+          this.spawnDoctors(landmark.x, landmark.y);
+        }
+        if (!this.milestoneShown.has(item.id)) {
+          this.milestoneShown.add(item.id);
+          this.showMilestoneDialog(
+            'LEVEL UP!\nBOW ACQUIRED',
+            'Bard has collected the bow.\nYou are now empowered to slay the Dragon.\nContinue right to find the beast!'
+          );
+        }
+        return;
+      }
+
+      // Dragon encounter
+      if (item.id === 'milestone2' && !this.dragonSlain && !this.dragonFightActive) {
+        if (!this.milestoneShown.has(item.id)) {
+          this.milestoneShown.add(item.id);
+          this.showMilestoneDialog(
+            'BOSS BATTLE\nTHE DRAGON AWAITS',
+            'You have reached the Dragon\'s lair.\nPrepare for battle!',
+            () => { this.startDragonFight(); }
+          );
+        } else {
+          this.startDragonFight();
+        }
+        return;
+      }
+
+      if (!this.milestoneShown.has(item.id)) {
+        this.milestoneShown.add(item.id);
+        this.showMilestoneBanner(item.title);
+      }
+      return;
+    }
+
+    // Regular item
+    landmark.visited = true;
+    this.character.visitedItems.add(item.id);
+    this.activePanel = item;
+
+    const panel = document.getElementById('info-panel');
+    const status = document.getElementById('panel-status');
+    const title = document.getElementById('panel-title');
+    const desc = document.getElementById('panel-desc');
+    const explore = document.getElementById('panel-explore');
+
+    if (item.status === 'shipped') {
+      status.textContent = 'SHIPPED';
+      status.className = 'panel-status';
+      this.playShippedSound();
+    } else {
+      status.textContent = 'ON THE ROADMAP';
+      status.className = 'panel-status upcoming';
+      this.playUpcomingSound();
+    }
+
+    title.innerHTML = `<span class="panel-number">${item.id}</span>${item.title}`;
+    desc.textContent = item.description;
+
+    if (item.docsUrl) {
+      explore.href = item.docsUrl;
+      explore.classList.remove('hidden');
+    } else {
+      explore.classList.add('hidden');
+    }
+
+    panel.classList.add('visible');
+  }
+
+  closePanel() {
+    this.activePanel = null;
+    document.getElementById('info-panel').classList.remove('visible');
+  }
+
+  showMilestoneBanner(text) {
+    this.shownMilestoneBanner = text;
+    this.milestoneBannerTimer = 180;
+    const banner = document.getElementById('milestone-banner');
+    document.getElementById('banner-title').textContent = text.replace(/\\n/g, '\n');
+    document.getElementById('banner-text').textContent = '';
+    banner.classList.add('visible');
+    setTimeout(() => {
+      banner.classList.remove('visible');
+    }, 3000);
+  }
+
+  showMilestoneDialog(title, text, callback) {
+    this.milestoneDialogActive = true;
+    this.milestoneDialogCallback = callback || null;
+    const banner = document.getElementById('milestone-banner');
+    document.getElementById('banner-title').textContent = title.replace(/\\n/g, '\n');
+    document.getElementById('banner-text').textContent = text.replace(/\\n/g, '\n');
+    banner.classList.add('visible');
+  }
+
+  dismissMilestoneDialog() {
+    this.milestoneDialogActive = false;
+    document.getElementById('milestone-banner').classList.remove('visible');
+    if (this.milestoneDialogCallback) {
+      this.milestoneDialogCallback();
+      this.milestoneDialogCallback = null;
+    }
+  }
+
+  // Dragon fight
+  startDragonFight() {
+    this.dragonFightActive = true;
+    this.gamePhase = 'dragon_fight';
+    document.getElementById('slay-button').classList.add('visible');
+    this.startBossMusic();
+  }
+
+  fireDragonArrow() {
+    const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
+    if (!dragonLandmark) return;
+
+    this.playArrowSound();
+
+    this.arrowsFired.push({
+      x: this.character.x + (this.character.facingRight ? 20 : -20),
+      y: this.character.y + PLAYER_H / 2 - 10,
+      vx: this.character.facingRight ? 12 : -12,
+      vy: -2,
+      active: true
+    });
+  }
+
+  updateArrows() {
+    const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
+    if (!dragonLandmark) return;
+
+    for (const arrow of this.arrowsFired) {
+      if (!arrow.active) continue;
+      arrow.x += arrow.vx;
+      arrow.y += arrow.vy;
+      arrow.vy += 0.1;
+
+      // Check hit dragon
+      const dx = arrow.x - dragonLandmark.x;
+      const dy = arrow.y - dragonLandmark.y;
+      if (Math.abs(dx) < 60 && Math.abs(dy) < 60 && !this.dragonSlain) {
+        arrow.active = false;
+        this.dragonHP -= 5;
+        this.dragonHitTimer = 10;
+        this.playDragonHitSound();
+        this.particles.emit(dragonLandmark.x, dragonLandmark.y - 20, 8, {
+          colors: ['#ff4020', '#ff8040', '#ffc060'], speed: 4, life: 20
+        });
+
+        if (this.dragonHP <= 0) {
+          this.dragonHP = 0;
+          this.dragonSlain = true;
+          this.dragonFightActive = false;
+          document.getElementById('slay-button').classList.remove('visible');
+          this.gamePhase = 'victory';
+          this.victoryFlashTimer = 30;
+          this.victoryTimer = 120;
+          this.playVictoryFanfare();
+          // Big explosion
+          this.particles.emit(dragonLandmark.x, dragonLandmark.y, 50, {
+            colors: ['#f0c040', '#ff4020', '#ff8040', '#fff8d0'], speed: 8, life: 60, upward: true, gravity: -0.02
+          });
+        }
+      }
+
+      // Off screen
+      if (arrow.x < 0 || arrow.x > LEVEL_W || arrow.y > LEVEL_H) {
+        arrow.active = false;
+      }
+    }
+
+    this.arrowsFired = this.arrowsFired.filter(a => a.active);
+  }
+
+  spawnDoctors(cx, cy) {
+    this.doctorsSpawned = true;
+    const positions = [
+      { x: cx + 100, y: cy - 40 },
+      { x: cx + 160, y: cy },
+      { x: cx - 80, y: cy - 20 },
+      { x: cx - 140, y: cy }
+    ];
+    const messages = ["We love your app!", "Thank you, Bard!", "Our hero!", "Amazing work!"];
+    for (let i = 0; i < positions.length; i++) {
+      this.doctors.push({
+        x: positions[i].x,
+        y: positions[i].y,
+        message: messages[i],
+        spriteIdx: i % Math.max(1, this.doctorSprites.length),
+        bouncePhase: Math.random() * Math.PI * 2,
+        spawnTime: this.time
+      });
+    }
+  }
+
+  updateHUD() {
+    // Health hearts
+    const healthBar = document.getElementById('health-bar');
+    let heartsHTML = '';
+    for (let i = 0; i < this.character.maxHP; i++) {
+      const cls = i < this.character.hp ? 'heart full' : 'heart empty';
+      heartsHTML += `<div class="${cls}"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>`;
+    }
+    healthBar.innerHTML = heartsHTML;
+
+    // Heart counter
+    document.getElementById('heart-counter').textContent = `Hearts: ${this.heartsCollected}/${this.totalHearts}`;
+
+    // Quest progress
+    const visited = this.character.visitedItems.size;
+    const total = ROADMAP_ITEMS.filter(i => i.status !== 'milestone').length;
+    document.getElementById('quest-progress').textContent = `Quest: ${visited}/${total}`;
+  }
+
+  // ---- Draw ----
+  draw() {
+    const ctx = this.ctx;
+    const cx = this.cameraX;
+    const cy = this.cameraY;
+
+    // Clear
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Parallax background
+    this.drawBackground(ctx, cx, cy);
+
+    // Tiles (ground/platforms)
+    this.drawTiles(ctx, cx, cy);
+
+    // Hazard visuals
+    this.drawHazards(ctx, cx, cy);
+
+    // Decorations
+    this.drawDecorations(ctx, cx, cy);
+
+    // Hearts
+    this.drawHearts(ctx, cx, cy);
+
+    // Landmarks
+    this.drawLandmarks(ctx, cx, cy);
+
+    // Doctors
+    this.drawDoctors(ctx, cx, cy);
+
+    // Character
+    this.character.draw(ctx, cx, cy);
+
+    // Arrows
+    this.drawArrows(ctx, cx, cy);
+
+    // Particles
+    this.particles.draw(ctx, cx, cy);
+
+    // Fog overlay (if in fog hazard)
+    this.drawFog(ctx, cx, cy);
+
+    // Zone labels
+    this.drawZoneLabels(ctx, cx, cy);
+
+    // Dragon HP bar
+    if (this.dragonFightActive) {
+      this.drawDragonHPBar(ctx);
+    }
+
+    // Victory flash
+    if (this.victoryFlashTimer > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.victoryFlashTimer / 30 * 0.5})`;
+      ctx.fillRect(0, 0, this.width, this.height);
+    }
+  }
+
+  drawBackground(ctx, cx, cy) {
+    // Sky gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, this.height);
+    grad.addColorStop(0, '#1a1040');
+    grad.addColorStop(0.4, '#2a2060');
+    grad.addColorStop(0.7, '#3a3080');
+    grad.addColorStop(1, '#1a2040');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Stars
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 50; i++) {
+      const sx = ((i * 137 + 50) % 1200) - (cx * 0.02) % 1200;
+      const sy = ((i * 89 + 30) % 300);
+      const alpha = 0.3 + Math.sin(this.time * 0.02 + i) * 0.2;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(sx < 0 ? sx + 1200 : sx, sy, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // Mountains (parallax layer 1)
+    for (const mt of this.mountains) {
+      const mx = mt.x - cx * 0.15;
+      const my = this.height - mt.height - 50;
+      ctx.fillStyle = mt.color;
+      ctx.beginPath();
+      ctx.moveTo(mx, this.height);
+      ctx.lineTo(mx + mt.width / 2, my);
+      ctx.lineTo(mx + mt.width, this.height);
+      ctx.fill();
+    }
+
+    // Clouds (parallax layer 2)
+    for (const cloud of this.clouds) {
+      const cloudX = cloud.x - cx * 0.3;
+      ctx.globalAlpha = cloud.alpha;
+      ctx.fillStyle = '#c0c0d0';
+      // Simple cloud shape
+      ctx.fillRect(cloudX, cloud.y, cloud.w, cloud.h * 0.6);
+      ctx.fillRect(cloudX + cloud.w * 0.1, cloud.y - cloud.h * 0.3, cloud.w * 0.4, cloud.h * 0.5);
+      ctx.fillRect(cloudX + cloud.w * 0.4, cloud.y - cloud.h * 0.2, cloud.w * 0.3, cloud.h * 0.4);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Build a Wang tile cache from loaded tileset metadata + image
+  buildWangCache(terrain) {
+    const ts = this.tilesetImages[terrain];
+    if (!ts || this._wangCache?.[terrain]) return;
+    if (!this._wangCache) this._wangCache = {};
+
+    const cache = {};
+    for (const tile of ts.meta.tileset_data.tiles) {
+      const c = tile.corners;
+      const nw = c.NW === 'upper' ? 1 : 0;
+      const ne = c.NE === 'upper' ? 1 : 0;
+      const sw = c.SW === 'upper' ? 1 : 0;
+      const se = c.SE === 'upper' ? 1 : 0;
+      const wangIdx = nw * 8 + ne * 4 + sw * 2 + se;
+
+      // Extract tile from spritesheet into an offscreen canvas
+      const bb = tile.bounding_box;
+      const canvas = document.createElement('canvas');
+      canvas.width = bb.width;
+      canvas.height = bb.height;
+      const ctx2 = canvas.getContext('2d');
+      ctx2.drawImage(ts.img, bb.x, bb.y, bb.width, bb.height, 0, 0, bb.width, bb.height);
+      cache[wangIdx] = canvas;
+    }
+    this._wangCache[terrain] = cache;
+  }
+
+  // Get the Wang index for a grid cell based on its 4 corner vertices.
+  // A corner vertex is "upper" (solid terrain, 1) if ALL neighbouring cells
+  // sharing that vertex are solid. Otherwise it's "lower" (transparent, 0).
+  getWangIndex(r, c, level) {
+    const s = (rr, cc) => {
+      if (rr < 0 || rr >= LEVEL_ROWS || cc < 0 || cc >= LEVEL_COLS) return false;
+      return level.grid[rr][cc] === 1;
+    };
+    const nw = (s(r - 1, c) && s(r, c - 1) && s(r - 1, c - 1)) ? 1 : 0;
+    const ne = (s(r - 1, c) && s(r, c + 1) && s(r - 1, c + 1)) ? 1 : 0;
+    const sw = (s(r + 1, c) && s(r, c - 1) && s(r + 1, c - 1)) ? 1 : 0;
+    const se = (s(r + 1, c) && s(r, c + 1) && s(r + 1, c + 1)) ? 1 : 0;
+    return nw * 8 + ne * 4 + sw * 2 + se;
+  }
+
+  drawTiles(ctx, cx, cy) {
+    // Build Wang tile caches on first call
+    for (const t of ['grass', 'stone', 'volcanic']) {
+      this.buildWangCache(t);
+    }
+
+    const startCol = Math.max(0, Math.floor(cx / TILE) - 1);
+    const endCol = Math.min(LEVEL_COLS, Math.ceil((cx + this.width) / TILE) + 1);
+    const startRow = Math.max(0, Math.floor(cy / TILE) - 1);
+    const endRow = Math.min(LEVEL_ROWS, Math.ceil((cy + this.height) / TILE) + 1);
+
+    for (let r = startRow; r < endRow; r++) {
+      for (let c = startCol; c < endCol; c++) {
+        const tile = this.level.grid[r][c];
+        if (tile === 0) continue;
+
+        const drawX = c * TILE - cx;
+        const drawY = r * TILE - cy;
+        const terrain = this.level.getTerrainAt(c);
+
+        if (tile === 1) {
+          // Try to use the PixelLab Wang tileset
+          const wangCache = this._wangCache?.[terrain];
+          if (wangCache) {
+            const wangIdx = this.getWangIndex(r, c, this.level);
+            const wangTile = wangCache[wangIdx] || wangCache[15]; // fallback to solid center
+            if (wangTile) {
+              ctx.drawImage(wangTile, Math.round(drawX), Math.round(drawY), TILE, TILE);
+              continue;
+            }
+          }
+
+          // Procedural fallback if tileset not loaded
+          const isTop = r === 0 || this.level.grid[r - 1][c] === 0;
+          if (isTop) {
+            if (terrain === 'grass') {
+              ctx.fillStyle = '#4a8a3a';
+              ctx.fillRect(drawX, drawY, TILE, 4);
+              ctx.fillStyle = '#6a4a2a';
+              ctx.fillRect(drawX, drawY + 4, TILE, TILE - 4);
+              ctx.fillStyle = '#5a9a4a';
+              ctx.fillRect(drawX + 2, drawY, 4, 2);
+              ctx.fillRect(drawX + 12, drawY, 6, 2);
+              ctx.fillRect(drawX + 24, drawY, 4, 3);
+            } else if (terrain === 'stone') {
+              ctx.fillStyle = '#5a7a5a';
+              ctx.fillRect(drawX, drawY, TILE, 3);
+              ctx.fillStyle = '#606870';
+              ctx.fillRect(drawX, drawY + 3, TILE, TILE - 3);
+              ctx.fillStyle = '#505860';
+              ctx.fillRect(drawX, drawY + 12, TILE, 1);
+            } else {
+              ctx.fillStyle = '#4a1a1a';
+              ctx.fillRect(drawX, drawY, TILE, TILE);
+              ctx.fillStyle = '#c04020';
+              ctx.fillRect(drawX + 4, drawY + 2, 8, 2);
+              ctx.fillRect(drawX + 20, drawY + 6, 6, 2);
+            }
+          } else {
+            if (terrain === 'grass') {
+              ctx.fillStyle = '#5a3a1a';
+              ctx.fillRect(drawX, drawY, TILE, TILE);
+              ctx.fillStyle = '#4a3015';
+              ctx.fillRect(drawX + 8, drawY + 4, 6, 4);
+            } else if (terrain === 'stone') {
+              ctx.fillStyle = '#505860';
+              ctx.fillRect(drawX, drawY, TILE, TILE);
+              ctx.fillStyle = '#484e56';
+              ctx.fillRect(drawX, drawY + 16, TILE, 1);
+            } else {
+              ctx.fillStyle = '#3a1010';
+              ctx.fillRect(drawX, drawY, TILE, TILE);
+            }
+          }
+        } else if (tile === 2) {
+          // One-way platform — Mario-style brick block
+          const brickColors = terrain === 'stone'
+            ? { main: '#707880', light: '#909aa4', dark: '#505860', line: '#404850' }
+            : terrain === 'volcanic'
+            ? { main: '#5a2020', light: '#7a3030', dark: '#3a1010', line: '#2a0808' }
+            : { main: '#c08040', light: '#d0a060', dark: '#906030', line: '#704820' };
+          // Full block face
+          ctx.fillStyle = brickColors.main;
+          ctx.fillRect(drawX, drawY, TILE, TILE);
+          // Light highlight (top + left)
+          ctx.fillStyle = brickColors.light;
+          ctx.fillRect(drawX, drawY, TILE, 2);
+          ctx.fillRect(drawX, drawY, 2, TILE);
+          // Dark shadow (bottom + right)
+          ctx.fillStyle = brickColors.dark;
+          ctx.fillRect(drawX, drawY + TILE - 2, TILE, 2);
+          ctx.fillRect(drawX + TILE - 2, drawY, 2, TILE);
+          // Mortar lines
+          ctx.fillStyle = brickColors.line;
+          ctx.fillRect(drawX, drawY + TILE / 2 - 1, TILE, 1);
+          ctx.fillRect(drawX + TILE / 2, drawY, 1, TILE / 2);
+          ctx.fillRect(drawX + TILE / 4, drawY + TILE / 2, 1, TILE / 2);
+          ctx.fillRect(drawX + 3 * TILE / 4, drawY + TILE / 2, 1, TILE / 2);
+        }
+      }
+    }
+
+    // Draw crumbling platforms
+    for (const plat of this.level.platforms) {
+      if (!plat.active) continue;
+      if (plat.type !== 'crumbling') continue;
+
+      const drawX = plat.x - cx;
+      const drawY = plat.y - cy;
+      if (drawX > this.width || drawX + plat.w < 0) continue;
+
+      const shake = plat.crumbleTimer > 0 ? (Math.random() - 0.5) * 4 : 0;
+      ctx.fillStyle = '#8a6a40';
+      ctx.fillRect(drawX + shake, drawY, plat.w, TILE * 0.4);
+      ctx.fillStyle = '#6a5030';
+      ctx.fillRect(drawX + shake, drawY + TILE * 0.4, plat.w, TILE * 0.6);
+
+      // Cracks
+      ctx.fillStyle = '#4a3020';
+      ctx.fillRect(drawX + shake + 8, drawY + 4, 2, TILE - 8);
+      ctx.fillRect(drawX + shake + plat.w - 12, drawY + 6, 2, TILE - 10);
+
+      // Warning label
+      if (plat.crumbleTimer < 0) {
+        ctx.font = '5px "Press Start 2P"';
+        ctx.fillStyle = '#c08040';
+        ctx.textAlign = 'center';
+        ctx.fillText('LEGACY', drawX + plat.w / 2, drawY - 4);
+        ctx.textAlign = 'start';
+      }
+    }
+  }
+
+  drawHazards(ctx, cx, cy) {
+    for (const h of this.level.hazards) {
+      const drawX = h.x - cx;
+      const drawY = h.y - cy;
+
+      if (drawX > this.width + 100 || drawX + h.w < -100) continue;
+
+      if (h.type === 'hipaa_hole') {
+        // Red glow in the gap
+        const grad = ctx.createLinearGradient(drawX, drawY - 20, drawX, drawY + h.h);
+        grad.addColorStop(0, 'rgba(192,32,32,0)');
+        grad.addColorStop(0.5, 'rgba(192,32,32,0.3)');
+        grad.addColorStop(1, 'rgba(192,32,32,0.1)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(drawX, drawY - 20, h.w, h.h + 20);
+
+        // Warning sign
+        ctx.font = '5px "Press Start 2P"';
+        ctx.fillStyle = '#ff4040';
+        ctx.textAlign = 'center';
+        ctx.fillText('HIPAA', drawX + h.w / 2, drawY - 28);
+        ctx.textAlign = 'start';
+      }
+
+      if (h.type === 'spikes') {
+        // Pixel spike triangles
+        const spikeCount = Math.floor(h.w / 12);
+        for (let i = 0; i < spikeCount; i++) {
+          const sx = drawX + i * 12 + 2;
+          const sy = drawY + h.h;
+          ctx.fillStyle = '#808080';
+          // Spike triangle
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + 5, sy - h.h);
+          ctx.lineTo(sx + 10, sy);
+          ctx.fill();
+          ctx.fillStyle = '#a0a0a0';
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + 5, sy - h.h);
+          ctx.lineTo(sx + 3, sy);
+          ctx.fill();
+        }
+        // Label
+        ctx.font = '5px "Press Start 2P"';
+        ctx.fillStyle = '#ff6060';
+        ctx.textAlign = 'center';
+        ctx.fillText('COMPLIANCE', drawX + h.w / 2, drawY - 4);
+        ctx.textAlign = 'start';
+      }
+
+      if (h.type === 'tar') {
+        // Dark sticky patch
+        ctx.fillStyle = 'rgba(20,10,30,0.7)';
+        ctx.fillRect(drawX, drawY, h.w, h.h);
+        // Bubbles
+        const bubbleT = this.time * 0.05;
+        for (let i = 0; i < 3; i++) {
+          const bx = drawX + 20 + i * 30 + Math.sin(bubbleT + i) * 5;
+          const by = drawY + 10 + Math.cos(bubbleT * 0.7 + i * 2) * 4;
+          ctx.fillStyle = 'rgba(60,30,80,0.5)';
+          ctx.beginPath();
+          ctx.arc(bx, by, 4 + Math.sin(bubbleT + i) * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.font = '5px "Press Start 2P"';
+        ctx.fillStyle = '#8040a0';
+        ctx.textAlign = 'center';
+        ctx.fillText('VENDOR LOCK-IN', drawX + h.w / 2, drawY - 8);
+        ctx.textAlign = 'start';
+      }
+
+      if (h.type === 'fire') {
+        // Animated fire column
+        const firePhase = h.phase + this.time * 0.1;
+        for (let i = 0; i < 8; i++) {
+          const fx = drawX + Math.sin(firePhase + i * 0.5) * 8;
+          const fy = drawY + h.h - i * 8;
+          const alpha = 1 - i / 8;
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.fillStyle = i < 3 ? '#ff4020' : i < 5 ? '#f08020' : '#f0c040';
+          ctx.fillRect(fx - 6, fy, 12 + Math.sin(firePhase + i) * 4, 8);
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.font = '5px "Press Start 2P"';
+        ctx.fillStyle = '#ff8040';
+        ctx.textAlign = 'center';
+        ctx.fillText('DATA BREACH', drawX + TILE / 2, drawY - 8);
+        ctx.textAlign = 'start';
+
+        // Emit particles occasionally
+        if (this.time % 10 === 0) {
+          this.particles.emit(h.x + TILE / 2, h.y, 2, {
+            colors: ['#f08020', '#f0c040', '#ff4020'], speed: 2, life: 20, upward: true
+          });
+        }
+      }
+    }
+  }
+
+  drawFog(ctx, cx, cy) {
+    for (const h of this.level.hazards) {
+      if (h.type !== 'fog') continue;
+      const drawX = h.x - cx;
+      const drawY = h.y - cy;
+
+      // Only draw if player is in or near the fog
+      if (this.character.x > h.x - 200 && this.character.x < h.x + h.w + 200) {
+        ctx.fillStyle = 'rgba(40,20,60,0.4)';
+        ctx.fillRect(drawX, drawY, h.w, h.h);
+
+        // Swirling fog particles
+        for (let i = 0; i < 5; i++) {
+          const fx = drawX + (this.time * 0.5 + i * 150) % h.w;
+          const fy = 100 + Math.sin(this.time * 0.02 + i * 2) * 80;
+          ctx.globalAlpha = 0.15 + Math.sin(this.time * 0.03 + i) * 0.05;
+          ctx.fillStyle = '#6030a0';
+          ctx.beginPath();
+          ctx.arc(fx, fy, 30 + Math.sin(this.time * 0.01 + i) * 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // Label
+        ctx.font = '6px "Press Start 2P"';
+        ctx.fillStyle = 'rgba(160,80,200,0.6)';
+        ctx.textAlign = 'center';
+        ctx.fillText('REGULATORY FOG', drawX + h.w / 2, 60);
+        ctx.textAlign = 'start';
+      }
+    }
+  }
+
+  drawDecorations(ctx, cx, cy) {
+    for (const deco of this.level.decorations) {
+      const drawX = deco.x - cx;
+      const drawY = deco.y - cy;
+
+      if (drawX > this.width + 50 || drawX < -50) continue;
+
+      const sprite = this.decoSprites[deco.type];
+      if (sprite) {
+        ctx.drawImage(sprite, drawX, drawY - sprite.height + TILE);
+      } else {
+        // Fallback procedural
+        if (deco.type === 'tree') {
+          ctx.fillStyle = '#3a5a2a';
+          ctx.fillRect(drawX + 10, drawY - 32, 12, 28);
+          ctx.fillStyle = '#2a8a2a';
+          ctx.fillRect(drawX + 4, drawY - 44, 24, 16);
+          ctx.fillRect(drawX + 8, drawY - 52, 16, 12);
+        } else if (deco.type === 'bush') {
+          ctx.fillStyle = '#3a7a3a';
+          ctx.fillRect(drawX + 4, drawY - 8, 24, 12);
+          ctx.fillStyle = '#4a9a4a';
+          ctx.fillRect(drawX + 8, drawY - 12, 16, 8);
+        } else if (deco.type === 'flower') {
+          ctx.fillStyle = '#2a6a2a';
+          ctx.fillRect(drawX + 14, drawY - 12, 4, 12);
+          ctx.fillStyle = '#e04060';
+          ctx.fillRect(drawX + 12, drawY - 16, 8, 6);
+        } else if (deco.type === 'rock') {
+          ctx.fillStyle = '#808080';
+          ctx.fillRect(drawX + 8, drawY - 8, 16, 10);
+          ctx.fillStyle = '#909090';
+          ctx.fillRect(drawX + 10, drawY - 10, 12, 4);
+        } else if (deco.type === 'boulder') {
+          ctx.fillStyle = '#606060';
+          ctx.fillRect(drawX + 4, drawY - 16, 24, 18);
+          ctx.fillStyle = '#707070';
+          ctx.fillRect(drawX + 6, drawY - 18, 20, 6);
+        } else if (deco.type === 'skull') {
+          ctx.fillStyle = '#d0c8b0';
+          ctx.fillRect(drawX + 10, drawY - 10, 12, 10);
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(drawX + 12, drawY - 8, 3, 3);
+          ctx.fillRect(drawX + 18, drawY - 8, 3, 3);
+        } else if (deco.type === 'signpost') {
+          ctx.fillStyle = '#8a6a40';
+          ctx.fillRect(drawX + 14, drawY - 28, 4, 28);
+          ctx.fillStyle = '#a08050';
+          ctx.fillRect(drawX + 6, drawY - 32, 20, 10);
+        } else if (deco.type === 'deadtree') {
+          ctx.fillStyle = '#4a3a2a';
+          ctx.fillRect(drawX + 12, drawY - 36, 8, 36);
+          ctx.fillRect(drawX + 4, drawY - 28, 8, 4);
+          ctx.fillRect(drawX + 20, drawY - 24, 8, 4);
+        }
+      }
+    }
+  }
+
+  drawHearts(ctx, cx, cy) {
+    for (const heart of this.level.hearts) {
+      if (heart.collected) continue;
+
+      const drawX = heart.x - cx;
+      const drawY = heart.y - cy;
+
+      if (drawX > this.width + 20 || drawX < -20) continue;
+
+      heart.anim += 0.04;
+      const bob = Math.sin(heart.anim) * 4;
+      const pulse = 1 + Math.sin(heart.anim * 2) * 0.1;
+
+      const size = 12 * pulse;
+
+      // Glow
+      ctx.globalAlpha = 0.3 + Math.sin(heart.anim) * 0.1;
+      const grad = ctx.createRadialGradient(drawX, drawY + bob, 0, drawX, drawY + bob, size * 1.5);
+      grad.addColorStop(0, 'rgba(255,64,96,0.5)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(drawX - size * 2, drawY + bob - size * 2, size * 4, size * 4);
+      ctx.globalAlpha = 1;
+
+      // Heart shape (pixel art)
+      ctx.fillStyle = '#e03050';
+      // Simple pixel heart
+      const hx = drawX - size / 2;
+      const hy = drawY + bob - size / 2;
+      const ps = size / 6; // pixel size
+      // Top bumps
+      ctx.fillRect(hx + ps, hy, ps * 2, ps);
+      ctx.fillRect(hx + ps * 3 + ps, hy, ps * 2, ps);
+      // Middle
+      ctx.fillRect(hx, hy + ps, ps * 6, ps);
+      ctx.fillRect(hx, hy + ps * 2, ps * 6, ps);
+      // Bottom
+      ctx.fillRect(hx + ps, hy + ps * 3, ps * 4, ps);
+      ctx.fillRect(hx + ps * 2, hy + ps * 4, ps * 2, ps);
+
+      // Highlight
+      ctx.fillStyle = '#ff6080';
+      ctx.fillRect(hx + ps, hy + ps, ps, ps);
+    }
+  }
+
+  drawLandmarks(ctx, cx, cy) {
+    for (const lm of this.level.landmarks) {
+      const drawX = lm.x - cx;
+      const drawY = lm.y - cy;
+
+      if (drawX > this.width + 100 || drawX < -100) continue;
+
+      const item = lm.item;
+      if (!item) continue;
+
+      // Glow when nearby
+      const dx = this.character.x - lm.x;
+      const dy = (this.character.y + PLAYER_H / 2) - lm.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 80 && item.icon !== 'dragon') {
+        const glowPhase = Math.sin(this.time * 0.08) * 0.15 + 0.25;
+        ctx.save();
+        ctx.globalAlpha = glowPhase;
+        const glowR = 40;
+        const grd = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowR);
+        grd.addColorStop(0, item.status === 'shipped' ? 'rgba(64,224,64,0.5)' : 'rgba(240,192,64,0.5)');
+        grd.addColorStop(1, 'transparent');
+        ctx.fillStyle = grd;
+        ctx.fillRect(drawX - glowR, drawY - glowR, glowR * 2, glowR * 2);
+        ctx.restore();
+      }
+
+      // Dragon
+      if (item.icon === 'dragon') {
+        if (this.dragonSprite) {
+          const dscale = 1.5;
+          const dw = this.dragonSprite.width * dscale;
+          const dh = this.dragonSprite.height * dscale;
+
+          if (this.dragonSlain) {
+            ctx.globalAlpha = 0.5;
+            ctx.save();
+            ctx.translate(drawX, drawY);
+            ctx.scale(1, -1);
+            ctx.drawImage(this.dragonSprite, -dw / 2, -dh / 2, dw, dh);
+            ctx.restore();
+            ctx.globalAlpha = 1;
+          } else {
+            const breathOffset = Math.sin(this.time * 0.05) * 2;
+            const hitFlash = this.dragonHitTimer > 0;
+            if (hitFlash) {
+              ctx.globalAlpha = 0.5 + Math.random() * 0.5;
+              this.dragonHitTimer--;
+            }
+            ctx.drawImage(this.dragonSprite, drawX - dw / 2, drawY - dh + breathOffset, dw, dh);
+            ctx.globalAlpha = 1;
+
+            // Fire breath during fight
+            if (this.dragonFightActive && this.time % 8 === 0) {
+              this.particles.emit(lm.x - 40, lm.y - 30, 3, {
+                colors: ['#f08020', '#f0c040', '#ff4020'], speed: 4, life: 20
+              });
+            }
+          }
+        } else {
+          // Fallback dragon
+          ctx.fillStyle = this.dragonSlain ? '#601010' : '#c03030';
+          ctx.fillRect(drawX - 30, drawY - 50, 60, 50);
+          ctx.fillStyle = '#f08020';
+          ctx.fillRect(drawX - 20, drawY - 40, 8, 8);
+          ctx.fillRect(drawX + 12, drawY - 40, 8, 8);
+        }
+        continue;
+      }
+
+      // Castle (shipped items)
+      if (item.icon === 'tower') {
+        const castle = this.castleSprites[item.id] || this.castleSprite;
+        if (castle) {
+          const scale = 1.0; // 64x64 cell is good size for sidescroller
+          const cw = castle.width * scale;
+          const ch = castle.height * scale;
+          ctx.drawImage(castle, drawX - cw / 2, drawY - ch + 8, cw, ch);
+        } else {
+          // Fallback castle
+          ctx.fillStyle = '#606870';
+          ctx.fillRect(drawX - 16, drawY - 48, 32, 48);
+          ctx.fillStyle = '#708080';
+          ctx.fillRect(drawX - 20, drawY - 56, 8, 8);
+          ctx.fillRect(drawX + 12, drawY - 56, 8, 8);
+          ctx.fillStyle = '#4a3520';
+          ctx.fillRect(drawX - 6, drawY - 16, 12, 16);
+        }
+      }
+
+      // Tent (upcoming items)
+      if (item.icon === 'tent') {
+        const tent = this.tentSprites[item.id] || this.tentSprite;
+        if (tent) {
+          const scale = 0.9;
+          const tw = tent.width * scale;
+          const th = tent.height * scale;
+          ctx.drawImage(tent, drawX - tw / 2, drawY - th + 8, tw, th);
+        } else {
+          // Fallback tent
+          ctx.fillStyle = '#8a6a3a';
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          ctx.lineTo(drawX - 20, drawY);
+          ctx.lineTo(drawX, drawY - 32);
+          ctx.lineTo(drawX + 20, drawY);
+          ctx.fill();
+          ctx.fillStyle = '#a08050';
+          ctx.beginPath();
+          ctx.moveTo(drawX, drawY);
+          ctx.lineTo(drawX, drawY - 32);
+          ctx.lineTo(drawX + 20, drawY);
+          ctx.fill();
+        }
+      }
+
+      // Bow (milestone 1, before pickup)
+      if (item.icon === 'bow' && !this.character.hasBow) {
+        const hover = Math.sin(this.time * 0.06) * 3;
+        if (this.bowSprite) {
+          ctx.drawImage(this.bowSprite, drawX - 16, drawY - 40 + hover, 32, 32);
+        } else {
+          ctx.fillStyle = '#8a5a20';
+          ctx.fillRect(drawX - 2, drawY - 40 + hover, 4, 24);
+          ctx.fillStyle = '#c0a040';
+          ctx.fillRect(drawX - 1, drawY - 38 + hover, 2, 20);
+        }
+        // Glow
+        const glowA = 0.15 + Math.sin(this.time * 0.04) * 0.1;
+        ctx.fillStyle = `rgba(255,220,80,${glowA})`;
+        ctx.beginPath();
+        ctx.arc(drawX, drawY - 28 + hover, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Number banner for non-milestone items
+      if (typeof item.id === 'number') {
+        const bannerX = drawX + 18;
+        const bannerY = drawY - 56;
+        const bw = 18;
+        const bh = 18;
+        const isShipped = item.status === 'shipped';
+        ctx.fillStyle = isShipped ? '#2a8a2a' : '#7a5020';
+        ctx.fillRect(bannerX, bannerY, bw, bh);
+        ctx.fillStyle = isShipped ? '#1a5a1a' : '#5a3810';
+        ctx.fillRect(bannerX, bannerY, bw, 2);
+        ctx.fillRect(bannerX, bannerY + bh - 2, bw, 2);
+
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(item.id), bannerX + bw / 2, bannerY + bh / 2 + 3);
+        ctx.textAlign = 'start';
+      }
+
+      // Label
+      if (item.status !== 'milestone' && dist < 300) {
+        const alpha = Math.min(1, (300 - dist) / 150);
+        ctx.globalAlpha = alpha;
+        ctx.font = '6px "Press Start 2P"';
+        ctx.fillStyle = item.status === 'shipped' ? '#90e090' : '#e8d060';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.title, drawX, drawY - 64);
+        ctx.textAlign = 'start';
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  drawDoctors(ctx, cx, cy) {
+    for (const doc of this.doctors) {
+      const sx = doc.x - cx;
+      const sy = doc.y - cy;
+      if (sx > this.width + 50 || sx < -50) continue;
+
+      const bounce = Math.sin(this.time * 0.08 + doc.bouncePhase) * 2;
+
+      if (this.doctorSprites[doc.spriteIdx]) {
+        ctx.drawImage(this.doctorSprites[doc.spriteIdx], sx - 24, sy - 40 + bounce);
+      } else {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(sx - 8, sy - 24 + bounce, 16, 20);
+        ctx.fillStyle = '#f0d0a0';
+        ctx.fillRect(sx - 6, sy - 32 + bounce, 12, 10);
+        ctx.fillStyle = '#e03030';
+        ctx.fillRect(sx - 2, sy - 18 + bounce, 4, 6);
+        ctx.fillRect(sx - 4, sy - 16 + bounce, 8, 2);
+      }
+
+      // Speech bubble
+      const fadeIn = Math.min(1, (this.time - doc.spawnTime) / 60);
+      if (fadeIn > 0.5) {
+        ctx.globalAlpha = Math.min(1, (fadeIn - 0.5) * 2);
+        ctx.font = '5px "Press Start 2P"';
+        const tw = ctx.measureText(doc.message).width;
+        const bw = tw + 8;
+        const bh = 14;
+        const bx = sx - bw / 2;
+        const by = sy - 50 + bounce;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(bx - 1, by + 1, 1, bh - 2);
+        ctx.fillRect(bx + bw, by + 1, 1, bh - 2);
+        ctx.fillRect(bx + 1, by - 1, bw - 2, 1);
+        ctx.fillRect(bx + 1, by + bh, bw - 2, 1);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(sx - 2, by + bh, 4, 3);
+        ctx.fillStyle = '#222';
+        ctx.textAlign = 'center';
+        ctx.fillText(doc.message, sx, by + 9);
+        ctx.textAlign = 'start';
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  drawArrows(ctx, cx, cy) {
+    for (const arrow of this.arrowsFired) {
+      if (!arrow.active) continue;
+      const ax = arrow.x - cx;
+      const ay = arrow.y - cy;
+      // Arrow body
+      ctx.fillStyle = '#8a5a20';
+      const angle = Math.atan2(arrow.vy, arrow.vx);
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(angle);
+      ctx.fillRect(-10, -1, 20, 2);
+      // Arrowhead
+      ctx.fillStyle = '#c0c0c0';
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(6, -3);
+      ctx.lineTo(6, 3);
+      ctx.fill();
+      // Fletching
+      ctx.fillStyle = '#c04040';
+      ctx.fillRect(-10, -2, 4, 1);
+      ctx.fillRect(-10, 1, 4, 1);
+      ctx.restore();
+    }
+  }
+
+  drawZoneLabels(ctx, cx, cy) {
+    for (const zone of ZONES) {
+      if (!zone.label) continue;
+      const nextZone = ZONES[ZONES.indexOf(zone) + 1];
+      const endCol = nextZone ? nextZone.startCol : LEVEL_COLS;
+      const centerCol = zone.startCol + (endCol - zone.startCol) / 2;
+      const labelX = centerCol * TILE - cx;
+      const labelY = (GROUND_ROW - 8) * TILE - cy;
+
+      // Only show if relatively near
+      const dist = Math.abs(this.character.x - centerCol * TILE);
+      if (dist > 800) continue;
+
+      const alpha = Math.min(0.15, (800 - dist) / 3000);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '12px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      if (zone.terrain === 'grass') ctx.fillStyle = '#40e040';
+      else if (zone.terrain === 'stone') ctx.fillStyle = '#f0c040';
+      else ctx.fillStyle = '#c03030';
+      ctx.fillText(zone.label, labelX, labelY);
+      ctx.restore();
+    }
+  }
+
+  drawDragonHPBar(ctx) {
+    const barW = Math.min(300, this.width * 0.6);
+    const barH = Math.min(36, this.height * 0.05);
+    const barX = this.width / 2 - barW / 2;
+    const barY = Math.min(80, this.height * 0.1);
+    const fontSize = Math.max(10, Math.min(16, this.width * 0.02));
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    ctx.fillStyle = '#600';
+    ctx.fillRect(barX, barY, barW, barH);
+    const hpFrac = Math.max(0, this.dragonHP / this.dragonMaxHP);
+    ctx.fillStyle = '#c03030';
+    ctx.fillRect(barX, barY, hpFrac * barW, barH);
+    ctx.fillStyle = '#e04040';
+    ctx.fillRect(barX, barY, hpFrac * barW, barH * 0.4);
+
+    ctx.font = `${fontSize}px "Press Start 2P"`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText('THE DRAGON', this.width / 2, barY - 10);
+    ctx.textAlign = 'start';
+  }
+
+  // Roadmap overlay
+  showRoadmapOverlay() {
+    this.roadmapOverlayVisible = true;
+    const container = document.getElementById('roadmap-scroll-content');
+    let html = '<div class="roadmap-title">THE ROADMAP</div>';
+    for (const item of ROADMAP_ITEMS) {
+      if (item.status === 'milestone') continue;
+      const statusClass = item.status === 'shipped' ? 'shipped' : 'upcoming';
+      const statusText = item.status === 'shipped' ? '✓ SHIPPED' : '★ UPCOMING';
+      html += `<div class="roadmap-item">`;
+      html += `<div class="ri-status ${statusClass}">${statusText}</div>`;
+      html += `<div class="ri-title">${item.id}. ${item.title}</div>`;
+      html += `<div class="ri-desc">${item.description}</div>`;
+      if (item.docsUrl) {
+        html += `<a class="ri-link" href="${item.docsUrl}" target="_blank">EXPLORE DOCS →</a>`;
+      }
+      html += `</div>`;
+    }
+    container.innerHTML = html;
+    document.getElementById('roadmap-overlay').classList.add('visible');
+  }
+
+  hideRoadmapOverlay() {
+    this.roadmapOverlayVisible = false;
+    document.getElementById('roadmap-overlay').classList.remove('visible');
+    if (this.gamePhase === 'victory' || this.dragonSlain) {
+      const vs = document.getElementById('victory-screen');
+      vs.classList.remove('visible');
+      void vs.offsetWidth;
+      vs.classList.add('visible');
+    }
+  }
+
+  loop() {
+    this.update();
+    this.draw();
+    requestAnimationFrame(() => this.loop());
+  }
+}
+
+// ============================================================
+// START
+// ============================================================
+const game = new Game();
+
+  </script>
+</body>
+</html>
