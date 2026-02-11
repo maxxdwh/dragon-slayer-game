@@ -124,14 +124,15 @@
     }
 
     #info-panel .panel-desc {
-      font-size: 11px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
       color: #3d3528;
-      line-height: 1.8;
+      line-height: 2.0;
+      text-transform: none;
       text-shadow: 0 1px 0 rgba(255,255,255,0.4);
       max-height: 38vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      font-family: 'Silkscreen', sans-serif;
       margin-bottom: 16px;
     }
 
@@ -190,6 +191,55 @@
       line-height: 1.6;
       white-space: pre-line;
       word-wrap: break-word;
+    }
+
+    /* Milestone dialog — big centered "press any key" overlay */
+    #milestone-dialog {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 26, 0.85);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+    }
+    #milestone-dialog.visible {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+    #milestone-dialog .md-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 4vw, 32px);
+      color: #f0c040;
+      text-shadow:
+        3px 3px 0 #000,
+        0 0 30px rgba(240,192,64,0.5);
+      margin-bottom: 24px;
+      white-space: pre-line;
+      line-height: 1.8;
+    }
+    #milestone-dialog .md-desc {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 2vw, 13px);
+      color: #c0c0d0;
+      text-shadow: 1px 1px 0 #000;
+      margin-bottom: 40px;
+      line-height: 2.2;
+      max-width: 600px;
+      white-space: pre-line;
+    }
+    #milestone-dialog .md-prompt {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 1.5vw, 11px);
+      color: #808090;
+      animation: blink 1.2s step-start infinite;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
     }
 
     /* Dragon slaying screen */
@@ -329,6 +379,12 @@
     .mobile-hint { display: none; }
     .desktop-hint { display: inline; }
 
+    /* Touch devices — swap hints based on pointer capability */
+    @media (pointer: coarse) {
+      .mobile-hint { display: inline; }
+      .desktop-hint { display: none; }
+    }
+
     /* ============================================================
        RESPONSIVE — Tablets & smaller (≤768px)
        ============================================================ */
@@ -374,8 +430,8 @@
         line-height: 1.5;
       }
       #info-panel .panel-desc {
-        font-size: 10px;
-        line-height: 1.7;
+        font-size: 8px;
+        line-height: 1.9;
       }
       #info-panel .panel-number {
         font-size: 8px;
@@ -383,8 +439,8 @@
         margin-right: 8px;
       }
       #info-panel .panel-explore {
-        font-size: 10px;
-        padding: 10px 20px;
+        font-size: 9px;
+        padding: 8px 18px;
       }
 
       #controls-hint {
@@ -454,12 +510,12 @@
         margin-bottom: 8px;
       }
       #info-panel .panel-desc {
-        font-size: 9px;
-        line-height: 1.7;
+        font-size: 7px;
+        line-height: 1.9;
       }
       #info-panel .panel-explore {
-        font-size: 9px;
-        padding: 10px 18px;
+        font-size: 8px;
+        padding: 8px 16px;
       }
 
       #milestone-banner .banner-text {
@@ -573,10 +629,10 @@
     #info-panel .panel-explore {
       display: inline-block;
       font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
+      font-size: 9px;
       color: #efe6d4;
       background: linear-gradient(180deg, #6b5344 0%, #4a3520 100%);
-      padding: 12px 28px;
+      padding: 10px 22px;
       text-decoration: none;
       cursor: pointer;
       transition: all 0.2s;
@@ -763,19 +819,14 @@
       color: #ffe070;
     }
 
-    /* Zoom controls */
-    #zoom-controls {
+    /* Mute button */
+    #mute-btn {
       position: absolute;
-      bottom: 80px;
+      bottom: 20px;
       left: 20px;
       z-index: 10;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    #zoom-controls button {
       font-family: 'Press Start 2P', monospace;
-      font-size: 16px;
+      font-size: 14px;
       width: 44px;
       height: 44px;
       min-width: 44px;
@@ -788,9 +839,14 @@
       align-items: center;
       justify-content: center;
       padding: 0;
+      line-height: 1;
     }
-    #zoom-controls button:hover {
+    #mute-btn:hover {
       background: rgba(240,192,64,0.2);
+    }
+    #mute-btn.muted {
+      color: #806020;
+      border-color: #806020;
     }
 
     /* Roadmap HUD button */
@@ -885,9 +941,16 @@
       <div class="banner-text" id="banner-text"></div>
     </div>
 
+    <!-- Milestone dialog — big centered overlay -->
+    <div id="milestone-dialog">
+      <div class="md-title" id="md-title"></div>
+      <div class="md-desc" id="md-desc"></div>
+      <div class="md-prompt"><span class="desktop-hint">Press any key to continue</span><span class="mobile-hint">Tap to continue</span></div>
+    </div>
+
     <div id="controls-hint">
       <span class="desktop-hint">Arrow Keys — Move</span>
-      <span class="mobile-hint">Arrow Keys — Move</span>
+      <span class="mobile-hint">Tap to Move</span>
     </div>
 
     <!-- Intro scroll (replaces title screen) -->
@@ -896,7 +959,7 @@
       <div class="scroll-title">DICTATION QUEST</div>
       <div class="scroll-text">
         <p class="scroll-paragraph">Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.</p>
-        <p class="scroll-paragraph">Use <span style="color:#4a3520;">Arrow Keys</span> to move. Walk into landmarks to discover them.</p>
+        <p class="scroll-paragraph"><span class="desktop-hint">Use <span style="color:#4a3520;">Arrow Keys</span> to move.</span><span class="mobile-hint"><span style="color:#4a3520;">Tap</span> to move.</span> Walk into landmarks to discover them.</p>
       </div>
       <button class="go-btn" id="go-btn">GO</button>
     </div>
@@ -912,8 +975,9 @@
       <div class="victory-text">
         Bard has slain the Dragon.<br>The Corti API roadmap awaits.
       </div>
-      <a class="cta-btn" href="https://studio.corti.ai" target="_blank" id="studio-cta">Start Building in Corti Studio</a>
+      <a class="cta-btn" href="https://console.corti.app/signup" target="_blank" id="studio-cta">Start Building in Corti Console</a>
       <button class="secondary-btn" id="review-roadmap-btn">Review the Roadmap</button>
+      <button class="secondary-btn" id="play-again-btn">Play Again</button>
     </div>
 
     <!-- Roadmap summary overlay -->
@@ -922,14 +986,11 @@
       <div class="roadmap-scroll" id="roadmap-scroll-content"></div>
     </div>
 
-    <!-- Zoom controls -->
-    <div id="zoom-controls">
-      <button id="zoom-in">+</button>
-      <button id="zoom-out">-</button>
-    </div>
+    <!-- Mute toggle -->
+    <button id="mute-btn" title="Toggle audio">♪</button>
 
     <!-- Roadmap HUD button -->
-    <button id="roadmap-btn">MAP</button>
+    <button id="roadmap-btn">VIEW ROADMAP</button>
 
     <!-- Mobile banner -->
     <div id="mobile-banner">
@@ -1780,6 +1841,28 @@ class WorldMap {
     this.generate();
   }
 
+  // Fill a rectangle with terrain (only overwrites grass tiles)
+  fillZone(startX, startY, w, h, terrain) {
+    for (let y = startY; y < startY + h && y < this.rows; y++) {
+      for (let x = startX; x < startX + w && x < this.cols; x++) {
+        if (x >= 0 && y >= 0 && this.grid[y][x] === 'grass') {
+          this.grid[y][x] = terrain;
+        }
+      }
+    }
+  }
+
+  // Fill a rectangle with terrain (overwrites everything except path)
+  fillZoneOver(startX, startY, w, h, terrain) {
+    for (let y = startY; y < startY + h && y < this.rows; y++) {
+      for (let x = startX; x < startX + w && x < this.cols; x++) {
+        if (x >= 0 && y >= 0 && this.grid[y][x] !== 'path') {
+          this.grid[y][x] = terrain;
+        }
+      }
+    }
+  }
+
   generate() {
     // Initialize with grass
     for (let y = 0; y < this.rows; y++) {
@@ -1808,150 +1891,25 @@ class WorldMap {
       this.drawStraightPath(waypoints[i], waypoints[i + 1]);
     }
 
-    // Terrain zones ------------------------------------------------
-    // Adapted for compact 40x35 map
-    const zoneRng = PixelArt.seededRandom(777);
-    const noiseTable = [];
-    for (let i = 0; i < 200; i++) noiseTable.push(zoneRng() * 4 - 2); // -2 to +2 tile variance (smaller map)
-    const zoneNoise = (idx) => noiseTable[Math.abs(idx) % noiseTable.length];
-    // Higher-amplitude noise for forest edges (jagged, organic borders)
-    const bigNoiseTable = [];
-    const bigNoiseRng = PixelArt.seededRandom(888);
-    for (let i = 0; i < 200; i++) bigNoiseTable.push(bigNoiseRng() * 6 - 3); // -3 to +3 tile variance
-    const bigNoise = (idx) => bigNoiseTable[Math.abs(idx) % bigNoiseTable.length];
+    // ---- Terrain zones: clean axis-aligned rectangles ----
+    // Every boundary is a straight horizontal or vertical line,
+    // producing clean Wang tile transitions (same principle as the path).
 
-    // Dark forest — left edge of map (highly irregular jagged boundary)
-    // Use dedicated RNG for forest edge so each row gets truly independent variation
-    const forestEdgeRng = PixelArt.seededRandom(1234);
-    const leftEdgeCols = []; // store per-row edge for scatter pass
-    for (let y = 0; y < this.rows; y++) {
-      const base = y < 6 ? 6 : (y < 20 ? 4 : 5);
-      // Independent random offset per row: -3 to +4 tiles (wide swing)
-      const offset = Math.floor(forestEdgeRng() * 7) - 3;
-      // Plus a slower wave for broader shape
-      const wave = Math.sin(y * 0.4) * 2;
-      const forestRightEdge = Math.max(1, base + offset + wave);
-      leftEdgeCols[y] = Math.floor(forestRightEdge);
-      for (let x = 0; x < Math.min(leftEdgeCols[y], this.cols); x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    // Scatter darkGrass outcrops 1-2 tiles beyond the main edge (fuzzy border)
-    for (let y = 0; y < this.rows; y++) {
-      const edgeCol = leftEdgeCols[y];
-      for (let dx = 0; dx < 3; dx++) {
-        const x = edgeCol + dx;
-        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
-          // Higher chance close to edge, lower further out
-          if (forestEdgeRng() < (0.6 - dx * 0.2)) {
-            this.grid[y][x] = 'darkGrass';
-          }
-        }
-      }
-    }
-    // Scatter grass clearings 1-2 tiles inside the forest edge (break up interior)
-    for (let y = 0; y < this.rows; y++) {
-      const edgeCol = leftEdgeCols[y];
-      for (let dx = 1; dx <= 2; dx++) {
-        const x = edgeCol - dx;
-        if (x >= 0 && x < this.cols && this.grid[y][x] === 'darkGrass') {
-          if (forestEdgeRng() < 0.25) {
-            this.grid[y][x] = 'grass';
-          }
-        }
-      }
-    }
+    // Dark forest — frame the map edges with clean rectangles
+    this.fillZone(0, 0, 2, this.rows, 'darkGrass');              // Left strip (cols 0-1)
+    this.fillZone(0, 0, this.cols, 6, 'darkGrass');               // Top band (rows 0-5)
+    this.fillZone(33, 0, this.cols - 33, this.rows, 'darkGrass'); // Right strip (cols 33-39)
+    this.fillZone(19, 27, this.cols - 19, this.rows - 27, 'darkGrass'); // Bottom-right block
 
-    // Top strip dark forest (jagged bottom edge with scatter)
-    const topEdgeRng = PixelArt.seededRandom(5678);
-    for (let y = 0; y < 4; y++) {
-      const base = y < 2 ? 16 : (y < 3 ? 12 : 8);
-      const offset = Math.floor(topEdgeRng() * 6) - 2;
-      for (let x = 0; x < Math.min(base + offset, this.cols); x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    // Scatter below the top strip
-    for (let y = 2; y < 5; y++) {
-      for (let x = 3; x < 14; x++) {
-        if (x < this.cols && this.grid[y][x] === 'grass' && topEdgeRng() < 0.3) {
-          this.grid[y][x] = 'darkGrass';
-        }
-      }
-    }
+    // Stone courtyard near milestone1 (27,8) — clean rectangle
+    this.fillZone(24, 6, 8, 7, 'stone'); // cols 24-31, rows 6-12
 
-    // Right-side dark forest (highly irregular jagged boundary)
-    const rightEdgeRng = PixelArt.seededRandom(4321);
-    const rightEdgeCols = [];
-    for (let y = 0; y < this.rows; y++) {
-      const base = y < 12 ? 32 : 30;
-      const offset = Math.floor(rightEdgeRng() * 7) - 3;
-      const wave = Math.sin(y * 0.35 + 2) * 2;
-      const rightForestLeftEdge = Math.min(this.cols - 1, base + offset + wave);
-      rightEdgeCols[y] = Math.floor(rightForestLeftEdge);
-      for (let x = Math.max(0, rightEdgeCols[y]); x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
-    // Scatter on right edge too
-    for (let y = 0; y < this.rows; y++) {
-      const edgeCol = rightEdgeCols[y];
-      for (let dx = 1; dx <= 3; dx++) {
-        const x = edgeCol - dx;
-        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
-          if (rightEdgeRng() < (0.6 - dx * 0.2)) {
-            this.grid[y][x] = 'darkGrass';
-          }
-        }
-      }
-    }
+    // Volcanic lair near dragon (9,24) — clean rectangle (overwrites forest)
+    this.fillZoneOver(0, 19, 19, this.rows - 19, 'volcanic'); // cols 0-18, rows 19-34
 
-    // Water features — smaller, fewer
-    this.addWaterBody(2, 12, 4, 3, 101);
-    this.addWaterBody(32, 4, 4, 3, 202);
-    this.addWaterBody(30, 20, 4, 3, 303);
-
-    // Stone zone near milestone1 (27,8)
-    for (let y = 3; y < 13; y++) {
-      for (let x = 23; x < 33; x++) {
-        const cx = 28, cy = 8;
-        const dist = Math.sqrt(((x - cx) / 5) ** 2 + ((y - cy) / 4) ** 2);
-        const noiseOff = zoneNoise(x * 3 + y * 5 + 300) * 0.08;
-        if (dist < 1.0 + noiseOff && this.grid[y][x] === 'grass') {
-          this.grid[y][x] = 'stone';
-        }
-      }
-    }
-
-    // Volcanic area near dragon (9,24)
-    for (let y = 19; y < this.rows; y++) {
-      for (let x = 0; x < 22; x++) {
-        const dist = Math.sqrt((x - 9) ** 2 + (y - 24) ** 2);
-        const noiseOff = zoneNoise(x * 2 + y * 3 + 400);
-        const maxRadius = y >= 22 ? 12 : 7;
-        if (dist < maxRadius + noiseOff && this.grid[y][x] !== 'path') {
-          if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-            this.grid[y][x] = 'volcanic';
-          }
-        }
-      }
-    }
-    // Bottom rows volcanic
-    for (let y = this.rows - 4; y < this.rows; y++) {
-      for (let x = 0; x < this.cols; x++) {
-        const topEdge = this.rows - 4 + zoneNoise(x * 3 + 900) * 0.5;
-        if (y >= topEdge && this.grid[y][x] !== 'path') {
-          this.grid[y][x] = 'volcanic';
-        }
-      }
-    }
-
-    // Bottom dark forest on right side
-    for (let y = this.rows - 8; y < this.rows; y++) {
-      for (let x = 22; x < this.cols; x++) {
-        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
-      }
-    }
+    // Water ponds — clean small rectangles in grass clearings
+    this.fillZone(4, 11, 3, 3, 'water');   // 3×3 pond, left area between paths
+    this.fillZone(22, 20, 3, 3, 'water');   // 3×3 pond, south of lower path
 
     // Add decorations
     this.addDecorations();
@@ -1983,49 +1941,6 @@ class WorldMap {
           if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
             this.grid[ny][nx] = 'path';
           }
-        }
-      }
-    }
-  }
-
-  addWaterBody(cx, cy, w, h, seed) {
-    // Create a natural pond shape using overlapping blobs
-    const rng = PixelArt.seededRandom(seed || (cx * 100 + cy));
-    const centerX = cx + w / 2;
-    const centerY = cy + h / 2;
-
-    // Generate 3-5 overlapping ellipses for organic shape
-    const blobCount = 3 + Math.floor(rng() * 3);
-    const blobs = [];
-    for (let i = 0; i < blobCount; i++) {
-      blobs.push({
-        x: centerX + (rng() - 0.5) * w * 0.6,
-        y: centerY + (rng() - 0.5) * h * 0.6,
-        rx: w * (0.3 + rng() * 0.3),
-        ry: h * (0.3 + rng() * 0.3)
-      });
-    }
-
-    // Check each tile against all blobs
-    const margin = 3;
-    for (let dy = -margin; dy <= h + margin; dy++) {
-      for (let dx = -margin; dx <= w + margin; dx++) {
-        const nx = cx + dx, ny = cy + dy;
-        if (nx < 0 || nx >= this.cols || ny < 0 || ny >= this.rows) continue;
-        if (this.grid[ny][nx] === 'path') continue;
-
-        // Check if this tile is inside any blob
-        let inside = false;
-        for (const blob of blobs) {
-          const bx = (nx - blob.x) / blob.rx;
-          const by = (ny - blob.y) / blob.ry;
-          if (bx * bx + by * by < 1.0) {
-            inside = true;
-            break;
-          }
-        }
-        if (inside) {
-          this.grid[ny][nx] = 'water';
         }
       }
     }
@@ -2424,13 +2339,23 @@ class Game {
     this.worldMap = null;
     this.character = null;
     this.particles = new ParticleSystem();
+
+    // Audio — lazy-init Web Audio on first user interaction
+    this.audioCtx = null;
+    this.audioUnlocked = false;
+    this.currentMusic = null; // { type, intervalId, nodes[] }
+    this.musicGain = null;
+
     this.activePanel = null;
     this.milestoneShown = new Set();
     this.shownMilestoneBanner = null;
     this.milestoneBannerTimer = 0;
+    this.milestoneDialogActive = false;
+    this.milestoneDialogCallback = null;
     this.dragonSlain = false;
     this.dragonFightActive = false;
-    this.dragonHP = 100;
+    this.dragonMaxHP = 40;
+    this.dragonHP = this.dragonMaxHP;
     this.dragonHitTimer = 0;
     this.hitFlashTimer = 0;
     this.victoryFlashTimer = 0;
@@ -2663,13 +2588,37 @@ class Game {
     }
     this.coinSprite = this.coinFrames.length > 0 ? this.coinFrames[0] : null;
 
-    // Load PixelLab hospital sprite (for shipped stops)
-    this.castleSprite = await new Promise((resolve) => {
+    // Load castle grid and slice into individual sprites for shipped stops
+    this.castleSprites = {}; // keyed by item id
+    const castleGrid = await new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = 'assets/items/hospital_south.png';
+      img.src = 'assets/items/castle/castle-grid.png';
     });
+    if (castleGrid) {
+      // 4x4 grid — each cell is gridW/4 × gridH/4
+      const cols = 4, rows = 4;
+      const cellW = castleGrid.width / cols;
+      const cellH = castleGrid.height / rows;
+      // Pick 3 distinct castles for the 3 shipped items (row, col):
+      // Item 1: row 0, col 0 (blue flag castle)
+      // Item 2: row 0, col 2 (red turret castle)
+      // Item 3: row 1, col 2 (large brown castle)
+      const picks = [ [0, 0], [0, 2], [1, 2] ];
+      const shippedIds = [1, 2, 3];
+      for (let i = 0; i < shippedIds.length; i++) {
+        const [r, c] = picks[i];
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = cellW;
+        sliceCanvas.height = cellH;
+        const sCtx = sliceCanvas.getContext('2d');
+        sCtx.drawImage(castleGrid, c * cellW, r * cellH, cellW, cellH, 0, 0, cellW, cellH);
+        this.castleSprites[shippedIds[i]] = sliceCanvas;
+      }
+    }
+    // Fallback: single castle sprite
+    this.castleSprite = this.castleSprites[1] || null;
 
     // Load PixelLab tent sprite (for upcoming stops)
     this.tentSprite = await new Promise((resolve) => {
@@ -2796,11 +2745,49 @@ class Game {
     this.moveTarget = null;
     this.tapIndicator = null;
 
-    // GO button — start the game
+    // Tap / click-to-move on canvas
+    const canvas = this.canvas;
+    const handleTap = (pageX, pageY) => {
+      if (this.milestoneDialogActive) return;
+      if (this.gamePhase !== 'playing' && this.gamePhase !== 'dragon_fight') return;
+
+      const rect = canvas.getBoundingClientRect();
+      // Convert page coords → canvas logical coords → world coords
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const canvasX = (pageX - rect.left) * scaleX;
+      const canvasY = (pageY - rect.top) * scaleY;
+
+      // Canvas renders with camera offset — convert to world position
+      const worldX = canvasX + this.cameraX;
+      const worldY = canvasY + this.cameraY;
+
+      this.moveTarget = { x: worldX, y: worldY };
+      this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0 };
+      this.ensureAudio(); // unlock audio on first touch gesture
+    };
+
+    // Touch events (primary)
+    canvas.addEventListener('touchstart', (e) => {
+      // Ignore multi-touch (pinch zoom etc.)
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      handleTap(t.clientX, t.clientY);
+      e.preventDefault();
+    }, { passive: false });
+
+    // Mouse click fallback (also useful for desktop click-to-move)
+    canvas.addEventListener('click', (e) => {
+      handleTap(e.clientX, e.clientY);
+    });
+
+    // GO button — start the game (also unlocks audio on user gesture)
     document.getElementById('go-btn').addEventListener('click', () => {
       document.getElementById('intro-backdrop').classList.remove('visible');
       document.getElementById('intro-scroll').classList.remove('visible');
       this.gamePhase = 'playing';
+      this.ensureAudio();
+      this.startExploreMusic();
     });
 
     // Slay button — fire arrow at dragon
@@ -2810,13 +2797,38 @@ class Game {
       }
     });
 
-    // Zoom controls
-    document.getElementById('zoom-in').addEventListener('click', () => {
-      this.zoom = Math.min(3.5, this.zoom + 0.25);
+    // Mute toggle
+    this.muted = false;
+    document.getElementById('mute-btn').addEventListener('click', () => {
+      this.muted = !this.muted;
+      const btn = document.getElementById('mute-btn');
+      if (this.muted) {
+        btn.textContent = '♪';
+        btn.classList.add('muted');
+        btn.title = 'Unmute audio';
+        // Mute master audio
+        if (this.audioCtx) {
+          this.audioCtx.suspend();
+        }
+        this.stopMusic();
+      } else {
+        btn.textContent = '♪';
+        btn.classList.remove('muted');
+        btn.title = 'Mute audio';
+        // Resume audio
+        if (this.audioCtx) {
+          this.audioCtx.resume();
+        }
+        // Restart appropriate music
+        if (this.gamePhase === 'dragon_fight') {
+          this.startBossMusic();
+        } else if (this.gamePhase === 'playing') {
+          this.startExploreMusic();
+        }
+      }
     });
-    document.getElementById('zoom-out').addEventListener('click', () => {
-      this.zoom = Math.max(1.5, this.zoom - 0.25);
-    });
+
+    // Scroll wheel zoom (kept without buttons)
     window.addEventListener('wheel', (e) => {
       if (this.gamePhase !== 'playing') return;
       if (e.deltaY < 0) this.zoom = Math.min(3.5, this.zoom + 0.15);
@@ -2837,6 +2849,10 @@ class Game {
       this.showRoadmapOverlay();
     });
 
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
   }
 
   closePanel() {
@@ -2848,14 +2864,13 @@ class Game {
   interactWithItem(item) {
     if (item.status === 'milestone') {
       this.activePanel = item;
-      if (item.id === 'milestone2' && !this.dragonSlain) {
-        this.startDragonFight();
-      }
+
       // Bow pickup + power-up
       if (item.id === 'milestone1' && !this.character.hasBow) {
         this.character.hasBow = true;
-        this.character.bowSprite = this.decos.bow; // Store the same sprite shown on map
+        this.character.bowSprite = this.decos.bow;
         this.character.targetPowerLevel = 1.3;
+        this.playLevelUpSound();
         // Power-up particle burst
         this.particles.emit(this.character.x, this.character.y - 20, 25, {
           colors: ['#f0c040', '#ffe070', '#fff8d0', '#40e040'],
@@ -2864,11 +2879,34 @@ class Game {
           life: 50,
           gravity: -0.05
         });
-        // Spawn celebrating doctors
         if (!this.doctorsSpawned) {
           this.spawnDoctors(item.mapX, item.mapY);
         }
+        if (!this.milestoneShown.has(item.id)) {
+          this.milestoneShown.add(item.id);
+          this.showMilestoneDialog(
+            'LEVEL UP!\nBOW ACQUIRED',
+            'Bard has collected the bow.\nYou are now empowered to slay the Dragon.\nContinue south to find the beast!'
+          );
+        }
+        return;
       }
+
+      // Dragon encounter
+      if (item.id === 'milestone2' && !this.dragonSlain && !this.dragonFightActive) {
+        if (!this.milestoneShown.has(item.id)) {
+          this.milestoneShown.add(item.id);
+          this.showMilestoneDialog(
+            'BOSS BATTLE\nTHE DRAGON AWAITS',
+            'You have reached the Dragon\'s lair.\nPrepare for battle!',
+            () => { this.startDragonFight(); }
+          );
+        } else {
+          this.startDragonFight();
+        }
+        return;
+      }
+
       if (!this.milestoneShown.has(item.id)) {
         this.milestoneShown.add(item.id);
         this.showMilestoneBanner(item.title);
@@ -2888,9 +2926,11 @@ class Game {
     if (item.status === 'shipped') {
       status.textContent = 'SHIPPED';
       status.className = 'panel-status';
+      this.playShippedSound();
     } else {
       status.textContent = 'ON THE ROADMAP';
       status.className = 'panel-status upcoming';
+      this.playUpcomingSound();
     }
 
     title.innerHTML = `<span class="panel-number">${item.id}</span>${item.title}`;
@@ -2916,15 +2956,50 @@ class Game {
     banner.classList.add('visible');
   }
 
+  showMilestoneDialog(title, desc, callback) {
+    this.milestoneDialogActive = true;
+    this.milestoneDialogCallback = callback || null;
+    document.getElementById('md-title').textContent = title;
+    document.getElementById('md-desc').textContent = desc;
+    document.getElementById('milestone-dialog').classList.add('visible');
+
+    // Dismiss on any key or tap (once) — clean up all listeners on first trigger
+    const dismiss = (e) => {
+      if (!this.milestoneDialogActive) return;
+      e.preventDefault();
+      window.removeEventListener('keydown', dismiss);
+      window.removeEventListener('touchstart', dismiss);
+      window.removeEventListener('click', dismiss);
+      this.dismissMilestoneDialog();
+    };
+    // Small delay so the triggering input doesn't instantly dismiss
+    setTimeout(() => {
+      if (!this.milestoneDialogActive) return; // already dismissed somehow
+      window.addEventListener('keydown', dismiss);
+      window.addEventListener('touchstart', dismiss);
+      window.addEventListener('click', dismiss);
+    }, 400);
+  }
+
+  dismissMilestoneDialog() {
+    if (!this.milestoneDialogActive) return;
+    this.milestoneDialogActive = false;
+    document.getElementById('milestone-dialog').classList.remove('visible');
+    if (this.milestoneDialogCallback) {
+      this.milestoneDialogCallback();
+      this.milestoneDialogCallback = null;
+    }
+  }
+
   generateCoins() {
-    // Place coins along the compressed path, spaced ~2 tiles apart
+    // Place exactly 2 coins between each pair of landmarks, evenly spaced
+    const COINS_PER_SEGMENT = 2;
     const waypoints = [
       { x: 3, y: 8 }, { x: 9, y: 8 }, { x: 15, y: 8 },
       { x: 21, y: 8 }, { x: 27, y: 8 }, { x: 27, y: 15 },
       { x: 21, y: 15 }, { x: 15, y: 15 }, { x: 9, y: 15 },
       { x: 9, y: 24 }
     ];
-    const COIN_SPACING = 2; // tighter spacing for compact map
     const coins = [];
 
     for (let i = 0; i < waypoints.length - 1; i++) {
@@ -2932,21 +3007,12 @@ class Game {
       const to = waypoints[i + 1];
       const dx = to.x - from.x;
       const dy = to.y - from.y;
-      const dist = Math.max(Math.abs(dx), Math.abs(dy));
-      const steps = Math.floor(dist / COIN_SPACING);
 
-      for (let s = 1; s <= steps; s++) {
-        const t = s / (steps + 1);
+      for (let s = 1; s <= COINS_PER_SEGMENT; s++) {
+        const t = s / (COINS_PER_SEGMENT + 1);
         const cx = from.x + dx * t;
         const cy = from.y + dy * t;
 
-        // Skip if too close to any roadmap item
-        const tooClose = ROADMAP_ITEMS.some(item =>
-          Math.abs(item.mapX - cx) < 1.5 && Math.abs(item.mapY - cy) < 1.5
-        );
-        if (tooClose) continue;
-
-        // Validate coin is on a path tile
         const tileCol = Math.floor(cx);
         const tileRow = Math.floor(cy);
         if (this.worldMap.grid[tileRow] && this.worldMap.grid[tileRow][tileCol] === 'path') {
@@ -2979,8 +3045,544 @@ class Game {
         coin.collectAnim = 15; // float-up animation frames
         this.coinsCollected++;
         this.character.jumpTimer = 12; // trigger jump
+        this.playCoinSound();
       }
     }
+  }
+
+  // ---- Audio ----
+
+  ensureAudio() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.audioCtx.state === 'suspended' && !this.muted) {
+      this.audioCtx.resume();
+    }
+    return this.audioCtx;
+  }
+
+  // ---- Background Music ----
+
+  stopMusic() {
+    if (this.currentMusic) {
+      clearInterval(this.currentMusic.intervalId);
+      this.currentMusic.nodes.forEach(n => { try { n.stop(); } catch(e){} });
+      this.currentMusic = null;
+    }
+  }
+
+  startExploreMusic() {
+    if (this.muted) return;
+    if (this.currentMusic && this.currentMusic.type === 'explore') return;
+    this.stopMusic();
+    try {
+      const ctx = this.ensureAudio();
+      if (!this.musicGain) {
+        this.musicGain = ctx.createGain();
+        this.musicGain.connect(ctx.destination);
+      }
+      this.musicGain.gain.setValueAtTime(0.06, ctx.currentTime);
+
+      const nodes = [];
+      const bpm = 110;
+      const beatLen = 60 / bpm;
+
+      // Melody: gentle adventurous loop in C major pentatonic
+      const melody = [
+        523, 587, 659, 784, 659, 587, 523, 440,  // C5 D5 E5 G5 E5 D5 C5 A4
+        523, 659, 784, 880, 784, 659, 523, 587,  // C5 E5 G5 A5 G5 E5 C5 D5
+        440, 523, 587, 659, 523, 440, 392, 440,  // A4 C5 D5 E5 C5 A4 G4 A4
+        523, 587, 659, 523, 440, 392, 440, 523,  // C5 D5 E5 C5 A4 G4 A4 C5
+      ];
+
+      // Bass: simple root notes, half-time
+      const bass = [
+        131, 131, 175, 175, 131, 131, 165, 165,  // C3 C3 F3 F3 C3 C3 E3 E3
+        110, 110, 131, 131, 131, 131, 147, 147,  // A2 A2 C3 C3 C3 C3 D3 D3
+      ];
+
+      let melodyIdx = 0;
+      let bassIdx = 0;
+      let beat = 0;
+
+      const playBeat = () => {
+        const now = ctx.currentTime;
+
+        // Melody note (square, soft)
+        const mOsc = ctx.createOscillator();
+        mOsc.type = 'square';
+        mOsc.frequency.setValueAtTime(melody[melodyIdx % melody.length], now);
+        const mGain = ctx.createGain();
+        mGain.gain.setValueAtTime(0.5, now);
+        mGain.gain.exponentialRampToValueAtTime(0.01, now + beatLen * 0.85);
+        mOsc.connect(mGain);
+        mGain.connect(this.musicGain);
+        mOsc.start(now);
+        mOsc.stop(now + beatLen * 0.9);
+        nodes.push(mOsc);
+
+        // Bass note (triangle, every 2 beats)
+        if (beat % 2 === 0) {
+          const bOsc = ctx.createOscillator();
+          bOsc.type = 'triangle';
+          bOsc.frequency.setValueAtTime(bass[bassIdx % bass.length], now);
+          const bGain = ctx.createGain();
+          bGain.gain.setValueAtTime(0.7, now);
+          bGain.gain.exponentialRampToValueAtTime(0.01, now + beatLen * 1.8);
+          bOsc.connect(bGain);
+          bGain.connect(this.musicGain);
+          bOsc.start(now);
+          bOsc.stop(now + beatLen * 1.9);
+          nodes.push(bOsc);
+          bassIdx++;
+        }
+
+        // Light percussion: hi-hat noise on every beat
+        const hatBuf = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+        const hatData = hatBuf.getChannelData(0);
+        for (let i = 0; i < hatData.length; i++) hatData[i] = (Math.random() * 2 - 1);
+        const hat = ctx.createBufferSource();
+        hat.buffer = hatBuf;
+        const hatGain = ctx.createGain();
+        hatGain.gain.setValueAtTime(beat % 4 === 0 ? 0.3 : 0.12, now);
+        hatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        hat.connect(hatGain);
+        hatGain.connect(this.musicGain);
+        hat.start(now);
+
+        melodyIdx++;
+        beat++;
+
+        // Clean up old nodes (keep last 16)
+        while (nodes.length > 16) nodes.shift();
+      };
+
+      const intervalId = setInterval(playBeat, beatLen * 1000);
+      playBeat(); // start immediately
+      this.currentMusic = { type: 'explore', intervalId, nodes };
+    } catch (e) { /* silent fallback */ }
+  }
+
+  startBossMusic() {
+    if (this.muted) return;
+    if (this.currentMusic && this.currentMusic.type === 'boss') return;
+    this.stopMusic();
+    try {
+      const ctx = this.ensureAudio();
+      if (!this.musicGain) {
+        this.musicGain = ctx.createGain();
+        this.musicGain.connect(ctx.destination);
+      }
+      this.musicGain.gain.setValueAtTime(0.07, ctx.currentTime);
+
+      const nodes = [];
+      const bpm = 150;
+      const beatLen = 60 / bpm;
+
+      // Aggressive minor-key melody: E minor / diminished tension
+      const melody = [
+        330, 330, 392, 370, 330, 294, 330, 262,  // E4 E4 G4 F#4 E4 D4 E4 C4
+        330, 370, 392, 440, 392, 370, 330, 294,  // E4 F#4 G4 A4 G4 F#4 E4 D4
+        262, 294, 330, 294, 262, 247, 262, 330,  // C4 D4 E4 D4 C4 B3 C4 E4
+        370, 392, 440, 494, 440, 392, 370, 330,  // F#4 G4 A4 B4 A4 G4 F#4 E4
+      ];
+
+      // Heavy bass: octave pumping in E minor
+      const bass = [
+        82, 82, 82, 82, 98, 98, 82, 82,     // E2 E2 E2 E2 G2 G2 E2 E2
+        110, 110, 98, 98, 82, 82, 73, 73,   // A2 A2 G2 G2 E2 E2 D2 D2
+      ];
+
+      let melodyIdx = 0;
+      let bassIdx = 0;
+      let beat = 0;
+
+      const playBeat = () => {
+        const now = ctx.currentTime;
+
+        // Lead: aggressive sawtooth
+        const mOsc = ctx.createOscillator();
+        mOsc.type = 'sawtooth';
+        mOsc.frequency.setValueAtTime(melody[melodyIdx % melody.length], now);
+        const mGain = ctx.createGain();
+        mGain.gain.setValueAtTime(0.4, now);
+        mGain.gain.exponentialRampToValueAtTime(0.01, now + beatLen * 0.7);
+        mOsc.connect(mGain);
+        mGain.connect(this.musicGain);
+        mOsc.start(now);
+        mOsc.stop(now + beatLen * 0.75);
+        nodes.push(mOsc);
+
+        // Heavy bass: every beat, sawtooth for grit
+        if (beat % 2 === 0) {
+          const bOsc = ctx.createOscillator();
+          bOsc.type = 'sawtooth';
+          bOsc.frequency.setValueAtTime(bass[bassIdx % bass.length], now);
+          const bGain = ctx.createGain();
+          bGain.gain.setValueAtTime(0.6, now);
+          bGain.gain.exponentialRampToValueAtTime(0.01, now + beatLen * 1.8);
+          bOsc.connect(bGain);
+          bGain.connect(this.musicGain);
+          bOsc.start(now);
+          bOsc.stop(now + beatLen * 1.9);
+          nodes.push(bOsc);
+          bassIdx++;
+        }
+
+        // Percussion: kick on 1 & 3, snare on 2 & 4
+        if (beat % 4 === 0 || beat % 4 === 2) {
+          // Kick: low sine pitch-drop
+          const kick = ctx.createOscillator();
+          kick.type = 'sine';
+          kick.frequency.setValueAtTime(150, now);
+          kick.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+          const kGain = ctx.createGain();
+          kGain.gain.setValueAtTime(0.5, now);
+          kGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          kick.connect(kGain);
+          kGain.connect(this.musicGain);
+          kick.start(now);
+          kick.stop(now + 0.12);
+          nodes.push(kick);
+        }
+        if (beat % 4 === 1 || beat % 4 === 3) {
+          // Snare: noise burst
+          const sBuf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+          const sData = sBuf.getChannelData(0);
+          for (let i = 0; i < sData.length; i++) sData[i] = (Math.random() * 2 - 1);
+          const snare = ctx.createBufferSource();
+          snare.buffer = sBuf;
+          const sGain = ctx.createGain();
+          sGain.gain.setValueAtTime(0.35, now);
+          sGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          snare.connect(sGain);
+          sGain.connect(this.musicGain);
+          snare.start(now);
+        }
+
+        // Hi-hat on every beat
+        const hatBuf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
+        const hatData = hatBuf.getChannelData(0);
+        for (let i = 0; i < hatData.length; i++) hatData[i] = (Math.random() * 2 - 1);
+        const hat = ctx.createBufferSource();
+        hat.buffer = hatBuf;
+        const hatGain = ctx.createGain();
+        hatGain.gain.setValueAtTime(0.2, now);
+        hatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        hat.connect(hatGain);
+        hatGain.connect(this.musicGain);
+        hat.start(now);
+
+        melodyIdx++;
+        beat++;
+        while (nodes.length > 16) nodes.shift();
+      };
+
+      const intervalId = setInterval(playBeat, beatLen * 1000);
+      playBeat();
+      this.currentMusic = { type: 'boss', intervalId, nodes };
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playCoinSound() {
+    if (this.muted) return;
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+
+      // Classic coin pickup: two quick ascending square-wave tones
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'square';
+      osc2.type = 'square';
+
+      // First tone: B5, then second tone: E6 (a perfect fourth up)
+      osc1.frequency.setValueAtTime(988, now);       // B5
+      osc2.frequency.setValueAtTime(1319, now + 0.07); // E6
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.setValueAtTime(0.12, now + 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.07);
+      osc2.start(now + 0.07);
+      osc2.stop(now + 0.2);
+    } catch (e) {
+      // Audio not available — silent fallback
+    }
+  }
+
+  playShippedSound() {
+    if (this.muted) return;
+    // 90s PC "quest complete" fanfare — ascending arpeggio with triumph chord
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.10, now);
+      gain.gain.setValueAtTime(0.10, now + 0.45);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+      // Quick ascending arpeggio: C5 → E5 → G5 → C6 (major triad fanfare)
+      const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+      const noteLen = 0.09;
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * noteLen);
+        osc.connect(gain);
+        osc.start(now + i * noteLen);
+        osc.stop(now + i * noteLen + noteLen * 1.2);
+      });
+
+      // Final triumph chord: C5 + E5 + G5 held together
+      const chordStart = now + notes.length * noteLen;
+      [523, 659, 784].forEach(freq => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, chordStart);
+        osc.connect(gain);
+        osc.start(chordStart);
+        osc.stop(chordStart + 0.35);
+      });
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playUpcomingSound() {
+    if (this.muted) return;
+    // Retro "scroll unroll" — quick descending triplet, like opening a quest log
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.10, now);
+      gain.gain.setValueAtTime(0.10, now + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      // Three quick descending notes: G5 → E5 → C5 (minor feel, mysterious)
+      const notes = [784, 659, 523];
+      const step = 0.07;
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * step);
+        osc.connect(gain);
+        osc.start(now + i * step);
+        osc.stop(now + i * step + step * 1.2);
+      });
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playLevelUpSound() {
+    if (this.muted) return;
+    // 90s PC power-up: rapid ascending scale into a bright held chord
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.setValueAtTime(0.13, now + 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+
+      // Fast ascending scale: C5 D5 E5 F5 G5 A5 B5 C6
+      const scale = [523, 587, 659, 698, 784, 880, 988, 1047];
+      const step = 0.055;
+      scale.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * step);
+        osc.connect(gain);
+        osc.start(now + i * step);
+        osc.stop(now + i * step + step * 1.3);
+      });
+
+      // Hold a bright major chord: C6 + E6 + G6
+      const chordStart = now + scale.length * step;
+      [1047, 1319, 1568].forEach(freq => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, chordStart);
+        osc.connect(gain);
+        osc.start(chordStart);
+        osc.stop(chordStart + 0.5);
+      });
+      // Sparkle overtone
+      const sparkle = ctx.createOscillator();
+      sparkle.type = 'sine';
+      sparkle.frequency.setValueAtTime(2093, chordStart); // C7
+      const sGain = ctx.createGain();
+      sGain.gain.setValueAtTime(0.04, chordStart);
+      sGain.gain.exponentialRampToValueAtTime(0.001, chordStart + 0.5);
+      sparkle.connect(sGain);
+      sGain.connect(ctx.destination);
+      sparkle.start(chordStart);
+      sparkle.stop(chordStart + 0.5);
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playBossEncounterSound() {
+    if (this.muted) return;
+    // Ominous 90s boss intro: low rumbling power chord + descending doom motif
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.setValueAtTime(0.13, now + 0.8);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+      // Low power chord: E2 + B2 (heavy, ominous)
+      [82, 123].forEach(freq => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.connect(gain);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      });
+
+      // Descending doom motif: E4 → D#4 → D4 → C#4 → C4
+      const doom = [330, 311, 294, 277, 262];
+      const dStep = 0.12;
+      const dStart = now + 0.15;
+      doom.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, dStart + i * dStep);
+        osc.connect(gain);
+        osc.start(dStart + i * dStep);
+        osc.stop(dStart + i * dStep + dStep * 1.4);
+      });
+
+      // Final low stab: C3 + G3 (minor power chord)
+      const stabStart = dStart + doom.length * dStep;
+      [131, 196].forEach(freq => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, stabStart);
+        const stabGain = ctx.createGain();
+        stabGain.gain.setValueAtTime(0.12, stabStart);
+        stabGain.gain.exponentialRampToValueAtTime(0.001, stabStart + 0.5);
+        osc.connect(stabGain);
+        stabGain.connect(ctx.destination);
+        osc.start(stabStart);
+        osc.stop(stabStart + 0.5);
+      });
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playArrowHitSound() {
+    if (this.muted) return;
+    // Retro hitmarker: sharp noise burst + quick pitch-down thwack
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+
+      // Noise burst (white noise through band-pass for that crunchy hit)
+      const bufferSize = ctx.sampleRate * 0.06;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.15, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      noise.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noise.start(now);
+
+      // Pitch-down thwack: square wave from A5 dropping to A3
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(0.10, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch (e) { /* silent fallback */ }
+  }
+
+  playBossDefeatedSound() {
+    if (this.muted) return;
+    // Epic 90s victory fanfare: triumphant ascending arpeggios into major chord explosion
+    try {
+      const ctx = this.ensureAudio();
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.setValueAtTime(0.13, now + 1.0);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+      // First arpeggio: G major ascending — G4 B4 D5 G5
+      const arp1 = [392, 494, 587, 784];
+      const s = 0.1;
+      arp1.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * s);
+        osc.connect(gain);
+        osc.start(now + i * s);
+        osc.stop(now + i * s + s * 1.3);
+      });
+
+      // Second arpeggio: C major ascending — C5 E5 G5 C6
+      const arp2Start = now + arp1.length * s + 0.05;
+      const arp2 = [523, 659, 784, 1047];
+      arp2.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, arp2Start + i * s);
+        osc.connect(gain);
+        osc.start(arp2Start + i * s);
+        osc.stop(arp2Start + i * s + s * 1.3);
+      });
+
+      // Final held victory chord: C5 + E5 + G5 + C6 (big and bright)
+      const chordStart = arp2Start + arp2.length * s;
+      [523, 659, 784, 1047].forEach(freq => {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, chordStart);
+        osc.connect(gain);
+        osc.start(chordStart);
+        osc.stop(chordStart + 0.8);
+      });
+
+      // High sparkle cascade
+      const sparkles = [2093, 1568, 2093]; // C7, G6, C7
+      sparkles.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        const sGain = ctx.createGain();
+        sGain.gain.setValueAtTime(0.04, chordStart + i * 0.15);
+        sGain.gain.exponentialRampToValueAtTime(0.001, chordStart + i * 0.15 + 0.4);
+        osc.frequency.setValueAtTime(freq, chordStart + i * 0.15);
+        osc.connect(sGain);
+        sGain.connect(ctx.destination);
+        osc.start(chordStart + i * 0.15);
+        osc.stop(chordStart + i * 0.15 + 0.4);
+      });
+    } catch (e) { /* silent fallback */ }
   }
 
   drawCoins(ctx, cx, cy) {
@@ -3064,13 +3666,18 @@ class Game {
   }
 
   startDragonFight() {
+    if (this.dragonFightActive) return; // Already in fight — don't restart
     this.dragonFightActive = true;
     this.gamePhase = 'dragon_fight';
-    this.dragonHP = 40; // ~5 hits at 8 damage each
+    this.dragonMaxHP = 40;
+    this.dragonHP = this.dragonMaxHP; // ~5 hits at 8 damage each
     this.arrowsFired = [];
     this.dragonHitTimer = 0;
+    this.playBossEncounterSound();
+    // Switch to boss music
+    setTimeout(() => this.startBossMusic(), 1200); // after encounter SFX finishes
+    // Close any info panel and show the slay button
     this.closePanel();
-    // Show slay button
     document.getElementById('slay-button').classList.add('visible');
   }
 
@@ -3109,6 +3716,7 @@ class Game {
         this.dragonHP -= 8;
         this.dragonHitTimer = 10;
         this.hitFlashTimer = 6;
+        this.playArrowHitSound();
         this.particles.emit(dragonX, dragonY, 10, {
           colors: ['#ff4040', '#ff8040', '#ffff40'],
           speed: 5,
@@ -3127,6 +3735,8 @@ class Game {
       this.gamePhase = 'victory';
       this.victoryTimer = 120; // 2 seconds until victory screen
       this.victoryFlashTimer = 30;
+      this.stopMusic();
+      this.playBossDefeatedSound();
       // Hide slay button
       document.getElementById('slay-button').classList.remove('visible');
       // Victory particles
@@ -3179,6 +3789,12 @@ class Game {
 
     this.time++;
     this.itemGlowPhase += 0.03;
+
+    // Pause game logic while milestone dialog is showing
+    if (this.milestoneDialogActive) {
+      this.particles.update();
+      return;
+    }
 
     // === Opening scene state machine ===
     if (this.gamePhase === 'opening_dragon') {
@@ -3297,13 +3913,16 @@ class Game {
     this.cameraY += (this.targetCameraY - this.cameraY) * CAMERA_SMOOTH;
 
     // Auto-show info panel and milestones on proximity
-    const nearbyItem = this.character.getNearbyItem(60);
-    if (nearbyItem) {
-      if (nearbyItem !== this.activePanel) {
-        this.interactWithItem(nearbyItem);
+    // During dragon fight, skip normal proximity logic — boss battle owns the UI
+    if (this.gamePhase !== 'dragon_fight') {
+      const nearbyItem = this.character.getNearbyItem(60);
+      if (nearbyItem) {
+        if (nearbyItem !== this.activePanel) {
+          this.interactWithItem(nearbyItem);
+        }
+      } else if (this.activePanel) {
+        this.closePanel();
       }
-    } else if (this.activePanel) {
-      this.closePanel();
     }
 
     // Milestone banner timer
@@ -3549,10 +4168,11 @@ class Game {
       ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
       ctx.fillStyle = '#600';
       ctx.fillRect(barX, barY, barW, barH);
+      const hpFrac = Math.max(0, this.dragonHP / this.dragonMaxHP);
       ctx.fillStyle = '#c03030';
-      ctx.fillRect(barX, barY, (this.dragonHP / 100) * barW, barH);
+      ctx.fillRect(barX, barY, hpFrac * barW, barH);
       ctx.fillStyle = '#e04040';
-      ctx.fillRect(barX, barY, (this.dragonHP / 100) * barW, barH * 0.4);
+      ctx.fillRect(barX, barY, hpFrac * barW, barH * 0.4);
 
       ctx.font = `${fontSize}px "Press Start 2P"`;
       ctx.fillStyle = '#fff';
@@ -3618,7 +4238,7 @@ class Game {
     const sprite = this.decos[item.icon];
     // For tent/tower with PixelLab sprites, allow rendering even without deco fallback
     if (!sprite && item.icon !== 'tent' && item.icon !== 'tower') return;
-    if (!sprite && item.icon === 'tower' && !this.castleSprite) return;
+    if (!sprite && item.icon === 'tower' && !this.castleSprites[item.id] && !this.castleSprite) return;
     if (!sprite && item.icon === 'tent' && !this.tentSprite) return;
 
     const drawX = item.mapX * TILE_SIZE - cx;
@@ -3688,17 +4308,18 @@ class Game {
 
     // Draw the icon
     if (item.icon === 'tower') {
-      // Use PixelLab castle sprite if available
+      // Use per-item castle sprite from the castle grid
+      const itemCastle = this.castleSprites[item.id] || this.castleSprite;
       let castleDrawX, castleDrawY, castleW, castleH;
-      if (this.castleSprite) {
-        const cW = this.castleSprite.width;
-        const cH = this.castleSprite.height;
+      if (itemCastle) {
+        const cW = itemCastle.width;
+        const cH = itemCastle.height;
         const scale = 1.4; // Scale up slightly for visibility
         castleW = cW * scale;
         castleH = cH * scale;
         castleDrawX = centerX - castleW / 2;
         castleDrawY = drawY - castleH + TILE_SIZE + 4;
-        ctx.drawImage(this.castleSprite, castleDrawX, castleDrawY, castleW, castleH);
+        ctx.drawImage(itemCastle, castleDrawX, castleDrawY, castleW, castleH);
       } else {
         ctx.drawImage(sprite, drawX - TILE_SIZE/2, drawY - sprite.height + TILE_SIZE);
         castleDrawX = drawX - TILE_SIZE/2;
