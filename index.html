@@ -1361,16 +1361,6 @@ class PixelArt {
     decos.tree0 = drawTree(0);
     decos.tree1 = drawTree(1);
 
-    // Dead tree
-    const { canvas: deadTree, ctx: dtCtx } = this.createCanvas(S, S*2);
-    dtCtx.fillStyle = '#3a2a1a';
-    dtCtx.fillRect(14, 10, 4, S+14);
-    dtCtx.fillRect(10, 14, 4, 3);
-    dtCtx.fillRect(18, 8, 6, 3);
-    dtCtx.fillRect(8, 20, 3, 3);
-    dtCtx.fillRect(20, 16, 4, 3);
-    decos.deadTree = deadTree;
-
     // Castle tower
     const { canvas: towerC, ctx: tCtx } = this.createCanvas(S*2, S*2);
     // Base
@@ -1978,12 +1968,13 @@ class WorldMap {
       }
     }
 
-    // Dead trees in volcanic area near dragon (9,24)
+    // Extra skulls where dead trees used to be in volcanic area
     for (let i = 0; i < 6; i++) {
       const x = 2 + Math.floor(rng() * 16);
       const y = 20 + Math.floor(rng() * 12);
       if (canPlace(x, y, ['volcanic']) && notTooClose(x, y)) {
-        this.decorations.push({ type: 'deadTree', x, y });
+        const v = Math.floor(rng() * 16);
+        this.decorations.push({ type: `skull_v${v}`, x, y });
       }
     }
 
@@ -2028,24 +2019,16 @@ class WorldMap {
       }
     }
 
-    // Skulls in volcanic area (16 variants from skulls-grid.png)
-    for (let i = 0; i < 5; i++) {
-      const x = 2 + Math.floor(rng() * 14);
-      const y = 21 + Math.floor(rng() * 10);
-      if (canPlace(x, y, ['volcanic'])) {
+    // Skulls and bones densely scattered around the dragon's lair
+    // Volcanic zone: cols 0-18, rows 19-34. Dragon at (9, 24).
+    for (let i = 0; i < 30; i++) {
+      const x = 1 + Math.floor(rng() * 16);
+      const y = 20 + Math.floor(rng() * 13);
+      if (canPlace(x, y, ['volcanic']) && notTooClose(x, y, 2)) {
         const v = Math.floor(rng() * variantCount);
         this.decorations.push({ type: `skull_v${v}`, x, y });
       }
     }
-
-    // Lava pools near dragon (9,24)
-    this.decorations.push({ type: 'lava', x: 5, y: 24 });
-    this.decorations.push({ type: 'lava', x: 13, y: 26 });
-    this.decorations.push({ type: 'lava', x: 7, y: 28 });
-    this.decorations.push({ type: 'lava', x: 11, y: 22 });
-
-    // Campfire at start
-    this.decorations.push({ type: 'campfire', x: 5, y: 10 });
 
     // Potions (16 variants from potions-grid.png)
     for (let i = 0; i < 6; i++) {
@@ -2525,7 +2508,7 @@ class Game {
     // Load other decoration sprites (single PNGs)
     const decoAssets = {
       campfire: 'assets/decorations/campfire.png',
-      deadTree: 'assets/trees/dead_south.png',
+      // (deadTree removed — replaced with skull decorations)
       lava: 'assets/decorations/lava.png',
       flag: 'assets/decorations/flag.png',
       bridge: 'assets/decorations/bridge.png',
@@ -2620,13 +2603,37 @@ class Game {
     // Fallback: single castle sprite
     this.castleSprite = this.castleSprites[1] || null;
 
-    // Load PixelLab tent sprite (for upcoming stops)
-    this.tentSprite = await new Promise((resolve) => {
+    // Load tent grid and slice into individual sprites for upcoming stops
+    this.tentSprites = {}; // keyed by item id
+    const tentGrid = await new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = 'assets/items/tent/tent.png';
+      img.src = 'assets/decorations/tents-grid.png';
     });
+    if (tentGrid) {
+      const cols = 4, rows = 4;
+      const cellW = tentGrid.width / cols;
+      const cellH = tentGrid.height / rows;
+      // Pick 4 distinct tents for the 4 upcoming items (row, col):
+      // Item 4: row 0, col 0 (red/blue striped tent)
+      // Item 5: row 0, col 2 (blue peaked tent)
+      // Item 6: row 1, col 1 (teal striped tent)
+      // Item 7: row 2, col 0 (blue/gold tent)
+      const picks = [ [0, 0], [0, 2], [1, 1], [2, 0] ];
+      const upcomingIds = [4, 5, 6, 7];
+      for (let i = 0; i < upcomingIds.length; i++) {
+        const [r, c] = picks[i];
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = cellW;
+        sliceCanvas.height = cellH;
+        const sCtx = sliceCanvas.getContext('2d');
+        sCtx.drawImage(tentGrid, c * cellW, r * cellH, cellW, cellH, 0, 0, cellW, cellH);
+        this.tentSprites[upcomingIds[i]] = sliceCanvas;
+      }
+    }
+    // Fallback: single tent sprite
+    this.tentSprite = this.tentSprites[4] || null;
 
     loadText.textContent = 'Summoning Bard the Bowman...';
     loadBar.style.width = '60%';
@@ -2724,6 +2731,7 @@ class Game {
 
   setupInput() {
     window.addEventListener('keydown', (e) => {
+      if (this.gamePhase === 'dragon_fight') return; // No movement during boss fight
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); this.moveTarget = null; }
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); this.moveTarget = null; }
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); this.moveTarget = null; }
@@ -2749,7 +2757,7 @@ class Game {
     const canvas = this.canvas;
     const handleTap = (pageX, pageY) => {
       if (this.milestoneDialogActive) return;
-      if (this.gamePhase !== 'playing' && this.gamePhase !== 'dragon_fight') return;
+      if (this.gamePhase !== 'playing') return;
 
       const rect = canvas.getBoundingClientRect();
       // Convert page coords → canvas logical coords → world coords
@@ -2791,7 +2799,8 @@ class Game {
     });
 
     // Slay button — fire arrow at dragon
-    document.getElementById('slay-btn').addEventListener('click', () => {
+    document.getElementById('slay-btn').addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent click reaching canvas
       if (this.dragonFightActive && !this.dragonSlain) {
         this.fireDragonArrow();
       }
@@ -2839,8 +2848,15 @@ class Game {
     document.getElementById('roadmap-btn').addEventListener('click', () => {
       this.showRoadmapOverlay();
     });
-    document.getElementById('roadmap-close').addEventListener('click', () => {
+    document.getElementById('roadmap-close').addEventListener('click', (e) => {
+      e.stopPropagation();
       this.hideRoadmapOverlay();
+    });
+    // Also close roadmap when clicking the dark overlay background (not the scroll content)
+    document.getElementById('roadmap-overlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('roadmap-overlay')) {
+        this.hideRoadmapOverlay();
+      }
     });
 
     // Victory screen buttons
@@ -3673,6 +3689,10 @@ class Game {
     this.dragonHP = this.dragonMaxHP; // ~5 hits at 8 damage each
     this.arrowsFired = [];
     this.dragonHitTimer = 0;
+    // Stop all character movement — Bard stands still during boss fight
+    this.moveTarget = null;
+    this.keys = { up: false, down: false, left: false, right: false };
+    this.character.moving = false;
     this.playBossEncounterSound();
     // Switch to boss music
     setTimeout(() => this.startBossMusic(), 1200); // after encounter SFX finishes
@@ -3981,29 +4001,50 @@ class Game {
         const drawX = col * TILE_SIZE - cx;
         const drawY = row * TILE_SIZE - cy;
 
-        // Layer Wang transitions: draw base then overlay each terrain transition
-        // This avoids grass strips between non-grass terrains (e.g. darkGrass → water)
-        const darkWang = this.getWangIndex(col, row, 'darkGrass');
-        const stoneWang = this.getWangIndex(col, row, 'stone');
-        const volcanicWang = this.getWangIndex(col, row, 'volcanic');
-        const waterWang = this.getWangIndex(col, row, 'water');
-        const pathWang = this.getWangIndex(col, row, 'path');
-
         // Base grass tile always drawn first
         const baseTile = this.wangGrassPath[0];
         if (baseTile) ctx.drawImage(baseTile, drawX, drawY);
 
-        // Layer terrains from lowest to highest priority
-        if (darkWang > 0 && this.wangGrassDark[darkWang])
-          ctx.drawImage(this.wangGrassDark[darkWang], drawX, drawY);
-        if (stoneWang > 0 && this.wangGrassStone[stoneWang])
-          ctx.drawImage(this.wangGrassStone[stoneWang], drawX, drawY);
-        if (volcanicWang > 0 && this.wangGrassVolcanic[volcanicWang])
-          ctx.drawImage(this.wangGrassVolcanic[volcanicWang], drawX, drawY);
-        if (waterWang > 0 && this.wangGrassWater[waterWang])
-          ctx.drawImage(this.wangGrassWater[waterWang], drawX, drawY);
-        if (pathWang > 0 && this.wangGrassPath[pathWang])
-          ctx.drawImage(this.wangGrassPath[pathWang], drawX, drawY);
+        // For grass tiles: draw all Wang transitions (shows edges of adjacent terrains).
+        // For non-grass tiles: only draw this tile's own terrain Wang.
+        // This prevents path's opaque grass pixels from overwriting stone/volcanic, etc.
+        if (tile === 'grass') {
+          const darkWang = this.getWangIndex(col, row, 'darkGrass');
+          const stoneWang = this.getWangIndex(col, row, 'stone');
+          const volcanicWang = this.getWangIndex(col, row, 'volcanic');
+          const waterWang = this.getWangIndex(col, row, 'water');
+          const pathWang = this.getWangIndex(col, row, 'path');
+          if (darkWang > 0 && this.wangGrassDark[darkWang])
+            ctx.drawImage(this.wangGrassDark[darkWang], drawX, drawY);
+          if (stoneWang > 0 && this.wangGrassStone[stoneWang])
+            ctx.drawImage(this.wangGrassStone[stoneWang], drawX, drawY);
+          if (volcanicWang > 0 && this.wangGrassVolcanic[volcanicWang])
+            ctx.drawImage(this.wangGrassVolcanic[volcanicWang], drawX, drawY);
+          if (waterWang > 0 && this.wangGrassWater[waterWang])
+            ctx.drawImage(this.wangGrassWater[waterWang], drawX, drawY);
+          if (pathWang > 0 && this.wangGrassPath[pathWang])
+            ctx.drawImage(this.wangGrassPath[pathWang], drawX, drawY);
+        } else if (tile === 'darkGrass') {
+          const darkWang = this.getWangIndex(col, row, 'darkGrass');
+          if (darkWang > 0 && this.wangGrassDark[darkWang])
+            ctx.drawImage(this.wangGrassDark[darkWang], drawX, drawY);
+        } else if (tile === 'stone') {
+          const stoneWang = this.getWangIndex(col, row, 'stone');
+          if (stoneWang > 0 && this.wangGrassStone[stoneWang])
+            ctx.drawImage(this.wangGrassStone[stoneWang], drawX, drawY);
+        } else if (tile === 'volcanic') {
+          const volcanicWang = this.getWangIndex(col, row, 'volcanic');
+          if (volcanicWang > 0 && this.wangGrassVolcanic[volcanicWang])
+            ctx.drawImage(this.wangGrassVolcanic[volcanicWang], drawX, drawY);
+        } else if (tile === 'water') {
+          const waterWang = this.getWangIndex(col, row, 'water');
+          if (waterWang > 0 && this.wangGrassWater[waterWang])
+            ctx.drawImage(this.wangGrassWater[waterWang], drawX, drawY);
+        } else if (tile === 'path') {
+          const pathWang = this.getWangIndex(col, row, 'path');
+          if (pathWang > 0 && this.wangGrassPath[pathWang])
+            ctx.drawImage(this.wangGrassPath[pathWang], drawX, drawY);
+        }
       }
     }
 
@@ -4239,7 +4280,7 @@ class Game {
     // For tent/tower with PixelLab sprites, allow rendering even without deco fallback
     if (!sprite && item.icon !== 'tent' && item.icon !== 'tower') return;
     if (!sprite && item.icon === 'tower' && !this.castleSprites[item.id] && !this.castleSprite) return;
-    if (!sprite && item.icon === 'tent' && !this.tentSprite) return;
+    if (!sprite && item.icon === 'tent' && !this.tentSprites[item.id] && !this.tentSprite) return;
 
     const drawX = item.mapX * TILE_SIZE - cx;
     const drawY = item.mapY * TILE_SIZE - cy;
@@ -4329,17 +4370,18 @@ class Game {
       }
 
     } else if (item.icon === 'tent') {
-      // Use PixelLab tent sprite if available
+      // Use per-item tent sprite from the tent grid
+      const itemTent = this.tentSprites[item.id] || this.tentSprite;
       let tentDrawX, tentDrawY, tentW, tentH;
-      if (this.tentSprite) {
-        const tW = this.tentSprite.width;
-        const tH = this.tentSprite.height;
+      if (itemTent) {
+        const tW = itemTent.width;
+        const tH = itemTent.height;
         const scale = 1.2;
         tentW = tW * scale;
         tentH = tH * scale;
         tentDrawX = centerX - tentW / 2;
         tentDrawY = drawY - tentH + TILE_SIZE + 4;
-        ctx.drawImage(this.tentSprite, tentDrawX, tentDrawY, tentW, tentH);
+        ctx.drawImage(itemTent, tentDrawX, tentDrawY, tentW, tentH);
       } else {
         // Fallback to old chest sprite
         const fallbackSprite = this.decos['chest'];
@@ -4760,6 +4802,13 @@ class Game {
   hideRoadmapOverlay() {
     this.roadmapOverlayVisible = false;
     document.getElementById('roadmap-overlay').classList.remove('visible');
+    // If game is over, re-show the victory screen (force reflow to replay fadeIn animation)
+    if (this.gamePhase === 'victory' || this.dragonSlain) {
+      const vs = document.getElementById('victory-screen');
+      vs.classList.remove('visible');
+      void vs.offsetWidth; // force reflow so animation replays
+      vs.classList.add('visible');
+    }
   }
 
   loop() {
