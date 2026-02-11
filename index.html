@@ -59,88 +59,99 @@
 
     #hud .subtitle {
       font-size: 12px;
-      color: #a0a0b0;
+      color: #b0b0c0;
       margin-top: 6px;
-      text-shadow: 1px 1px 0 #000;
+      text-shadow: 1px 1px 0 #000, 0 0 4px rgba(0,0,0,0.8);
     }
 
     #hud .quest-info {
       text-align: right;
       font-size: 12px;
-      color: #80d080;
-      text-shadow: 1px 1px 0 #000;
+      color: #90e090;
+      text-shadow: 1px 1px 0 #000, 0 0 4px rgba(0,0,0,0.8);
     }
 
-    /* Info panel for roadmap items */
+    /* Info panel — medieval scroll / parchment aesthetic */
     #info-panel {
       position: absolute;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      max-width: 800px;
-      width: 90%;
-      background: rgba(10, 10, 30, 0.95);
-      border: 4px solid #f0c040;
-      border-radius: 6px;
-      padding: 28px 32px;
+      max-width: 520px;
+      width: 92%;
+      background: linear-gradient(180deg, #efe6d4 0%, #d9ccb8 100%);
+      border: 4px solid #4a3520;
+      border-radius: 4px;
+      padding: 20px 24px 20px 24px;
       z-index: 20;
       display: none;
-      box-shadow: 0 0 40px rgba(240, 192, 64, 0.3), inset 0 0 20px rgba(0,0,0,0.5);
+      box-shadow: 
+        0 0 0 2px #6b5344,
+        0 8px 24px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.3);
     }
 
     #info-panel.visible {
       display: block;
-      animation: panelSlideUp 0.2s ease-out;
+      animation: panelSlideUp 0.25s ease-out;
     }
 
     @keyframes panelSlideUp {
-      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      from { transform: translateX(-50%) translateY(24px); opacity: 0; }
       to { transform: translateX(-50%) translateY(0); opacity: 1; }
     }
 
     #info-panel .panel-status {
-      font-size: 14px;
-      color: #80d080;
-      margin-bottom: 12px;
+      font-size: 9px;
+      color: #3d5c2e;
+      margin-bottom: 8px;
       text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: 'Press Start 2P', monospace;
     }
 
     #info-panel .panel-status.upcoming {
-      color: #f0c040;
+      color: #6b5020;
     }
 
     #info-panel .panel-title {
-      font-size: 20px;
-      color: #fff;
-      margin-bottom: 16px;
-      text-shadow: 1px 1px 0 #000;
-      line-height: 1.8;
+      font-size: 11px;
+      color: #2a1f14;
+      margin-bottom: 14px;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+      line-height: 1.7;
+      font-family: 'Press Start 2P', monospace;
     }
 
     #info-panel .panel-desc {
-      font-size: 13px;
-      color: #c0c0d0;
-      line-height: 2.2;
-      text-shadow: 1px 1px 0 #000;
+      font-size: 11px;
+      color: #3d3528;
+      line-height: 1.8;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      max-height: 38vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      font-family: 'Silkscreen', sans-serif;
+      margin-bottom: 16px;
     }
 
-    #info-panel .panel-close {
-      position: absolute;
-      top: 12px;
-      right: 16px;
-      font-size: 14px;
-      color: #f0c040;
-      cursor: pointer;
-      pointer-events: all;
+    #info-panel .panel-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     #info-panel .panel-number {
       display: inline-block;
-      background: #f0c040;
-      color: #0a0a1a;
+      background: #4a3520;
+      color: #efe6d4;
       padding: 4px 10px;
       margin-right: 10px;
-      font-size: 16px;
+      font-size: 10px;
+      font-family: 'Press Start 2P', monospace;
+      border-radius: 2px;
     }
 
     /* Milestone banner */
@@ -153,6 +164,8 @@
       text-align: center;
       display: none;
       pointer-events: none;
+      max-width: min(90vw, 520px);
+      padding: 0 20px;
     }
 
     #milestone-banner.visible {
@@ -167,11 +180,16 @@
     }
 
     #milestone-banner .banner-text {
-      font-size: 28px;
+      font-size: clamp(14px, 4.5vw, 28px);
       color: #f0c040;
-      text-shadow: 3px 3px 0 #000, 0 0 20px rgba(240,192,64,0.5);
-      line-height: 2;
-      white-space: nowrap;
+      text-shadow:
+        -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
+        0 -2px 0 #000, 0 2px 0 #000, -2px 0 0 #000, 2px 0 0 #000,
+        0 0 24px rgba(0,0,0,0.8), 0 0 48px rgba(0,0,0,0.4),
+        0 0 20px rgba(240,192,64,0.5);
+      line-height: 1.6;
+      white-space: pre-line;
+      word-wrap: break-word;
     }
 
     /* Dragon slaying screen */
@@ -213,6 +231,7 @@
       line-height: 2.2;
       text-align: right;
     }
+    #controls-hint .control-line { display: block; }
 
     /* Minimap — hidden by default */
     #minimap {
@@ -267,14 +286,27 @@
     #loading .load-bar-inner {
       height: 100%;
       width: 0%;
-      background: #f0c040;
+      background: linear-gradient(90deg, #d4a020 0%, #f0c040 50%, #f0d060 100%);
+      background-size: 200% 100%;
       transition: width 0.3s;
+      animation: loadBarShimmer 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loadBarShimmer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
     }
 
     #loading .load-text {
       font-size: 14px;
       color: #808090;
       margin-top: 16px;
+      animation: loadTextPulse 0.8s ease-in-out infinite;
+    }
+
+    @keyframes loadTextPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
 
     /* Interaction prompt above items */
@@ -333,27 +365,26 @@
         border-width: 3px;
       }
       #info-panel .panel-status {
-        font-size: 10px;
-        margin-bottom: 8px;
+        font-size: 8px;
+        margin-bottom: 6px;
       }
       #info-panel .panel-title {
-        font-size: 13px;
+        font-size: 9px;
         margin-bottom: 10px;
-        line-height: 1.6;
+        line-height: 1.5;
       }
       #info-panel .panel-desc {
-        font-size: 9px;
-        line-height: 2;
+        font-size: 10px;
+        line-height: 1.7;
       }
       #info-panel .panel-number {
-        font-size: 11px;
-        padding: 3px 7px;
-        margin-right: 6px;
+        font-size: 8px;
+        padding: 3px 8px;
+        margin-right: 8px;
       }
-      #info-panel .panel-close {
-        font-size: 11px;
-        top: 8px;
-        right: 10px;
+      #info-panel .panel-explore {
+        font-size: 10px;
+        padding: 10px 20px;
       }
 
       #controls-hint {
@@ -363,8 +394,8 @@
       }
 
       #milestone-banner .banner-text {
-        font-size: 18px;
-        line-height: 1.8;
+        font-size: clamp(12px, 3.5vw, 18px);
+        line-height: 1.6;
       }
 
       /* Loading screen */
@@ -418,18 +449,22 @@
         border-width: 2px;
       }
       #info-panel .panel-title {
-        font-size: 11px;
+        font-size: 8px;
         line-height: 1.5;
         margin-bottom: 8px;
       }
       #info-panel .panel-desc {
-        font-size: 8px;
-        line-height: 1.9;
+        font-size: 9px;
+        line-height: 1.7;
+      }
+      #info-panel .panel-explore {
+        font-size: 9px;
+        padding: 10px 18px;
       }
 
       #milestone-banner .banner-text {
-        font-size: 14px;
-        line-height: 1.6;
+        font-size: clamp(10px, 3vw, 14px);
+        line-height: 1.5;
       }
 
       #controls-hint {
@@ -448,21 +483,42 @@
        NEW UI ELEMENTS
        ============================================================ */
 
-    /* Intro scroll (replaces title screen) */
+    /* Intro backdrop — dim background when modal is shown */
+    #intro-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 49;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #intro-backdrop.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Intro scroll — medieval parchment style, pixel font */
     #intro-scroll {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 50;
-      background: linear-gradient(135deg, #2a1a08 0%, #3a2510 40%, #2a1a08 100%);
-      border: 4px solid #c09030;
-      border-radius: 8px;
-      padding: 32px 40px;
-      max-width: 520px;
+      background: linear-gradient(180deg, #efe6d4 0%, #d9ccb8 100%);
+      border: 4px solid #4a3520;
+      border-radius: 4px;
+      padding: 36px 44px;
+      max-width: 560px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 0 60px rgba(192,144,48,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+      box-shadow: 
+        0 0 0 2px #6b5344,
+        0 12px 32px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.3);
       display: none;
     }
     #intro-scroll.visible {
@@ -470,51 +526,68 @@
       animation: panelSlideUp 0.4s ease-out;
     }
     #intro-scroll .scroll-title {
-      font-size: 14px;
-      color: #f0c040;
-      text-shadow: 2px 2px 0 #000;
-      margin-bottom: 20px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 18px;
+      color: #2a1f14;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+      margin-bottom: 24px;
       line-height: 2.2;
     }
     #intro-scroll .scroll-text {
-      font-size: 10px;
-      color: #d0c0a0;
-      text-shadow: 1px 1px 0 #000;
-      line-height: 2.4;
-      margin-bottom: 24px;
+      font-family: 'Silkscreen', sans-serif;
+      font-size: 14px;
+      color: #3d3528;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      line-height: 1.9;
+      margin-bottom: 28px;
+    }
+    #intro-scroll .scroll-paragraph {
+      text-wrap: balance;
+      margin-bottom: 0.8em;
+    }
+    #intro-scroll .scroll-paragraph:last-child {
+      margin-bottom: 0;
     }
     #intro-scroll .go-btn {
       display: inline-block;
       font-family: 'Press Start 2P', monospace;
-      font-size: 16px;
-      color: #0a0a1a;
-      background: #f0c040;
-      border: none;
-      padding: 12px 40px;
+      font-size: 14px;
+      color: #efe6d4;
+      background: linear-gradient(180deg, #6b5344 0%, #4a3520 100%);
+      border: 2px solid #2a1f14;
+      border-radius: 2px;
+      padding: 14px 36px;
       cursor: pointer;
       text-shadow: none;
       animation: bobUpDown 1.5s ease-in-out infinite;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
     }
     #intro-scroll .go-btn:hover {
-      background: #ffe070;
+      background: linear-gradient(180deg, #7b6354 0%, #5a4530 100%);
+      color: #fff;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
 
-    /* Panel explore button */
+    /* Panel explore button — medieval style */
     #info-panel .panel-explore {
       display: inline-block;
       font-family: 'Press Start 2P', monospace;
       font-size: 10px;
-      color: #0a0a1a;
-      background: #f0c040;
-      padding: 8px 16px;
-      margin-top: 16px;
+      color: #efe6d4;
+      background: linear-gradient(180deg, #6b5344 0%, #4a3520 100%);
+      padding: 12px 28px;
       text-decoration: none;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      border: 2px solid #2a1f14;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
     }
     #info-panel .panel-explore:hover {
-      background: #ffe070;
+      background: linear-gradient(180deg, #7b6354 0%, #5a4530 100%);
+      color: #fff;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
     }
     #info-panel .panel-explore.hidden {
       display: none;
@@ -703,8 +776,10 @@
     #zoom-controls button {
       font-family: 'Press Start 2P', monospace;
       font-size: 16px;
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
       background: rgba(0,0,0,0.6);
       color: #f0c040;
       border: 2px solid #f0c040;
@@ -729,7 +804,13 @@
       color: #f0c040;
       background: rgba(0,0,0,0.6);
       border: 2px solid #f0c040;
-      padding: 6px 10px;
+      padding: 12px 16px;
+      min-width: 44px;
+      min-height: 44px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
     #roadmap-btn:hover {
@@ -792,11 +873,12 @@
     </div>
 
     <div id="info-panel">
-      <div class="panel-close" id="panel-close">X</div>
       <div class="panel-status" id="panel-status"></div>
       <div class="panel-title" id="panel-title"></div>
       <div class="panel-desc" id="panel-desc"></div>
-      <a class="panel-explore hidden" id="panel-explore" target="_blank">EXPLORE DOCS</a>
+      <div class="panel-actions">
+        <a class="panel-explore hidden" id="panel-explore" target="_blank">Explore Docs</a>
+      </div>
     </div>
 
     <div id="milestone-banner">
@@ -804,17 +886,17 @@
     </div>
 
     <div id="controls-hint">
-      <span class="desktop-hint">WASD / ARROWS — Move</span>
-      <span class="mobile-hint">TAP TO MOVE</span>
+      <span class="desktop-hint">Arrow Keys — Move</span>
+      <span class="mobile-hint">Arrow Keys — Move</span>
     </div>
 
     <!-- Intro scroll (replaces title screen) -->
+    <div id="intro-backdrop"></div>
     <div id="intro-scroll">
       <div class="scroll-title">DICTATION QUEST</div>
       <div class="scroll-text">
-        Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.
-        <br><br>
-        Use <span style="color:#f0c040;">WASD</span> or <span style="color:#f0c040;">Arrow Keys</span> to move. Walk into landmarks to discover them.
+        <p class="scroll-paragraph">Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.</p>
+        <p class="scroll-paragraph">Use <span style="color:#4a3520;">Arrow Keys</span> to move. Walk into landmarks to discover them.</p>
       </div>
       <button class="go-btn" id="go-btn">GO</button>
     </div>
@@ -1732,27 +1814,95 @@ class WorldMap {
     const noiseTable = [];
     for (let i = 0; i < 200; i++) noiseTable.push(zoneRng() * 4 - 2); // -2 to +2 tile variance (smaller map)
     const zoneNoise = (idx) => noiseTable[Math.abs(idx) % noiseTable.length];
+    // Higher-amplitude noise for forest edges (jagged, organic borders)
+    const bigNoiseTable = [];
+    const bigNoiseRng = PixelArt.seededRandom(888);
+    for (let i = 0; i < 200; i++) bigNoiseTable.push(bigNoiseRng() * 6 - 3); // -3 to +3 tile variance
+    const bigNoise = (idx) => bigNoiseTable[Math.abs(idx) % bigNoiseTable.length];
 
-    // Dark forest — left edge of map
+    // Dark forest — left edge of map (highly irregular jagged boundary)
+    // Use dedicated RNG for forest edge so each row gets truly independent variation
+    const forestEdgeRng = PixelArt.seededRandom(1234);
+    const leftEdgeCols = []; // store per-row edge for scatter pass
     for (let y = 0; y < this.rows; y++) {
-      const forestRightEdge = y < 6 ? 6 + zoneNoise(y * 3) : (y < 20 ? 4 + zoneNoise(y * 3) : 5 + zoneNoise(y * 3 + 50));
-      for (let x = 0; x < Math.min(Math.floor(forestRightEdge), this.cols); x++) {
+      const base = y < 6 ? 6 : (y < 20 ? 4 : 5);
+      // Independent random offset per row: -3 to +4 tiles (wide swing)
+      const offset = Math.floor(forestEdgeRng() * 7) - 3;
+      // Plus a slower wave for broader shape
+      const wave = Math.sin(y * 0.4) * 2;
+      const forestRightEdge = Math.max(1, base + offset + wave);
+      leftEdgeCols[y] = Math.floor(forestRightEdge);
+      for (let x = 0; x < Math.min(leftEdgeCols[y], this.cols); x++) {
         if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
       }
     }
-
-    // Top strip dark forest
-    for (let y = 0; y < 3; y++) {
-      for (let x = 0; x < 14 + zoneNoise(y + 200); x++) {
-        if (x < this.cols && this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+    // Scatter darkGrass outcrops 1-2 tiles beyond the main edge (fuzzy border)
+    for (let y = 0; y < this.rows; y++) {
+      const edgeCol = leftEdgeCols[y];
+      for (let dx = 0; dx < 3; dx++) {
+        const x = edgeCol + dx;
+        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
+          // Higher chance close to edge, lower further out
+          if (forestEdgeRng() < (0.6 - dx * 0.2)) {
+            this.grid[y][x] = 'darkGrass';
+          }
+        }
+      }
+    }
+    // Scatter grass clearings 1-2 tiles inside the forest edge (break up interior)
+    for (let y = 0; y < this.rows; y++) {
+      const edgeCol = leftEdgeCols[y];
+      for (let dx = 1; dx <= 2; dx++) {
+        const x = edgeCol - dx;
+        if (x >= 0 && x < this.cols && this.grid[y][x] === 'darkGrass') {
+          if (forestEdgeRng() < 0.25) {
+            this.grid[y][x] = 'grass';
+          }
+        }
       }
     }
 
-    // Right-side dark forest
-    for (let y = 0; y < this.rows; y++) {
-      const rightForestLeftEdge = y < 12 ? 32 + zoneNoise(y * 4 + 600) : 30 + zoneNoise(y * 4 + 500);
-      for (let x = Math.max(0, Math.floor(rightForestLeftEdge)); x < this.cols; x++) {
+    // Top strip dark forest (jagged bottom edge with scatter)
+    const topEdgeRng = PixelArt.seededRandom(5678);
+    for (let y = 0; y < 4; y++) {
+      const base = y < 2 ? 16 : (y < 3 ? 12 : 8);
+      const offset = Math.floor(topEdgeRng() * 6) - 2;
+      for (let x = 0; x < Math.min(base + offset, this.cols); x++) {
         if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+    // Scatter below the top strip
+    for (let y = 2; y < 5; y++) {
+      for (let x = 3; x < 14; x++) {
+        if (x < this.cols && this.grid[y][x] === 'grass' && topEdgeRng() < 0.3) {
+          this.grid[y][x] = 'darkGrass';
+        }
+      }
+    }
+
+    // Right-side dark forest (highly irregular jagged boundary)
+    const rightEdgeRng = PixelArt.seededRandom(4321);
+    const rightEdgeCols = [];
+    for (let y = 0; y < this.rows; y++) {
+      const base = y < 12 ? 32 : 30;
+      const offset = Math.floor(rightEdgeRng() * 7) - 3;
+      const wave = Math.sin(y * 0.35 + 2) * 2;
+      const rightForestLeftEdge = Math.min(this.cols - 1, base + offset + wave);
+      rightEdgeCols[y] = Math.floor(rightForestLeftEdge);
+      for (let x = Math.max(0, rightEdgeCols[y]); x < this.cols; x++) {
+        if (this.grid[y][x] === 'grass') this.grid[y][x] = 'darkGrass';
+      }
+    }
+    // Scatter on right edge too
+    for (let y = 0; y < this.rows; y++) {
+      const edgeCol = rightEdgeCols[y];
+      for (let dx = 1; dx <= 3; dx++) {
+        const x = edgeCol - dx;
+        if (x >= 0 && x < this.cols && this.grid[y][x] === 'grass') {
+          if (rightEdgeRng() < (0.6 - dx * 0.2)) {
+            this.grid[y][x] = 'darkGrass';
+          }
+        }
       }
     }
 
@@ -1922,48 +2072,54 @@ class WorldMap {
       }
     }
 
-    // Small rocks
+    // Small rocks (16 variants from rocks-grid.png)
+    const variantCount = 16;
     for (let i = 0; i < 12; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass', 'stone', 'volcanic']) && notTooClose(x, y)) {
-        this.decorations.push({ type: 'rock', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `rock_v${v}`, x, y });
       }
     }
 
-    // Boulders
+    // Boulders (16 variants from boulders-grid.png)
     for (let i = 0; i < 6; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['stone', 'volcanic', 'darkGrass']) && notTooClose(x, y)) {
-        this.decorations.push({ type: 'boulder', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `boulder_v${v}`, x, y });
       }
     }
 
-    // Flowers
-    for (let i = 0; i < 15; i++) {
+    // Flowers (16 variants from flowers-grid.png)
+    for (let i = 0; i < 30; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass', 'darkGrass'])) {
-        this.decorations.push({ type: 'flower', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `flower_v${v}`, x, y });
       }
     }
 
-    // Rose bushes
+    // Rose bushes (16 variants from bushes-grid.png)
     for (let i = 0; i < 10; i++) {
       const x = Math.floor(rng() * this.cols);
       const y = Math.floor(rng() * this.rows);
       if (canPlace(x, y, ['grass']) && notTooClose(x, y, 2)) {
-        this.decorations.push({ type: 'roseBush', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `roseBush_v${v}`, x, y });
       }
     }
 
-    // Skulls in volcanic area
+    // Skulls in volcanic area (16 variants from skulls-grid.png)
     for (let i = 0; i < 5; i++) {
       const x = 2 + Math.floor(rng() * 14);
       const y = 21 + Math.floor(rng() * 10);
       if (canPlace(x, y, ['volcanic'])) {
-        this.decorations.push({ type: 'skull', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `skull_v${v}`, x, y });
       }
     }
 
@@ -1976,27 +2132,18 @@ class WorldMap {
     // Campfire at start
     this.decorations.push({ type: 'campfire', x: 5, y: 10 });
 
-    // Signposts near turns (off-path)
-    this.decorations.push({ type: 'signpost', x: 6, y: 5 });
-    this.decorations.push({ type: 'signpost', x: 30, y: 11 });
-
-    // Medkits scattered off-path
+    // Potions (16 variants from potions-grid.png)
     for (let i = 0; i < 6; i++) {
       const x = 3 + Math.floor(rng() * (this.cols - 6));
       const y = 3 + Math.floor(rng() * (this.rows - 6));
       if (canPlace(x, y, ['grass', 'stone']) && notTooClose(x, y, 2)) {
-        this.decorations.push({ type: 'medkit', x, y });
+        const v = Math.floor(rng() * variantCount);
+        this.decorations.push({ type: `potion_v${v}`, x, y });
       }
     }
 
-    // Health potions scattered off-path
-    for (let i = 0; i < 6; i++) {
-      const x = 3 + Math.floor(rng() * (this.cols - 6));
-      const y = 3 + Math.floor(rng() * (this.rows - 6));
-      if (canPlace(x, y, ['grass', 'stone']) && notTooClose(x, y, 2)) {
-        this.decorations.push({ type: 'potion', x, y });
-      }
-    }
+    // Medkits — hidden until medkit-grid.png is added
+    // for (let i = 0; i < 6; i++) { ... }
 
     // Sort decorations by Y for proper layering
     this.decorations.sort((a, b) => a.y - b.y);
@@ -2151,102 +2298,32 @@ class Character {
     const drawY = this.y - cameraY - (sh * 40 / 48) - jumpOffset - walkBob;
     ctx.drawImage(sprite, drawX, drawY, sw, sh);
 
-    // Draw held bow
-    if (this.hasBow) {
+    // Draw held bow (same sprite as the pickup on the map)
+    if (this.hasBow && this.bowSprite) {
       const d = this.dir;
       let ox, oy, flip;
       if (d === 2 || d === 1 || d === 3) {
-        ox = 28 * scale; oy = 0; flip = false;
+        ox = 20 * scale; oy = -4; flip = false;
       } else if (d === 6 || d === 5 || d === 7) {
-        ox = -8 * scale; oy = 0; flip = true;
+        ox = -4 * scale; oy = -4; flip = true;
       } else if (d === 0) {
-        ox = 26 * scale; oy = 2; flip = false;
+        ox = 18 * scale; oy = -2; flip = false;
       } else {
-        ox = -6 * scale; oy = 2; flip = true;
+        ox = -2 * scale; oy = -2; flip = true;
       }
       const bob = this.moving ? Math.sin(this.frameTimer * 0.6) * 1.5 : 0;
       const bx = drawX + ox;
       const by = drawY + oy + bob;
+      const bowSize = 24; // Render held bow at 24px
 
       ctx.save();
+      ctx.imageSmoothingEnabled = false;
       if (flip) {
-        ctx.translate(bx + 8, by);
+        ctx.translate(bx + bowSize / 2, by + bowSize / 2);
         ctx.scale(-1, 1);
-        ctx.translate(-(bx + 8), -by);
+        ctx.translate(-(bx + bowSize / 2), -(by + bowSize / 2));
       }
-
-      // -- Detailed recurve bow --
-      // Dark outline/shadow first
-      ctx.fillStyle = '#3a2010';
-      // Top limb outline
-      ctx.fillRect(bx + 3, by - 12, 3, 2);
-      ctx.fillRect(bx + 4, by - 10, 3, 3);
-      ctx.fillRect(bx + 5, by - 7, 3, 3);
-      ctx.fillRect(bx + 6, by - 4, 3, 4);
-      // Bottom limb outline
-      ctx.fillRect(bx + 6, by + 6, 3, 4);
-      ctx.fillRect(bx + 5, by + 10, 3, 3);
-      ctx.fillRect(bx + 4, by + 13, 3, 3);
-      ctx.fillRect(bx + 3, by + 16, 3, 2);
-
-      // Main wood — warm brown
-      ctx.fillStyle = '#9a5828';
-      // Top recurve tip
-      ctx.fillRect(bx + 4, by - 11, 2, 2);
-      // Upper limb (curves outward)
-      ctx.fillRect(bx + 5, by - 9, 2, 3);
-      ctx.fillRect(bx + 6, by - 6, 2, 3);
-      ctx.fillRect(bx + 7, by - 3, 2, 4);
-      // Lower limb (curves outward)
-      ctx.fillRect(bx + 7, by + 5, 2, 4);
-      ctx.fillRect(bx + 6, by + 9, 2, 3);
-      ctx.fillRect(bx + 5, by + 12, 2, 3);
-      // Bottom recurve tip
-      ctx.fillRect(bx + 4, by + 15, 2, 2);
-
-      // Lighter inner highlight
-      ctx.fillStyle = '#b87838';
-      ctx.fillRect(bx + 5, by - 10, 1, 2);
-      ctx.fillRect(bx + 6, by - 8, 1, 3);
-      ctx.fillRect(bx + 7, by - 5, 1, 3);
-      ctx.fillRect(bx + 7, by + 6, 1, 3);
-      ctx.fillRect(bx + 6, by + 10, 1, 3);
-      ctx.fillRect(bx + 5, by + 13, 1, 2);
-
-      // Grip wrap — golden leather
-      ctx.fillStyle = '#d4a830';
-      ctx.fillRect(bx + 7, by - 1, 2, 8);
-      ctx.fillStyle = '#e8c040';
-      ctx.fillRect(bx + 7, by, 1, 6);
-      // Grip detail lines
-      ctx.fillStyle = '#b08820';
-      ctx.fillRect(bx + 7, by + 1, 2, 1);
-      ctx.fillRect(bx + 7, by + 3, 2, 1);
-      ctx.fillRect(bx + 7, by + 5, 2, 1);
-
-      // Nock tips — small metal fittings
-      ctx.fillStyle = '#c0c0c0';
-      ctx.fillRect(bx + 3, by - 12, 2, 1);
-      ctx.fillRect(bx + 3, by + 17, 2, 1);
-      ctx.fillStyle = '#e0e0e0';
-      ctx.fillRect(bx + 4, by - 12, 1, 1);
-      ctx.fillRect(bx + 4, by + 17, 1, 1);
-
-      // Bowstring — thin taut line
-      ctx.fillStyle = '#e0d8c0';
-      ctx.fillRect(bx + 2, by - 11, 1, 1);
-      ctx.fillRect(bx + 1, by - 10, 1, 6);
-      ctx.fillRect(bx + 1, by - 4, 1, 4);
-      ctx.fillRect(bx + 1, by, 1, 6);
-      ctx.fillRect(bx + 1, by + 6, 1, 4);
-      ctx.fillRect(bx + 1, by + 10, 1, 4);
-      ctx.fillRect(bx + 2, by + 14, 1, 3);
-      ctx.fillRect(bx + 2, by + 16, 1, 1);
-      // String highlight
-      ctx.fillStyle = '#f0ece0';
-      ctx.fillRect(bx + 1, by - 2, 1, 2);
-      ctx.fillRect(bx + 1, by + 4, 1, 2);
-
+      ctx.drawImage(this.bowSprite, bx, by, bowSize, bowSize);
       ctx.restore();
     }
   }
@@ -2355,6 +2432,8 @@ class Game {
     this.dragonFightActive = false;
     this.dragonHP = 100;
     this.dragonHitTimer = 0;
+    this.hitFlashTimer = 0;
+    this.victoryFlashTimer = 0;
     this.arrowsFired = [];
     this.interactCooldown = 0;
     this.coins = [];
@@ -2396,12 +2475,15 @@ class Game {
 
     loadText.textContent = 'Generating terrain...';
     loadBar.style.width = '20%';
-    await this.sleep(300);
+    await this.sleep(200);
 
     this.tiles = PixelArt.generateTiles();
+    loadText.textContent = 'Loading tilesets...';
+    loadBar.style.width = '28%';
+    await this.sleep(100);
 
     // Load PixelLab Wang tilesets in parallel
-    loadText.textContent = 'Loading terrain...';
+    loadText.textContent = 'Placing landmarks...';
     loadBar.style.width = '35%';
     const [grassPathTiles, grassWaterTiles, grassDarkTiles, grassStoneTiles, grassVolcanicTiles] = await Promise.all([
       PixelArt.loadWangTileset('assets/tilesets/grass_path.png', 'assets/tilesets/grass_path_meta.json'),
@@ -2424,10 +2506,12 @@ class Game {
     });
 
     loadText.textContent = 'Growing forests...';
-    loadBar.style.width = '50%';
-    await this.sleep(200);
+    loadBar.style.width = '45%';
+    await this.sleep(150);
 
     this.decos = PixelArt.generateDecorations();
+    loadText.textContent = 'Loading decorations...';
+    loadBar.style.width = '50%';
 
     // Replace procedural assets with PixelLab-generated ones
     const loadAssetImg = (src) => new Promise((resolve, reject) => {
@@ -2442,16 +2526,80 @@ class Game {
       img.src = src;
     });
 
+    // Load isometric tile and auto-crop the diamond base
+    // Scans from bottom to find the base edge, then keeps only the object above it
+    const loadAssetImgCropped = (src, cropRatio = 0.35) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const w = img.width, h = img.height;
+        // Draw full image to temp canvas to read pixel data
+        const tmp = document.createElement('canvas');
+        tmp.width = w; tmp.height = h;
+        const tCtx = tmp.getContext('2d');
+        tCtx.drawImage(img, 0, 0);
+        const data = tCtx.getImageData(0, 0, w, h).data;
+
+        // Find the topmost row that has opaque pixels (the actual object)
+        let topRow = h;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (data[(y * w + x) * 4 + 3] > 10) { topRow = y; break; }
+          }
+          if (topRow < h) break;
+        }
+
+        // Crop bottom portion (the isometric base) by removing cropRatio from bottom
+        const cropH = Math.floor(h * cropRatio);
+        const keepH = h - cropH;
+        const c = document.createElement('canvas');
+        c.width = w; c.height = keepH;
+        c.getContext('2d').drawImage(img, 0, 0, w, keepH, 0, 0, w, keepH);
+        resolve(c);
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+
     const treeCanvas = await loadAssetImg('assets/trees/pine_south.png');
     if (treeCanvas) { this.decos.tree0 = treeCanvas; this.decos.tree1 = treeCanvas; }
 
-    // Load PixelLab decoration sprites (replace procedural fallbacks)
+    // Generic grid loader: splits a grid PNG into individual variant sprites
+    const DECO_SIZE = TILE_SIZE / 2; // 16px — half-tile for decorations
+    const loadGrid = async (src, prefix, gridCols = 4, gridRows = 4, size = DECO_SIZE) => {
+      const grid = await loadAssetImg(src);
+      if (!grid) return 0;
+      const cellW = grid.width / gridCols;
+      const cellH = grid.height / gridRows;
+      const count = gridCols * gridRows;
+      for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
+          const idx = row * gridCols + col;
+          const c = document.createElement('canvas');
+          c.width = size; c.height = size;
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(grid, col * cellW, row * cellH, cellW, cellH, 0, 0, size, size);
+          this.decos[`${prefix}_v${idx}`] = c;
+        }
+      }
+      return count;
+    };
+
+    // Load all decoration grids (4x4 = 16 variants each, rendered at 16px)
+    await loadGrid('assets/decorations/flowers-grid.png', 'flower');
+    await loadGrid('assets/decorations/rocks-grid.png', 'rock');
+    await loadGrid('assets/decorations/boulders-grid.png', 'boulder');
+    await loadGrid('assets/decorations/skulls-grid.png', 'skull');
+    await loadGrid('assets/decorations/bushes-grid.png', 'roseBush');
+    await loadGrid('assets/decorations/potions-grid.png', 'potion');
+
+    // Load bow grid and use first variant as the bow pickup sprite
+    const bowCount = await loadGrid('assets/decorations/bows-grid.png', 'bow_opt', 4, 4, TILE_SIZE);
+    if (bowCount > 0) this.decos.bow = this.decos['bow_opt_v0'];
+
+    // Load other decoration sprites (single PNGs)
     const decoAssets = {
-      // rock, boulder, flower, roseBush, medkit, potion use procedural sprites
-      // (PixelLab PNGs had opaque isometric block bases)
       campfire: 'assets/decorations/campfire.png',
-      skull: 'assets/decorations/skull.png',
-      signpost: 'assets/decorations/signpost.png',
       deadTree: 'assets/trees/dead_south.png',
       lava: 'assets/decorations/lava.png',
       flag: 'assets/decorations/flag.png',
@@ -2466,68 +2614,50 @@ class Game {
     const dragonCanvas = await loadAssetImg('assets/dragon/south.png');
     if (dragonCanvas) this.decos.dragon = dragonCanvas;
 
-    // Pre-render 8 round coin rotation frames (classic pixel game style)
+    // Load coin rotation frames from coins.png spritesheet (3x3 grid, 32x32 per cell)
+    // Contains pre-drawn rotation frames for a spinning gold coin
     this.coinFrames = [];
-    {
+    const coinSheet = await loadAssetImg('assets/decorations/coins.png');
+    if (coinSheet) {
+      const gridCols = 3, gridRows = 3;
+      const cellW = coinSheet.width / gridCols;
+      const cellH = coinSheet.height / gridRows;
+      const coinSize = 16; // rendered size in game
+      const totalCells = gridCols * gridRows;
+      for (let i = 0; i < totalCells; i++) {
+        const col = i % gridCols;
+        const row = Math.floor(i / gridCols);
+        const fc = document.createElement('canvas');
+        fc.width = coinSize; fc.height = coinSize;
+        const fctx = fc.getContext('2d');
+        fctx.imageSmoothingEnabled = false;
+        fctx.drawImage(coinSheet, col * cellW, row * cellH, cellW, cellH, 0, 0, coinSize, coinSize);
+        this.coinFrames.push(fc);
+      }
+    }
+    if (this.coinFrames.length === 0) {
+      // Fallback: procedural gold coin if spritesheet not available
       const frameCount = 8;
-      const coinSize = 14; // diameter in pixels
-      const coinH = coinSize;
+      const coinSize = 14;
       for (let i = 0; i < frameCount; i++) {
         const angle = (i / frameCount) * Math.PI * 2;
         const scaleX = Math.abs(Math.cos(angle));
         const coinW = Math.max(2, Math.round(coinSize * scaleX));
         const fc = document.createElement('canvas');
-        fc.width = coinW + 2; fc.height = coinH + 2;
+        fc.width = coinW + 2; fc.height = coinSize + 2;
         const fctx = fc.getContext('2d');
         const cx = (coinW + 2) / 2;
-        const cy = (coinH + 2) / 2;
+        const cy = (coinSize + 2) / 2;
         const rx = coinW / 2;
-        const ry = coinH / 2;
-
-        // Dark outline
+        const ry = coinSize / 2;
         fctx.fillStyle = '#8a6010';
-        fctx.beginPath();
-        fctx.ellipse(cx, cy, rx + 1, ry + 1, 0, 0, Math.PI * 2);
-        fctx.fill();
-
-        // Main gold body
+        fctx.beginPath(); fctx.ellipse(cx, cy, rx + 1, ry + 1, 0, 0, Math.PI * 2); fctx.fill();
         fctx.fillStyle = '#d4a020';
-        fctx.beginPath();
-        fctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-        fctx.fill();
-
-        // Highlight (top)
+        fctx.beginPath(); fctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); fctx.fill();
         if (coinW > 4) {
           fctx.fillStyle = '#f0d060';
-          fctx.beginPath();
-          fctx.ellipse(cx, cy - ry * 0.2, rx * 0.7, ry * 0.5, 0, 0, Math.PI * 2);
-          fctx.fill();
-
-          // Bright shine spot
-          fctx.fillStyle = '#fff8d0';
-          fctx.beginPath();
-          fctx.ellipse(cx - rx * 0.2, cy - ry * 0.3, rx * 0.25, ry * 0.25, 0, 0, Math.PI * 2);
-          fctx.fill();
-
-          // Embossed detail (show on front-facing frames)
-          if (scaleX > 0.5) {
-            fctx.fillStyle = '#c09018';
-            fctx.beginPath();
-            fctx.ellipse(cx, cy, rx * 0.35, ry * 0.35, 0, 0, Math.PI * 2);
-            fctx.fill();
-            fctx.fillStyle = '#d4a020';
-            fctx.beginPath();
-            fctx.ellipse(cx, cy, rx * 0.25, ry * 0.25, 0, 0, Math.PI * 2);
-            fctx.fill();
-          }
+          fctx.beginPath(); fctx.ellipse(cx, cy - ry * 0.2, rx * 0.7, ry * 0.5, 0, 0, Math.PI * 2); fctx.fill();
         }
-
-        // Bottom shadow edge
-        fctx.fillStyle = '#9a6808';
-        fctx.beginPath();
-        fctx.ellipse(cx, cy + ry * 0.7, rx * 0.8, ry * 0.2, 0, 0, Math.PI);
-        fctx.fill();
-
         this.coinFrames.push(fc);
       }
     }
@@ -2554,6 +2684,10 @@ class Game {
 
     const charSprites = await PixelArt.loadCharacterSprites();
     loadText.textContent = 'Awakening the dragon...';
+    loadBar.style.width = '75%';
+    await this.sleep(100);
+
+    loadText.textContent = 'Preparing the quest...';
     loadBar.style.width = '80%';
     await this.sleep(200);
 
@@ -2596,6 +2730,7 @@ class Game {
 
     this.gamePhase = 'opening_bard';
     this.openingTimer = 0;
+    document.getElementById('intro-backdrop').classList.add('visible');
     document.getElementById('intro-scroll').classList.add('visible');
 
     // Start game loop
@@ -2644,6 +2779,11 @@ class Game {
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); this.moveTarget = null; }
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); this.moveTarget = null; }
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.keys.right = true; e.preventDefault(); this.moveTarget = null; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.closePanel();
+        if (this.roadmapOverlayVisible) this.hideRoadmapOverlay();
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -2653,61 +2793,12 @@ class Game {
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
     });
 
-    // Tap/click-to-move for mobile & pointer
-    this.moveTarget = null; // {x, y} in world coords
-    this.tapIndicator = null; // {x, y, alpha} for visual feedback
-
-    const getWorldPos = (screenX, screenY) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const canvasX = screenX - rect.left;
-      const canvasY = screenY - rect.top;
-      // Convert screen coords to world coords (accounting for zoom and camera)
-      const worldX = canvasX / this.zoom + this.cameraX;
-      const worldY = canvasY / this.zoom + this.cameraY;
-      return { x: worldX, y: worldY };
-    };
-
-    const setMoveTarget = (screenX, screenY) => {
-      const pos = getWorldPos(screenX, screenY);
-      this.moveTarget = pos;
-      this.tapIndicator = { x: pos.x, y: pos.y, alpha: 1.0 };
-    };
-
-    // Touch events
-    this.canvas.addEventListener('touchstart', (e) => {
-      if (!this.loaded || this.gamePhase !== 'playing') return;
-      e.preventDefault();
-      const t = e.touches[0];
-      setMoveTarget(t.clientX, t.clientY);
-    }, { passive: false });
-
-    this.canvas.addEventListener('touchmove', (e) => {
-      if (!this.loaded || this.gamePhase !== 'playing') return;
-      e.preventDefault();
-      const t = e.touches[0];
-      setMoveTarget(t.clientX, t.clientY);
-    }, { passive: false });
-
-    this.canvas.addEventListener('touchend', (e) => {
-      // Keep the move target — character continues to walk there
-    });
-
-    // Mouse click-to-move (also useful on desktop)
-    this.canvas.addEventListener('click', (e) => {
-      if (!this.loaded || this.gamePhase !== 'playing') return;
-      if (this.activePanel) return;
-      if (this.roadmapOverlayVisible) return;
-      setMoveTarget(e.clientX, e.clientY);
-    });
-
-    // Panel close button
-    document.getElementById('panel-close').addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.closePanel();
-    });
+    this.moveTarget = null;
+    this.tapIndicator = null;
 
     // GO button — start the game
     document.getElementById('go-btn').addEventListener('click', () => {
+      document.getElementById('intro-backdrop').classList.remove('visible');
       document.getElementById('intro-scroll').classList.remove('visible');
       this.gamePhase = 'playing';
     });
@@ -2746,35 +2837,6 @@ class Game {
       this.showRoadmapOverlay();
     });
 
-    // Minimap click-to-navigate
-    this.minimapCanvas.addEventListener('click', (e) => {
-      if (this.gamePhase !== 'playing') return;
-      const rect = this.minimapCanvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const scaleX = this.minimapCanvas.width / (MAP_COLS * TILE_SIZE);
-      const scaleY = this.minimapCanvas.height / (MAP_ROWS * TILE_SIZE);
-      const worldX = mx / scaleX;
-      const worldY = my / scaleY;
-
-      // Snap to nearest milestone if close
-      let snapped = false;
-      for (const item of ROADMAP_ITEMS) {
-        const itemMX = item.mapX * TILE_SIZE * scaleX;
-        const itemMY = item.mapY * TILE_SIZE * scaleY;
-        if (Math.abs(mx - itemMX) < 10 && Math.abs(my - itemMY) < 10) {
-          this.moveTarget = { x: item.mapX * TILE_SIZE + TILE_SIZE / 2, y: item.mapY * TILE_SIZE + TILE_SIZE / 2 };
-          this.tapIndicator = { x: this.moveTarget.x, y: this.moveTarget.y, alpha: 1.0 };
-          snapped = true;
-          break;
-        }
-      }
-      if (!snapped) {
-        this.moveTarget = { x: worldX, y: worldY };
-        this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0 };
-      }
-    });
-    this.minimapCanvas.style.cursor = 'pointer';
   }
 
   closePanel() {
@@ -2792,6 +2854,7 @@ class Game {
       // Bow pickup + power-up
       if (item.id === 'milestone1' && !this.character.hasBow) {
         this.character.hasBow = true;
+        this.character.bowSprite = this.decos.bow; // Store the same sprite shown on map
         this.character.targetPowerLevel = 1.3;
         // Power-up particle burst
         this.particles.emit(this.character.x, this.character.y - 20, 25, {
@@ -2823,10 +2886,10 @@ class Game {
     const explore = document.getElementById('panel-explore');
 
     if (item.status === 'shipped') {
-      status.textContent = '✓ SHIPPED — CONQUERED';
+      status.textContent = 'SHIPPED';
       status.className = 'panel-status';
     } else {
-      status.textContent = '★ POWER-UP — ON THE ROADMAP';
+      status.textContent = 'ON THE ROADMAP';
       status.className = 'panel-status upcoming';
     }
 
@@ -2849,7 +2912,7 @@ class Game {
     this.milestoneBannerTimer = 180;
     const banner = document.getElementById('milestone-banner');
     const bannerText = document.getElementById('banner-text');
-    bannerText.textContent = text.replace('\n', ' ');
+    bannerText.textContent = text;
     banner.classList.add('visible');
   }
 
@@ -3045,6 +3108,7 @@ class Game {
       if (dist < 40) {
         this.dragonHP -= 8;
         this.dragonHitTimer = 10;
+        this.hitFlashTimer = 6;
         this.particles.emit(dragonX, dragonY, 10, {
           colors: ['#ff4040', '#ff8040', '#ffff40'],
           speed: 5,
@@ -3062,6 +3126,7 @@ class Game {
       this.dragonFightActive = false;
       this.gamePhase = 'victory';
       this.victoryTimer = 120; // 2 seconds until victory screen
+      this.victoryFlashTimer = 30;
       // Hide slay button
       document.getElementById('slay-button').classList.remove('visible');
       // Victory particles
@@ -3155,6 +3220,7 @@ class Game {
         this.cameraX = bardX;
         this.cameraY = bardY;
         this.gamePhase = 'opening_bard';
+        document.getElementById('intro-backdrop').classList.add('visible');
         document.getElementById('intro-scroll').classList.add('visible');
       }
       return;
@@ -3168,6 +3234,7 @@ class Game {
 
     // === Victory timer ===
     if (this.gamePhase === 'victory') {
+      if (this.victoryFlashTimer > 0) this.victoryFlashTimer--;
       if (this.victoryTimer > 0) {
         this.victoryTimer--;
         if (this.victoryTimer === 0) {
@@ -3449,6 +3516,27 @@ class Game {
 
     // --- HUD elements drawn at screen resolution (no zoom) ---
 
+    // Hit flash overlay (dragon fight feedback)
+    if (this.hitFlashTimer > 0) {
+      this.hitFlashTimer--;
+      const alpha = (this.hitFlashTimer / 6) * 0.25;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ff4040';
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.restore();
+    }
+
+    // Victory flash (golden glow when dragon slain)
+    if (this.victoryFlashTimer > 0) {
+      const alpha = (this.victoryFlashTimer / 30) * 0.4;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#f0c040';
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.restore();
+    }
+
     // Draw dragon HP bar (responsive)
     if (this.dragonFightActive) {
       const barW = Math.min(300, this.width * 0.6);
@@ -3537,6 +3625,23 @@ class Game {
     const drawY = item.mapY * TILE_SIZE - cy;
     const centerX = drawX + TILE_SIZE / 2;
 
+    // Glow when character is nearby (interactive landmark)
+    const nearbyItem = this.character.getNearbyItem(80);
+    if (nearbyItem === item && item.icon !== 'dragon') {
+      const glowPhase = Math.sin(this.time * 0.08) * 0.15 + 0.25;
+      ctx.save();
+      ctx.globalAlpha = glowPhase;
+      const glowR = 28;
+      const gx = centerX;
+      const gy = drawY + TILE_SIZE / 2;
+      const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, glowR);
+      grad.addColorStop(0, item.status === 'shipped' ? 'rgba(64,224,64,0.5)' : 'rgba(240,192,64,0.5)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(centerX - glowR, drawY - glowR, glowR * 2, glowR * 2);
+      ctx.restore();
+    }
+
     // Dragon special handling
     if (item.icon === 'dragon') {
       const dragonScale = 1.5; // Scale up the dragon for boss presence
@@ -3602,10 +3707,6 @@ class Game {
         castleH = sprite.height;
       }
 
-      // Checkmark for shipped
-      if (item.status === 'shipped') {
-        ctx.drawImage(this.decos.checkmark, drawX + TILE_SIZE - 4, drawY - 8);
-      }
     } else if (item.icon === 'tent') {
       // Use PixelLab tent sprite if available
       let tentDrawX, tentDrawY, tentW, tentH;
@@ -3723,7 +3824,7 @@ class Game {
   }
 
   drawItemLabels(ctx, cx, cy) {
-    ctx.font = '10px Silkscreen';
+    ctx.font = '7px "Press Start 2P"';
     ctx.textAlign = 'center';
 
     for (const item of ROADMAP_ITEMS) {
@@ -3743,31 +3844,40 @@ class Game {
 
       const alpha = Math.min(1, (maxDist - dist) / 200);
 
-      // Label background — positioned just above the icon
+      // Full label, no truncation — wrap long text into multiple lines
+      const fullLabel = item.title.replace(/\n/g, ' ');
+      const maxWidth = 100;
+      const words = fullLabel.split(' ');
+      const lines = [];
+      let line = '';
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width <= maxWidth) {
+          line = test;
+        } else {
+          if (line) lines.push(line);
+          line = w;
+        }
+      }
+      if (line) lines.push(line);
+
+      const lineHeight = 9;
       const labelY = item.icon === 'tower' ? drawY - 36 : drawY - 18;
-      const label = item.title;
-      const metrics = ctx.measureText(label);
-      const labelW = metrics.width + 12;
-      const labelH = 16;
-
-      ctx.globalAlpha = alpha * 0.8;
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      // Rounded-ish label pill
-      ctx.fillRect(drawX - labelW/2, labelY - 8, labelW, labelH);
-
-      ctx.globalAlpha = alpha;
-
-      // Small status dot
-      if (item.status === 'shipped') {
-        ctx.fillStyle = '#40e040';
-        ctx.fillRect(drawX - labelW/2 + 4, labelY - 2, 3, 3);
-      } else {
-        ctx.fillStyle = '#f0c040';
-        ctx.fillRect(drawX - labelW/2 + 4, labelY - 2, 3, 3);
+      const labelH = lines.length * lineHeight + 4;
+      let labelW = 0;
+      for (const ln of lines) {
+        labelW = Math.max(labelW, ctx.measureText(ln).width + 12);
       }
 
-      ctx.fillStyle = item.status === 'shipped' ? '#c0ffc0' : '#ffe080';
-      ctx.fillText(label, drawX, labelY + 4);
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fillRect(drawX - labelW/2, labelY - 4, labelW, labelH);
+
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = item.status === 'shipped' ? '#90e090' : '#e8d060';
+      lines.forEach((ln, i) => {
+        ctx.fillText(ln, drawX, labelY + lineHeight * (i + 1) - 2);
+      });
 
       ctx.globalAlpha = 1;
     }

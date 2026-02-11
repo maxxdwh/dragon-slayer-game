@@ -16,28 +16,26 @@ Or simply open `index.html` in a browser (works as a standalone file).
 
 ### Game Flow
 1. **Title Screen** — Shows core positioning: "The best foundation for building clinical dictation products, delivered as an API."
-2. **Foundation Zone** (bottom-left, forest) — 3 shipped features represented as conquered castle towers with green glow and checkmarks
+2. **Foundation Zone** (bottom-left, forest) — 3 shipped features represented as conquered clinic buildings with green glow and checkmarks
 3. **Milestone: "Empowered to Build a Dragon Replacement"** — Triggered when the player walks near the flag
-4. **Power-Ups Zone** (mid-map) — 4 upcoming features represented as treasure chests with golden glow
+4. **Power-Ups Zone** (mid-map) — 4 upcoming features represented as tents with golden glow
 5. **Dragon Lair** (top-right, volcanic) — The dragon encounter and slaying animation
 
 ### Controls
-- **WASD / Arrow Keys** — Move character
-- **Space / Click** — Interact with roadmap items
-- **Click on map** — Move character to that location
-- **ESC** — Close info panel
+- **Arrow Keys** — Move character (WASD also supported)
+- **Proximity** — Info panels open automatically when you walk near roadmap items; walk away to close
 
 ### Roadmap Items
 | # | Item | Status | Icon |
 |---|------|--------|------|
-| 1 | Clinical-grade STT Models | Shipped | Castle Tower |
-| 2 | Command Framework | Shipped | Castle Tower |
-| 3 | Output Formatting | Shipped | Castle Tower |
+| 1 | Clinical-grade STT Models | Shipped | Clinic Building |
+| 2 | Command Framework | Shipped | Clinic Building |
+| 3 | Output Formatting | Shipped | Clinic Building |
 | — | EMPOWERED TO BUILD A DRAGON REPLACEMENT | Milestone | Flag |
-| 4 | Advanced Formatting | Upcoming | Treasure Chest |
-| 5 | Advanced Speed | Upcoming | Treasure Chest |
-| 6 | Advanced Commands | Upcoming | Treasure Chest |
-| 7 | Advanced Customization | Upcoming | Treasure Chest |
+| 4 | Advanced Formatting | Upcoming | Tent |
+| 5 | Advanced Speed | Upcoming | Tent |
+| 6 | Advanced Commands | Upcoming | Tent |
+| 7 | Advanced Customization | Upcoming | Tent |
 | — | SLAY THE DRAGON ONCE AND FOR ALL | Final | Dragon |
 
 ## Customizing Sprites
@@ -81,8 +79,8 @@ decos.tower = towerImg;
 
 **Sprite sizes:**
 - Trees: 32×64 px (1 tile wide, 2 tiles tall)
-- Tower: 64×64 px (2×2 tiles)
-- Chest: 32×32 px (1 tile)
+- Clinic (shipped): `assets/items/hospital_south.png`
+- Tent (upcoming): `assets/items/tent/tent.png`
 - Flag: 32×64 px
 - Dragon: 96×96 px (3×3 tiles)
 - Rock, flower, skull, campfire, lava: 32×32 px
@@ -98,6 +96,9 @@ for (let v = 0; v < 4; v++) {
   tiles[`grass${v}`] = img;
 }
 ```
+
+### Optional Coin Sprite
+Place `assets/items/coin_sprite.png` (e.g. from PixelLab isometric tile) to replace the procedural coin with a custom sprite. Recommended size: 24×24 or 32×32 px.
 
 ### Map Layout
 Edit `ROADMAP_ITEMS` array to change item positions (`mapX`, `mapY` in tile coordinates). Edit `WorldMap.generate()` to change terrain layout.
