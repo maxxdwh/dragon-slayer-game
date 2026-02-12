@@ -113,6 +113,9 @@
     #info-panel .panel-status.upcoming {
       color: #6b5020;
     }
+    #info-panel .panel-status.pitfall {
+      color: #8a1f1f;
+    }
 
     #info-panel .panel-title {
       font-size: 11px;
@@ -796,16 +799,30 @@
     }
     #roadmap-overlay .ri-status.shipped { color: #80d080; }
     #roadmap-overlay .ri-status.upcoming { color: #f0c040; }
+    #roadmap-overlay .ri-status.pitfall { color: #ff8080; }
     #roadmap-overlay .ri-title {
       font-size: 12px;
       color: #fff;
       text-shadow: 1px 1px 0 #000;
       margin-bottom: 8px;
     }
+    #roadmap-overlay .roadmap-section-title {
+      margin-top: 28px;
+      font-size: 12px;
+      color: #f0c040;
+      text-shadow: 1px 1px 0 #000;
+      letter-spacing: 1px;
+    }
+    #roadmap-overlay .roadmap-section-title:first-of-type {
+      margin-top: 0;
+    }
     #roadmap-overlay .ri-desc {
       font-size: 9px;
       color: #a0a0b0;
       line-height: 2;
+    }
+    #roadmap-overlay .ri-label {
+      color: #f0c040;
     }
     #roadmap-overlay .ri-link {
       display: inline-block;
@@ -949,8 +966,8 @@
     </div>
 
     <div id="controls-hint">
-      <span class="desktop-hint">Arrow Keys — Move</span>
-      <span class="mobile-hint">Tap to Move</span>
+      <span class="desktop-hint">Arrow Keys — Move (Path Only)</span>
+      <span class="mobile-hint">Tap to Move (Path Only)</span>
     </div>
 
     <!-- Intro scroll (replaces title screen) -->
@@ -959,7 +976,7 @@
       <div class="scroll-title">DICTATION QUEST</div>
       <div class="scroll-text">
         <p class="scroll-paragraph">Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.</p>
-        <p class="scroll-paragraph"><span class="desktop-hint">Use <span style="color:#4a3520;">Arrow Keys</span> to move.</span><span class="mobile-hint"><span style="color:#4a3520;">Tap</span> to move.</span> Walk into landmarks to discover them.</p>
+        <p class="scroll-paragraph"><span class="desktop-hint">Use <span style="color:#4a3520;">Arrow Keys</span> to move.</span><span class="mobile-hint"><span style="color:#4a3520;">Tap</span> to move.</span> Stay on the road and walk into landmarks to discover them.</p>
       </div>
       <button class="go-btn" id="go-btn">GO</button>
     </div>
@@ -1106,6 +1123,37 @@ const ROADMAP_ITEMS = [
     description: '',
     mapX: 9, mapY: 24,
     icon: 'dragon'
+  }
+];
+
+const PITFALLS = [
+  {
+    id: 'P1',
+    title: 'HIPAA / PHI COMPLIANCE GAPS',
+    risk: 'Patient identifiers can leak through raw audio retention, debug logs, or broad internal access.',
+    mitigation: 'Use policy controls for retention, encryption, least-privilege access, and auditable PHI-safe operations.',
+    mapX: 24, mapY: 8
+  },
+  {
+    id: 'P2',
+    title: 'LANGUAGE HANDLING BLIND SPOTS',
+    risk: 'Generic STT can miss clinical terms across accents, dialects, and locale-specific vocabulary.',
+    mitigation: 'Use multilingual clinical models, locale-specific evaluation, and custom vocabulary per organization.',
+    mapX: 27, mapY: 11
+  },
+  {
+    id: 'P3',
+    title: 'FORMATTING SAFETY FAILURES',
+    risk: 'Dates, units, dosages, and punctuation can be formatted incorrectly and alter clinical meaning.',
+    mitigation: 'Apply deterministic formatting rules with QA checks for numbers, units, punctuation, and date handling.',
+    mapX: 18, mapY: 15
+  },
+  {
+    id: 'P4',
+    title: 'COMMAND + LATENCY BREAKDOWNS',
+    risk: 'False command triggers and slow transcription can interrupt clinician workflow and reduce trust.',
+    mitigation: 'Use robust command parsing, non-verbal triggers, and low-latency streaming partial transcription.',
+    mapX: 9, mapY: 20
   }
 ];
 
@@ -1784,6 +1832,19 @@ class PixelArt {
     chkCtx.fillRect(12, 2, 3, 3);
     decos.checkmark = checkC;
 
+    // Pitfall warning marker
+    const { canvas: pitC, ctx: pitCtx } = this.createCanvas(S, S);
+    pitCtx.fillStyle = '#5a3a20';
+    pitCtx.fillRect(14, 16, 4, 14);   // post
+    pitCtx.fillStyle = '#802020';
+    pitCtx.fillRect(7, 7, 18, 12);    // frame
+    pitCtx.fillStyle = '#b03030';
+    pitCtx.fillRect(8, 8, 16, 10);    // sign face
+    pitCtx.fillStyle = '#f0d060';
+    pitCtx.fillRect(15, 10, 2, 5);    // exclamation
+    pitCtx.fillRect(15, 16, 2, 2);
+    decos.pitfall = pitC;
+
     // Medkit (procedural fallback) — red box with white cross
     const { canvas: medC, ctx: medCtx } = this.createCanvas(S, S);
     medCtx.fillStyle = '#c03030';
@@ -2330,6 +2391,7 @@ class Game {
 
     this.activePanel = null;
     this.milestoneShown = new Set();
+    this.discoveredPitfalls = new Set();
     this.shownMilestoneBanner = null;
     this.milestoneBannerTimer = 0;
     this.milestoneDialogActive = false;
@@ -2771,8 +2833,16 @@ class Game {
       const worldX = canvasX + this.cameraX;
       const worldY = canvasY + this.cameraY;
 
+      // Path-only movement: keep click/tap navigation constrained to the road.
+      if (!this.worldMap.isWalkable(worldX, worldY)) {
+        this.moveTarget = null;
+        this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0, blocked: true };
+        this.ensureAudio();
+        return;
+      }
+
       this.moveTarget = { x: worldX, y: worldY };
-      this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0 };
+      this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0, blocked: false };
       this.ensureAudio(); // unlock audio on first touch gesture
     };
 
@@ -2876,6 +2946,36 @@ class Game {
     this.activePanel = null;
     const panel = document.getElementById('info-panel');
     panel.classList.remove('visible');
+  }
+
+  getNearbyPitfall(range = 56) {
+    for (const pitfall of PITFALLS) {
+      const px = pitfall.mapX * TILE_SIZE + TILE_SIZE / 2;
+      const py = pitfall.mapY * TILE_SIZE + TILE_SIZE / 2;
+      const dist = Math.sqrt((this.character.x - px) ** 2 + (this.character.y - py) ** 2);
+      if (dist < range) return pitfall;
+    }
+    return null;
+  }
+
+  interactWithPitfall(pitfall) {
+    this.activePanel = pitfall;
+    this.discoveredPitfalls.add(pitfall.id);
+
+    const panel = document.getElementById('info-panel');
+    const status = document.getElementById('panel-status');
+    const title = document.getElementById('panel-title');
+    const desc = document.getElementById('panel-desc');
+    const explore = document.getElementById('panel-explore');
+
+    status.textContent = 'PITFALL TO AVOID';
+    status.className = 'panel-status pitfall';
+    title.innerHTML = `<span class="panel-number">${pitfall.id}</span>${pitfall.title}`;
+    desc.textContent = `Risk: ${pitfall.risk} Mitigation: ${pitfall.mitigation}`;
+    explore.classList.add('hidden');
+    panel.classList.add('visible');
+
+    this.playUpcomingSound();
   }
 
   interactWithItem(item) {
@@ -3937,9 +4037,14 @@ class Game {
     // During dragon fight, skip normal proximity logic — boss battle owns the UI
     if (this.gamePhase !== 'dragon_fight') {
       const nearbyItem = this.character.getNearbyItem(60);
+      const nearbyPitfall = nearbyItem ? null : this.getNearbyPitfall(56);
       if (nearbyItem) {
         if (nearbyItem !== this.activePanel) {
           this.interactWithItem(nearbyItem);
+        }
+      } else if (nearbyPitfall) {
+        if (nearbyPitfall !== this.activePanel) {
+          this.interactWithPitfall(nearbyPitfall);
         }
       } else if (this.activePanel) {
         this.closePanel();
@@ -4127,6 +4232,14 @@ class Game {
       }
     }
 
+    // Draw pitfall markers (behind character)
+    for (const pitfall of PITFALLS) {
+      const pitfallWorldY = pitfall.mapY * TILE_SIZE + TILE_SIZE;
+      if (pitfallWorldY < charY + 4) {
+        this.drawPitfall(ctx, pitfall, cx, cy);
+      }
+    }
+
     // Draw character
     this.character.draw(ctx, cx, cy);
 
@@ -4143,6 +4256,14 @@ class Game {
       const itemWorldY = item.mapY * TILE_SIZE + TILE_SIZE;
       if (itemWorldY >= charY + 4) {
         this.drawRoadmapItem(ctx, item, cx, cy);
+      }
+    }
+
+    // Draw pitfall markers (in front of character)
+    for (const pitfall of PITFALLS) {
+      const pitfallWorldY = pitfall.mapY * TILE_SIZE + TILE_SIZE;
+      if (pitfallWorldY >= charY + 4) {
+        this.drawPitfall(ctx, pitfall, cx, cy);
       }
     }
 
@@ -4167,14 +4288,15 @@ class Game {
       const ix = ti.x - cx;
       const iy = ti.y - cy;
       const pulse = Math.sin(this.time * 0.15) * 2;
+      const indicatorColor = ti.blocked ? '#d04040' : '#f0c040';
       ctx.globalAlpha = ti.alpha * 0.6;
-      ctx.strokeStyle = '#f0c040';
+      ctx.strokeStyle = indicatorColor;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(ix, iy, 6 + pulse, 0, Math.PI * 2);
       ctx.stroke();
       // Inner dot
-      ctx.fillStyle = '#f0c040';
+      ctx.fillStyle = indicatorColor;
       ctx.globalAlpha = ti.alpha * 0.8;
       ctx.beginPath();
       ctx.arc(ix, iy, 2, 0, Math.PI * 2);
@@ -4497,6 +4619,31 @@ class Game {
     }
   }
 
+  drawPitfall(ctx, pitfall, cx, cy) {
+    const sprite = this.decos.pitfall;
+    if (!sprite) return;
+
+    const drawX = pitfall.mapX * TILE_SIZE - cx;
+    const drawY = pitfall.mapY * TILE_SIZE - cy;
+    const centerX = drawX + TILE_SIZE / 2;
+    const centerY = drawY + TILE_SIZE / 2;
+
+    if (this.getNearbyPitfall(78) === pitfall) {
+      const glowR = 22;
+      ctx.save();
+      ctx.globalAlpha = 0.25 + Math.sin(this.time * 0.08) * 0.1;
+      const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowR);
+      grad.addColorStop(0, 'rgba(255, 90, 90, 0.7)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(centerX - glowR, centerY - glowR, glowR * 2, glowR * 2);
+      ctx.restore();
+    }
+
+    const wobble = Math.sin(this.time * 0.06 + pitfall.mapX) * 1.5;
+    ctx.drawImage(sprite, drawX, drawY - 4 + wobble);
+  }
+
   drawItemLabels(ctx, cx, cy) {
     ctx.font = '7px "Press Start 2P"';
     ctx.textAlign = 'center';
@@ -4603,6 +4750,14 @@ class Game {
       } else {
         mCtx.fillStyle = '#f0c040';
       }
+      mCtx.fillRect(mx - 2, my - 2, 5, 5);
+    }
+
+    // Draw pitfalls on minimap
+    for (const pitfall of PITFALLS) {
+      const mx = pitfall.mapX * TILE_SIZE * scaleX;
+      const my = pitfall.mapY * TILE_SIZE * scaleY;
+      mCtx.fillStyle = '#c04040';
       mCtx.fillRect(mx - 2, my - 2, 5, 5);
     }
   }
@@ -4793,6 +4948,7 @@ class Game {
     this.roadmapOverlayVisible = true;
     const container = document.getElementById('roadmap-scroll-content');
     let html = '<div class="roadmap-title">THE ROADMAP</div>';
+    html += '<div class="roadmap-section-title">FEATURE ROADMAP</div>';
     for (const item of ROADMAP_ITEMS) {
       if (item.status === 'milestone') continue;
       const statusClass = item.status === 'shipped' ? 'shipped' : 'upcoming';
@@ -4802,8 +4958,16 @@ class Game {
       html += `<div class="ri-title">${item.id}. ${item.title}</div>`;
       html += `<div class="ri-desc">${item.description}</div>`;
       if (item.docsUrl) {
-        html += `<a class="ri-link" href="${item.docsUrl}" target="_blank">EXPLORE DOCS →</a>`;
+        html += `<a class="ri-link" href="${item.docsUrl}" target="_blank" rel="noopener noreferrer">EXPLORE DOCS →</a>`;
       }
+      html += `</div>`;
+    }
+    html += '<div class="roadmap-section-title">PITFALLS TO AVOID IN PRODUCTION</div>';
+    for (const pitfall of PITFALLS) {
+      html += `<div class="roadmap-item">`;
+      html += `<div class="ri-status pitfall">! PITFALL</div>`;
+      html += `<div class="ri-title">${pitfall.id}. ${pitfall.title}</div>`;
+      html += `<div class="ri-desc"><span class="ri-label">Risk:</span> ${pitfall.risk}<br><span class="ri-label">Mitigation:</span> ${pitfall.mitigation}</div>`;
       html += `</div>`;
     }
     container.innerHTML = html;
