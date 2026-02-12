@@ -2956,9 +2956,9 @@ class Game {
       const canvasX = (pageX - rect.left) * scaleX;
       const canvasY = (pageY - rect.top) * scaleY;
 
-      // Canvas renders with camera offset — convert to world position
-      const worldX = canvasX + this.cameraX;
-      const worldY = canvasY + this.cameraY;
+      // Canvas renders in zoomed space: convert screen pixels back to world coordinates.
+      const worldX = canvasX / this.zoom + this.cameraX;
+      const worldY = canvasY / this.zoom + this.cameraY;
 
       // Path-only movement with path routing: snap taps near the road and follow turns.
       const destination = this.planPathTo(worldX, worldY);
@@ -2986,6 +2986,16 @@ class Game {
     canvas.addEventListener('click', (e) => {
       handleTap(e.clientX, e.clientY);
     });
+
+    // Let players dismiss info panels directly on touch devices.
+    const infoPanel = document.getElementById('info-panel');
+    const dismissInfoPanel = (e) => {
+      if (e.target.closest('#panel-explore')) return;
+      e.stopPropagation();
+      this.closePanel();
+    };
+    infoPanel.addEventListener('click', dismissInfoPanel);
+    infoPanel.addEventListener('touchstart', dismissInfoPanel, { passive: true });
 
     // GO button — start the game (also unlocks audio on user gesture)
     document.getElementById('go-btn').addEventListener('click', () => {
@@ -3086,6 +3096,8 @@ class Game {
   }
 
   interactWithPitfall(pitfall) {
+    // Stop movement when surfacing a risk so the player can read and decide the next tap.
+    this.cancelAutoMove(true);
     this.activePanel = pitfall;
     this.discoveredPitfalls.add(pitfall.id);
 
@@ -3106,6 +3118,8 @@ class Game {
   }
 
   interactWithItem(item) {
+    // Stop movement when reaching a landmark to avoid "auto-walking through" the content.
+    this.cancelAutoMove(true);
     if (item.status === 'milestone') {
       this.activePanel = item;
 
