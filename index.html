@@ -74,7 +74,7 @@
     /* Info panel — medieval scroll / parchment aesthetic */
     #info-panel {
       position: absolute;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
       max-width: 520px;
@@ -420,7 +420,7 @@
       #info-panel {
         max-width: 95%;
         padding: 16px 18px;
-        bottom: 12px;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
         border-width: 3px;
       }
       #info-panel .panel-status {
@@ -504,7 +504,7 @@
 
       #info-panel {
         padding: 12px 14px;
-        bottom: 8px;
+        bottom: calc(92px + env(safe-area-inset-bottom, 0px));
         border-width: 2px;
       }
       #info-panel .panel-title {
@@ -2370,6 +2370,11 @@ class Game {
 
     // Input
     this.keys = { up: false, down: false, left: false, right: false };
+    this.moveTarget = null;
+    this.pathQueue = [];
+    this.lastAutoMoveDistance = null;
+    this.autoMoveStuckFrames = 0;
+    this.tapIndicator = null;
 
     // Game phase state machine
     // 'loading' -> 'opening_dragon' -> 'opening_pan' -> 'opening_bard' -> 'playing' -> 'dragon_fight' -> 'victory'
@@ -2792,13 +2797,138 @@ class Game {
     return nw * 8 + ne * 4 + sw * 2 + se;
   }
 
+  cancelAutoMove(clearKeys = false) {
+    this.moveTarget = null;
+    this.pathQueue = [];
+    this.lastAutoMoveDistance = null;
+    this.autoMoveStuckFrames = 0;
+    if (clearKeys) {
+      this.keys.up = false;
+      this.keys.down = false;
+      this.keys.left = false;
+      this.keys.right = false;
+    }
+  }
+
+  isPathTile(col, row) {
+    return (
+      row >= 0 &&
+      row < this.worldMap.rows &&
+      col >= 0 &&
+      col < this.worldMap.cols &&
+      this.worldMap.grid[row][col] === 'path'
+    );
+  }
+
+  findNearestPathTile(worldX, worldY, maxRadius = 2) {
+    const baseCol = Math.floor(worldX / TILE_SIZE);
+    const baseRow = Math.floor(worldY / TILE_SIZE);
+
+    if (this.isPathTile(baseCol, baseRow)) {
+      return { col: baseCol, row: baseRow };
+    }
+
+    let best = null;
+    let bestDistSq = Infinity;
+    for (let radius = 1; radius <= maxRadius; radius++) {
+      for (let row = baseRow - radius; row <= baseRow + radius; row++) {
+        for (let col = baseCol - radius; col <= baseCol + radius; col++) {
+          if (!this.isPathTile(col, row)) continue;
+          const cx = col * TILE_SIZE + TILE_SIZE / 2;
+          const cy = row * TILE_SIZE + TILE_SIZE / 2;
+          const dx = cx - worldX;
+          const dy = cy - worldY;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < bestDistSq) {
+            bestDistSq = distSq;
+            best = { col, row };
+          }
+        }
+      }
+      if (best) return best;
+    }
+    return null;
+  }
+
+  planPathTo(worldX, worldY) {
+    const startTile = this.findNearestPathTile(this.character.x, this.character.y, 1);
+    const targetTile = this.findNearestPathTile(worldX, worldY, 2);
+    if (!startTile || !targetTile) return null;
+
+    const keyOf = (col, row) => `${col},${row}`;
+    const parseKey = (key) => {
+      const [colStr, rowStr] = key.split(',');
+      return { col: Number(colStr), row: Number(rowStr) };
+    };
+
+    const startKey = keyOf(startTile.col, startTile.row);
+    const targetKey = keyOf(targetTile.col, targetTile.row);
+    const queue = [startTile];
+    const visited = new Set([startKey]);
+    const parent = new Map();
+    const dirs = [
+      [1, 0], [-1, 0],
+      [0, 1], [0, -1]
+    ];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      const currentKey = keyOf(current.col, current.row);
+      if (currentKey === targetKey) break;
+
+      for (const [dx, dy] of dirs) {
+        const nc = current.col + dx;
+        const nr = current.row + dy;
+        if (!this.isPathTile(nc, nr)) continue;
+        const nextKey = keyOf(nc, nr);
+        if (visited.has(nextKey)) continue;
+        visited.add(nextKey);
+        parent.set(nextKey, currentKey);
+        queue.push({ col: nc, row: nr });
+      }
+    }
+
+    if (!visited.has(targetKey)) return null;
+
+    const tilePath = [];
+    let walkKey = targetKey;
+    while (walkKey) {
+      tilePath.push(parseKey(walkKey));
+      if (walkKey === startKey) break;
+      walkKey = parent.get(walkKey);
+    }
+    tilePath.reverse();
+
+    const waypoints = tilePath.slice(1).map((tile) => ({
+      x: tile.col * TILE_SIZE + TILE_SIZE / 2,
+      y: tile.row * TILE_SIZE + TILE_SIZE / 2
+    }));
+
+    this.pathQueue = waypoints;
+    if (this.pathQueue.length > 0) {
+      this.moveTarget = this.pathQueue.shift();
+    } else {
+      this.moveTarget = {
+        x: targetTile.col * TILE_SIZE + TILE_SIZE / 2,
+        y: targetTile.row * TILE_SIZE + TILE_SIZE / 2
+      };
+    }
+    this.lastAutoMoveDistance = null;
+    this.autoMoveStuckFrames = 0;
+
+    return {
+      x: targetTile.col * TILE_SIZE + TILE_SIZE / 2,
+      y: targetTile.row * TILE_SIZE + TILE_SIZE / 2
+    };
+  }
+
   setupInput() {
     window.addEventListener('keydown', (e) => {
       if (this.gamePhase === 'dragon_fight') return; // No movement during boss fight
-      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.keys.up = true; e.preventDefault(); this.moveTarget = null; }
-      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.keys.down = true; e.preventDefault(); this.moveTarget = null; }
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.keys.left = true; e.preventDefault(); this.moveTarget = null; }
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.keys.right = true; e.preventDefault(); this.moveTarget = null; }
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.cancelAutoMove(); this.keys.up = true; e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.cancelAutoMove(); this.keys.down = true; e.preventDefault(); }
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { this.cancelAutoMove(); this.keys.left = true; e.preventDefault(); }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { this.cancelAutoMove(); this.keys.right = true; e.preventDefault(); }
       if (e.key === 'Escape') {
         e.preventDefault();
         this.closePanel();
@@ -2812,9 +2942,6 @@ class Game {
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = false;
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
     });
-
-    this.moveTarget = null;
-    this.tapIndicator = null;
 
     // Tap / click-to-move on canvas
     const canvas = this.canvas;
@@ -2833,16 +2960,16 @@ class Game {
       const worldX = canvasX + this.cameraX;
       const worldY = canvasY + this.cameraY;
 
-      // Path-only movement: keep click/tap navigation constrained to the road.
-      if (!this.worldMap.isWalkable(worldX, worldY)) {
-        this.moveTarget = null;
+      // Path-only movement with path routing: snap taps near the road and follow turns.
+      const destination = this.planPathTo(worldX, worldY);
+      if (!destination) {
+        this.cancelAutoMove(true);
         this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0, blocked: true };
         this.ensureAudio();
         return;
       }
 
-      this.moveTarget = { x: worldX, y: worldY };
-      this.tapIndicator = { x: worldX, y: worldY, alpha: 1.0, blocked: false };
+      this.tapIndicator = { x: destination.x, y: destination.y, alpha: 1.0, blocked: false };
       this.ensureAudio(); // unlock audio on first touch gesture
     };
 
@@ -3791,8 +3918,7 @@ class Game {
     this.arrowsFired = [];
     this.dragonHitTimer = 0;
     // Stop all character movement — Bard stands still during boss fight
-    this.moveTarget = null;
-    this.keys = { up: false, down: false, left: false, right: false };
+    this.cancelAutoMove(true);
     this.character.moving = false;
     this.playBossEncounterSound();
     // Switch to boss music
@@ -3988,12 +4114,14 @@ class Game {
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < 8) {
-        // Arrived at target
-        this.moveTarget = null;
-        this.keys.up = false;
-        this.keys.down = false;
-        this.keys.left = false;
-        this.keys.right = false;
+        // Arrived at one waypoint: continue route or stop.
+        if (this.pathQueue.length > 0) {
+          this.moveTarget = this.pathQueue.shift();
+          this.lastAutoMoveDistance = null;
+          this.autoMoveStuckFrames = 0;
+        } else {
+          this.cancelAutoMove(true);
+        }
       } else {
         // Set directional keys toward target
         const deadzone = 0.3; // prevents jittery micro-movements
@@ -4001,12 +4129,24 @@ class Game {
         this.keys.down = dy > dist * deadzone;
         this.keys.left = dx < -dist * deadzone;
         this.keys.right = dx > dist * deadzone;
-      }
-    }
 
-    // Cancel move target if real keyboard input detected
-    if (!this.moveTarget) {
-      // keys are handled directly from keyboard events
+        // Bail out if distance is not improving (prevents endless "push in one direction").
+        if (this.lastAutoMoveDistance !== null && dist >= this.lastAutoMoveDistance - 0.2) {
+          this.autoMoveStuckFrames++;
+          if (this.autoMoveStuckFrames > 28) {
+            if (this.pathQueue.length > 0) {
+              this.moveTarget = this.pathQueue.shift();
+              this.lastAutoMoveDistance = null;
+              this.autoMoveStuckFrames = 0;
+            } else {
+              this.cancelAutoMove(true);
+            }
+          }
+        } else {
+          this.autoMoveStuckFrames = 0;
+        }
+        this.lastAutoMoveDistance = dist;
+      }
     }
 
     // Fade tap indicator
