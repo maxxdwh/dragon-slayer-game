@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Stone Tileset Picker</title>
+<style>
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    padding: 24px;
+    margin: 0;
+  }
+  h1 { color: #7ec8e3; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 900px;
+  }
+  .tile-card {
+    background: #262640;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .tile-card:hover { border-color: #7ec8e3; }
+  .label {
+    font-size: 28px;
+    font-weight: bold;
+    color: #f0c040;
+    margin-bottom: 8px;
+  }
+  .tile-container {
+    display: inline-block;
+    background: #111;
+    border: 1px solid #444;
+    padding: 8px;
+    margin: 8px 0;
+    image-rendering: pixelated;
+  }
+  .tile-canvas {
+    display: block;
+    width: 128px;
+    height: 128px;
+    image-rendering: pixelated;
+  }
+  .corners {
+    font-size: 11px;
+    color: #aaa;
+    line-height: 1.5;
+  }
+  .corners .upper { color: #a0a0c0; font-weight: bold; }
+  .corners .lower { color: #60b060; }
+  .wang-id {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+  }
+  .section-label {
+    grid-column: 1 / -1;
+    font-size: 16px;
+    color: #7ec8e3;
+    border-bottom: 1px solid #333;
+    padding-bottom: 6px;
+    margin-top: 12px;
+  }
+  .preview-section {
+    margin-top: 40px;
+    max-width: 900px;
+  }
+  .preview-section h2 { color: #7ec8e3; }
+  .preview-grid {
+    display: inline-block;
+    background: #111;
+    border: 1px solid #444;
+    padding: 4px;
+    image-rendering: pixelated;
+  }
+  .preview-canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+<h1>Stone Tileset — Individual Tiles</h1>
+<p class="subtitle">grass_stone.png — 16 Wang tiles, 32×32px each (shown at 4× zoom)</p>
+
+<div class="grid" id="tile-grid"></div>
+
+<div class="preview-section">
+  <h2>Full Spritesheet</h2>
+  <div class="preview-grid">
+    <canvas id="full-preview" class="preview-canvas" width="512" height="512"></canvas>
+  </div>
+
+  <h2 style="margin-top:32px;">Sample 5×5 Layout</h2>
+  <p class="subtitle">Shows how the tiles fit together (stone rectangle with grass border)</p>
+  <div class="preview-grid">
+    <canvas id="sample-map" class="preview-canvas" width="320" height="320"></canvas>
+  </div>
+</div>
+
+<script>
+const TILESET_SRC = 'assets/tilesets/grass_stone.png';
+const TILE_SIZE = 32;
+const ZOOM = 4;
+
+// Tiles in order from metadata, labeled A-P
+const tiles = [
+  { label: 'A', wang: 13, corners: {NW:'upper',NE:'upper',SW:'lower',SE:'upper'}, bb: {x:0,y:0} },
+  { label: 'B', wang: 10, corners: {NW:'upper',NE:'lower',SW:'upper',SE:'lower'}, bb: {x:32,y:0} },
+  { label: 'C', wang: 4,  corners: {NW:'lower',NE:'upper',SW:'lower',SE:'lower'}, bb: {x:64,y:0} },
+  { label: 'D', wang: 12, corners: {NW:'upper',NE:'upper',SW:'lower',SE:'lower'}, bb: {x:96,y:0} },
+  { label: 'E', wang: 6,  corners: {NW:'lower',NE:'upper',SW:'upper',SE:'lower'}, bb: {x:0,y:32} },
+  { label: 'F', wang: 8,  corners: {NW:'upper',NE:'lower',SW:'lower',SE:'lower'}, bb: {x:32,y:32} },
+  { label: 'G', wang: 0,  corners: {NW:'lower',NE:'lower',SW:'lower',SE:'lower'}, bb: {x:64,y:32} },
+  { label: 'H', wang: 1,  corners: {NW:'lower',NE:'lower',SW:'lower',SE:'upper'}, bb: {x:96,y:32} },
+  { label: 'I', wang: 11, corners: {NW:'upper',NE:'lower',SW:'upper',SE:'upper'}, bb: {x:0,y:64} },
+  { label: 'J', wang: 3,  corners: {NW:'lower',NE:'lower',SW:'upper',SE:'upper'}, bb: {x:32,y:64} },
+  { label: 'K', wang: 2,  corners: {NW:'lower',NE:'lower',SW:'upper',SE:'lower'}, bb: {x:64,y:64} },
+  { label: 'L', wang: 5,  corners: {NW:'lower',NE:'upper',SW:'lower',SE:'upper'}, bb: {x:96,y:64} },
+  { label: 'M', wang: 15, corners: {NW:'upper',NE:'upper',SW:'upper',SE:'upper'}, bb: {x:0,y:96} },
+  { label: 'N', wang: 14, corners: {NW:'upper',NE:'upper',SW:'upper',SE:'lower'}, bb: {x:32,y:96} },
+  { label: 'O', wang: 9,  corners: {NW:'upper',NE:'lower',SW:'lower',SE:'upper'}, bb: {x:64,y:96} },
+  { label: 'P', wang: 7,  corners: {NW:'lower',NE:'upper',SW:'upper',SE:'upper'}, bb: {x:96,y:96} },
+];
+
+const img = new Image();
+img.onload = () => {
+  const grid = document.getElementById('tile-grid');
+
+  tiles.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'tile-card';
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'tile-canvas';
+    canvas.width = TILE_SIZE * ZOOM;
+    canvas.height = TILE_SIZE * ZOOM;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, t.bb.x, t.bb.y, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE * ZOOM, TILE_SIZE * ZOOM);
+
+    const cornerStr = (c) => `<span class="${c}">${c === 'upper' ? '■' : '□'}</span>`;
+
+    card.innerHTML = `
+      <div class="label">${t.label}</div>
+      <div class="tile-container"></div>
+      <div class="corners">
+        ${cornerStr(t.corners.NW)} ${cornerStr(t.corners.NE)}<br>
+        ${cornerStr(t.corners.SW)} ${cornerStr(t.corners.SE)}
+      </div>
+      <div class="wang-id">wang ${t.wang} · (${t.bb.x}, ${t.bb.y})</div>
+    `;
+    card.querySelector('.tile-container').appendChild(canvas);
+    grid.appendChild(card);
+  });
+
+  // Full preview
+  const fp = document.getElementById('full-preview');
+  const fpCtx = fp.getContext('2d');
+  fpCtx.imageSmoothingEnabled = false;
+  fpCtx.drawImage(img, 0, 0, 128, 128, 0, 0, 512, 512);
+  // Draw grid lines + labels
+  fpCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+  fpCtx.lineWidth = 1;
+  fpCtx.font = 'bold 20px Courier New';
+  fpCtx.textAlign = 'center';
+  fpCtx.textBaseline = 'middle';
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const x = c * 128;
+      const y = r * 128;
+      fpCtx.strokeRect(x, y, 128, 128);
+      const idx = r * 4 + c;
+      fpCtx.fillStyle = 'rgba(0,0,0,0.5)';
+      fpCtx.fillRect(x + 2, y + 2, 28, 24);
+      fpCtx.fillStyle = '#f0c040';
+      fpCtx.fillText(tiles[idx].label, x + 16, y + 15);
+    }
+  }
+
+  // Sample 5x5 map: stone center with grass border
+  // Wang index lookup by corners
+  const wangMap = {};
+  tiles.forEach(t => { wangMap[t.wang] = t; });
+
+  // 5x5 terrain: 0=grass, 1=stone
+  const terrain = [
+    [0,0,0,0,0],
+    [0,1,1,1,0],
+    [0,1,1,1,0],
+    [0,1,1,1,0],
+    [0,0,0,0,0],
+  ];
+
+  // 6x6 vertex grid
+  const verts = [];
+  for (let vy = 0; vy <= 5; vy++) {
+    verts[vy] = [];
+    for (let vx = 0; vx <= 5; vx++) {
+      // vertex is upper if any adjacent tile is stone
+      let upper = false;
+      for (let dy = -1; dy <= 0; dy++) {
+        for (let dx = -1; dx <= 0; dx++) {
+          const ty = vy + dy, tx = vx + dx;
+          if (ty >= 0 && ty < 5 && tx >= 0 && tx < 5 && terrain[ty][tx] === 1) upper = true;
+        }
+      }
+      verts[vy][vx] = upper ? 1 : 0;
+    }
+  }
+
+  const sm = document.getElementById('sample-map');
+  const smCtx = sm.getContext('2d');
+  smCtx.imageSmoothingEnabled = false;
+  const Z = 2;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const nw = verts[r][c], ne = verts[r][c+1];
+      const sw = verts[r+1][c], se = verts[r+1][c+1];
+      const wang = nw * 8 + ne * 4 + sw * 2 + se;
+      const t = wangMap[wang];
+      if (t) {
+        smCtx.drawImage(img, t.bb.x, t.bb.y, 32, 32, c*32*Z, r*32*Z, 32*Z, 32*Z);
+      }
+    }
+  }
+};
+img.src = TILESET_SRC;
+</script>
+</body>
+</html>

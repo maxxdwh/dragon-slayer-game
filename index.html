@@ -1886,19 +1886,18 @@ class WorldMap {
     // producing clean Wang tile transitions (same principle as the path).
 
     // Dark forest — frame the map edges with clean rectangles
-    this.fillZone(0, 0, 2, this.rows, 'darkGrass');              // Left strip (cols 0-1)
-    this.fillZone(0, 0, this.cols, 6, 'darkGrass');               // Top band (rows 0-5)
+    // Left darkGrass strip removed — too close to path, transitions overlapped
+    this.fillZone(0, 0, this.cols, 5, 'darkGrass');               // Top band (rows 0-4)
     this.fillZone(33, 0, this.cols - 33, this.rows, 'darkGrass'); // Right strip (cols 33-39)
     this.fillZone(19, 27, this.cols - 19, this.rows - 27, 'darkGrass'); // Bottom-right block
 
-    // Stone courtyard near milestone1 (27,8) — clean rectangle
-    this.fillZone(24, 6, 8, 7, 'stone'); // cols 24-31, rows 6-12
+    // (Stone courtyard removed — area is now grass with existing path running through)
 
     // Volcanic lair near dragon (9,24) — clean rectangle (overwrites forest)
     this.fillZoneOver(0, 19, 19, this.rows - 19, 'volcanic'); // cols 0-18, rows 19-34
 
     // Water ponds — clean small rectangles in grass clearings
-    this.fillZone(4, 11, 3, 3, 'water');   // 3×3 pond, left area between paths
+    this.fillZone(3, 13, 3, 3, 'water');   // 3×3 pond, positioned for clean water→grass→path on all sides
     this.fillZone(22, 20, 3, 3, 'water');   // 3×3 pond, south of lower path
 
     // Add decorations
@@ -2393,23 +2392,25 @@ class Game {
     // Load PixelLab Wang tilesets in parallel
     loadText.textContent = 'Placing landmarks...';
     loadBar.style.width = '35%';
-    const [grassPathTiles, grassWaterTiles, grassDarkTiles, grassStoneTiles, grassVolcanicTiles] = await Promise.all([
+    const [grassPathTiles, grassWaterTiles, grassDarkTiles, grassStoneTiles, grassVolcanicTiles, pathVolcanicTiles] = await Promise.all([
       PixelArt.loadWangTileset('assets/tilesets/grass_path.png', 'assets/tilesets/grass_path_meta.json'),
       PixelArt.loadWangTileset('assets/tilesets/grass_water.png', 'assets/tilesets/grass_water_meta.json'),
       PixelArt.loadWangTileset('assets/tilesets/grass_darkgrass.png', 'assets/tilesets/grass_darkgrass_meta.json'),
       PixelArt.loadWangTileset('assets/tilesets/grass_stone.png', 'assets/tilesets/grass_stone_meta.json'),
-      PixelArt.loadWangTileset('assets/tilesets/grass_volcanic.png', 'assets/tilesets/grass_volcanic_meta.json')
+      PixelArt.loadWangTileset('assets/tilesets/grass_volcanic.png', 'assets/tilesets/grass_volcanic_meta.json'),
+      PixelArt.loadWangTileset('assets/tilesets/path_volcanic.png', 'assets/tilesets/path_volcanic_meta.json')
     ]);
     this.wangGrassPath = grassPathTiles;        // lower=grass, upper=path
     this.wangGrassWater = grassWaterTiles;      // lower=grass, upper=water
     this.wangGrassDark = grassDarkTiles;        // lower=grass, upper=darkGrass
     this.wangGrassStone = grassStoneTiles;      // lower=grass, upper=stone
     this.wangGrassVolcanic = grassVolcanicTiles; // lower=grass, upper=volcanic
+    this.wangPathVolcanic = pathVolcanicTiles;   // lower=path, upper=volcanic
 
     // Darken all tileset tiles to reduce bright grass
     const GRASS_DARKEN = 0.2;
     [this.wangGrassPath, this.wangGrassWater, this.wangGrassDark,
-     this.wangGrassStone, this.wangGrassVolcanic].forEach(tileset => {
+     this.wangGrassStone, this.wangGrassVolcanic, this.wangPathVolcanic].forEach(tileset => {
       tileset.forEach(tile => { if (tile) PixelArt.darkenCanvas(tile, GRASS_DARKEN); });
     });
 
@@ -4036,6 +4037,15 @@ class Game {
           const volcanicWang = this.getWangIndex(col, row, 'volcanic');
           if (volcanicWang > 0 && this.wangGrassVolcanic[volcanicWang])
             ctx.drawImage(this.wangGrassVolcanic[volcanicWang], drawX, drawY);
+          // Path→volcanic overlay: show path edges on volcanic tiles near path
+          // path_volcanic tileset has lower=path, upper=volcanic; Wang bits encode 1=upper=volcanic
+          // getWangIndex(col,row,'path') gives 1 where path detected, so complement (15-x) to get correct tileset index
+          const pvPathWang = this.getWangIndex(col, row, 'path');
+          if (pvPathWang > 0) {
+            const pvIdx = 15 - pvPathWang;
+            if (pvIdx > 0 && this.wangPathVolcanic && this.wangPathVolcanic[pvIdx])
+              ctx.drawImage(this.wangPathVolcanic[pvIdx], drawX, drawY);
+          }
         } else if (tile === 'water') {
           const waterWang = this.getWangIndex(col, row, 'water');
           if (waterWang > 0 && this.wangGrassWater[waterWang])
@@ -4047,6 +4057,7 @@ class Game {
         }
       }
     }
+
 
     // Animate water shimmer
     if (this.time % 40 < 20) {

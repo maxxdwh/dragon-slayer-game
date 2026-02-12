@@ -123,8 +123,75 @@
       margin-top: 8px;
       pointer-events: auto;
     }
-    #view-roadmap-btn:hover {
+    #view-roadmap-btn:hover, #mute-btn:hover {
       background: rgba(240,192,64,0.2);
+    }
+
+    #mute-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #f0c040;
+      background: rgba(0,0,0,0.4);
+      border: 2px solid #f0c040;
+      padding: 6px 10px;
+      cursor: pointer;
+      margin-top: 4px;
+      pointer-events: auto;
+      display: inline-block;
+    }
+    #mute-btn.muted {
+      color: #888;
+      border-color: #666;
+    }
+
+    #controls-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #f0c040;
+      background: rgba(0,0,0,0.4);
+      border: 2px solid #f0c040;
+      padding: 6px 10px;
+      cursor: pointer;
+      margin-top: 4px;
+      pointer-events: auto;
+      display: inline-block;
+    }
+    #controls-btn:hover {
+      background: rgba(240,192,64,0.2);
+    }
+
+    /* ---- Controls Hint Overlay ---- */
+    #controls-hint {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      border: 2px solid #f0c040;
+      border-radius: 8px;
+      padding: 24px 32px;
+      z-index: 200;
+      color: #f0c040;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      text-align: center;
+      line-height: 2;
+      pointer-events: auto;
+    }
+    #controls-hint .controls-title {
+      font-size: 12px;
+      margin-bottom: 12px;
+      color: #ffe070;
+    }
+    #controls-hint .controls-dismiss {
+      margin-top: 16px;
+      font-size: 8px;
+      color: #aaa;
+      cursor: pointer;
+    }
+    #controls-hint .controls-dismiss:hover {
+      color: #fff;
     }
 
     /* ---- Info Panel (scroll popup) ---- */
@@ -685,11 +752,13 @@
         <div class="title">DICTATION QUEST</div>
         <div class="subtitle">Corti API Roadmap</div>
         <div id="health-bar"></div>
-        <div id="heart-counter">Hearts: 0/0</div>
+        <div id="heart-counter">Health: 5/5</div>
       </div>
       <div class="quest-info">
-        <div id="quest-progress">Quest: 0/7</div>
+        <div id="quest-progress">Landmarks: 0/7</div>
         <button id="view-roadmap-btn">VIEW ROADMAP</button>
+        <button id="controls-btn" title="Show controls">?</button>
+        <button id="mute-btn" title="Toggle sound">SOUND ON</button>
       </div>
     </div>
 
@@ -720,6 +789,7 @@
       <div class="scroll-title">DICTATION QUEST</div>
       <div class="scroll-text">
         <p class="scroll-paragraph">Follow Bard the Bowman on his journey through the Corti API to slay the Dragon.</p>
+        <p class="scroll-paragraph" style="font-size:8px;color:#6a5030;">Explore the Corti API roadmap &mdash; each landmark reveals a feature or milestone.</p>
         <p class="scroll-paragraph"><span class="desktop-hint">Use <span style="color:#4a3520;">Arrow Keys</span> to move. Press <span style="color:#4a3520;">Space</span> to jump.</span><span class="mobile-hint">Use the <span style="color:#4a3520;">D-pad</span> to move. Tap <span style="color:#4a3520;">Jump</span> to leap.</span> Collect hearts and avoid pitfalls!</p>
       </div>
       <button class="go-btn" id="go-btn">GO</button>
@@ -728,6 +798,14 @@
     <!-- Slay Dragon Button -->
     <div id="slay-button">
       <button id="slay-btn">SLAY THE DRAGON</button>
+    </div>
+
+    <!-- Controls Hint Overlay -->
+    <div id="controls-hint">
+      <div class="controls-title">CONTROLS</div>
+      <div><span class="desktop-hint"><span style="color:#ffe070;">Arrow Keys</span> — Move left/right<br><span style="color:#ffe070;">Space</span> — Jump (tap again mid-air for double jump!)</span><span class="mobile-hint"><span style="color:#ffe070;">D-pad</span> — Move left/right<br><span style="color:#ffe070;">Jump</span> — Leap (tap again mid-air!)</span></div>
+      <div style="margin-top:8px;color:#aaa;font-size:8px;">Collect hearts &bull; Avoid pitfalls &bull; Visit landmarks</div>
+      <div class="controls-dismiss" id="controls-dismiss">GOT IT</div>
     </div>
 
     <!-- Victory Screen -->
@@ -739,6 +817,9 @@
       <a class="cta-btn" href="https://console.corti.app/signup" target="_blank" id="studio-cta">Start Building in Corti Console</a>
       <button class="secondary-btn" id="review-roadmap-btn">Review the Roadmap</button>
       <button class="secondary-btn" id="play-again-btn">Play Again</button>
+      <label style="display:block;margin-top:10px;font-family:'Press Start 2P',monospace;font-size:7px;color:#aaa;cursor:pointer;">
+        <input type="checkbox" id="skip-intro-checkbox" checked style="margin-right:6px;cursor:pointer;">Skip intro next time
+      </label>
     </div>
 
     <!-- Roadmap Summary Overlay -->
@@ -778,19 +859,21 @@
 // CONSTANTS
 // ============================================================
 const TILE = 32;
-const GRAVITY = 0.35;
-const MAX_FALL = 8;
-const JUMP_FORCE = -8.5;
-const MOVE_SPEED = 3.0;
+const GRAVITY = 0.55;
+const MAX_FALL = 12;
+const JUMP_FORCE = -10.5;
+const MOVE_SPEED = 4.5;
 const PLAYER_W = 36;
 const PLAYER_H = 52;
-const CAMERA_SMOOTH = 0.08;
-const LOOK_AHEAD = 100;
+const CAMERA_SMOOTH = 0.12;
+const LOOK_AHEAD = 50;
+const ZOOM = 2.5; // render at lower virtual resolution, CSS scales up
 
 // Mario-like physics helpers
 const COYOTE_FRAMES = 8;     // frames after leaving ground you can still jump
 const JUMP_BUFFER_FRAMES = 8; // frames before landing where jump input is remembered
 const JUMP_CUT_MULT = 0.45;  // multiply vy by this when releasing jump early
+const ALLOW_DOUBLE_JUMP = true; // enable double jump
 
 // Level dimensions (tighter spacing)
 const LEVEL_COLS = 200;
@@ -995,51 +1078,57 @@ class Level {
       // Build ground
       this.buildZoneGround(startCol, endCol, zi);
 
-      // Place floating platforms between landmarks
-      if (zi > 0 && zi < ZONES.length) {
-        this.buildPlatforms(startCol, Math.min(startCol + 12, endCol), zi);
-      }
+      // Place floating platforms between landmarks (never overlapping them)
+      this.buildPlatforms(startCol, endCol, zi);
 
-      // Place hearts in the zone
-      this.placeHearts(startCol, endCol, zi);
-
-      // Place hazards (not in first zone or at landmarks)
+      // Place hazards BEFORE hearts (hearts reference gap positions)
       if (zi >= 2) {
         this.placeHazards(startCol, endCol, zi);
       }
 
-      // Place decorations
+      // Place hearts strategically — on platforms, above gaps, reward exploration
+      this.placeHearts(startCol, endCol, zi);
+
+      // Place decorations (avoids landmarks)
       this.placeDecorations(startCol, endCol, zi);
     }
   }
 
   buildZoneGround(startCol, endCol, zoneIdx) {
+    const LANDMARK_BUFFER = 6; // generous clearance around landmarks
+
     // Fill ground rows
     for (let c = startCol; c < endCol; c++) {
-      // Create gaps (HIPAA holes) - but not in first zone, not at landmark positions, and not at very end
-      const isLandmarkArea = this.landmarks.some(l => Math.abs(l.col - c) < 4);
-      const isStartArea = c < 8;
+      // Create gaps (HIPAA holes) — strictly between landmarks, never near them
+      const isNearLandmark = this.landmarks.some(l => Math.abs(l.col - c) < LANDMARK_BUFFER);
+      const isStartArea = c < 10;
       const isDragonArea = c > LEVEL_COLS - 15;
 
-      if (!isStartArea && !isLandmarkArea && !isDragonArea && zoneIdx >= 3) {
-        // Chance of a gap (less frequent, narrower)
-        const gapSeed = (c * 7 + zoneIdx * 13) % 53;
-        if (gapSeed < 2 && c > startCol + 6 && c < endCol - 6) {
-          // Skip this column (gap) - only 2 cols wide (easy to jump)
-          const gapW = 2;
-          if (c + gapW < endCol - 5) {
-            // Register as HIPAA Hole hazard
-            this.hazards.push({
-              type: 'hipaa_hole',
-              x: c * TILE,
-              y: GROUND_ROW * TILE,
-              w: gapW * TILE,
-              h: 4 * TILE,
-              col: c,
-              gapW
-            });
-            c += gapW; // skip these cols
-            continue;
+      if (!isStartArea && !isNearLandmark && !isDragonArea && zoneIdx >= 4) {
+        // Chance of a gap — only in the middle portion of the zone
+        const zoneWidth = endCol - startCol;
+        const zoneMidStart = startCol + Math.floor(zoneWidth * 0.3);
+        const zoneMidEnd = startCol + Math.floor(zoneWidth * 0.7);
+
+        if (c >= zoneMidStart && c <= zoneMidEnd) {
+          const gapSeed = (c * 7 + zoneIdx * 13) % 53;
+          if (gapSeed < 2 && c > startCol + 6 && c < endCol - 6) {
+            // Skip this column (gap) - only 2 cols wide (easy to jump)
+            const gapW = 2;
+            if (c + gapW < endCol - 5) {
+              // Register as HIPAA Hole hazard
+              this.hazards.push({
+                type: 'hipaa_hole',
+                x: c * TILE,
+                y: GROUND_ROW * TILE,
+                w: gapW * TILE,
+                h: 4 * TILE,
+                col: c,
+                gapW
+              });
+              c += gapW; // skip these cols
+              continue;
+            }
           }
         }
       }
@@ -1052,60 +1141,168 @@ class Level {
   }
 
   buildPlatforms(startCol, endCol, zoneIdx) {
-    // Floating platforms between zones — wider and easier to land on
-    const numPlats = 1 + (zoneIdx % 2);
-    for (let i = 0; i < numPlats; i++) {
-      const px = startCol + 3 + Math.floor((i / numPlats) * (endCol - startCol - 6));
-      const py = GROUND_ROW - 3 - (i % 2);
-      const pw = 4 + (i % 2) * 2; // wider: 4-6 tiles
+    // Mario-like platform layout: dense, varied heights, step formations
+    // Skip first zone (spawn area — gentle intro) and last zone (dragon lair)
+    if (zoneIdx >= ZONES.length - 1) return;
 
+    const LANDMARK_BUFFER = 5;
+    const landmarkCols = this.landmarks.map(l => l.col);
+    const isNearLandmark = (col, w) => {
+      for (const lc of landmarkCols) {
+        if (col + w > lc - LANDMARK_BUFFER && col < lc + LANDMARK_BUFFER) return true;
+      }
+      return false;
+    };
+
+    const zoneWidth = endCol - startCol;
+    if (zoneWidth < 8) return;
+
+    // --- Mario-like platform recipes per zone ---
+    // Heights: GROUND_ROW is 14, so row 12 = 2 tiles up, row 10 = 4 tiles up, row 8 = 6 tiles up
+    const heightOptions = [
+      GROUND_ROW - 2,  // low step (2 tiles up)
+      GROUND_ROW - 3,  // medium (3 tiles up)
+      GROUND_ROW - 4,  // high (4 tiles up)
+      GROUND_ROW - 5,  // very high (5 tiles up)
+      GROUND_ROW - 6,  // ceiling level (6 tiles up)
+    ];
+
+    // Number of platforms scales with zone: zone 0 gets 2, later zones get 4-6
+    const numPlats = zoneIdx === 0 ? 2 : 3 + Math.min(3, Math.floor(zoneIdx / 2));
+    let placed = 0;
+
+    // Spread platforms across the zone
+    const spacing = Math.floor(zoneWidth / (numPlats + 1));
+
+    for (let i = 0; i < numPlats; i++) {
+      const baseCol = startCol + spacing * (i + 1) - 1;
+      const pw = 2 + Math.floor(Math.random() * 3); // 2-4 tiles wide (tighter, more Mario-like)
+
+      if (isNearLandmark(baseCol, pw)) continue;
+      if (baseCol < startCol + 2 || baseCol + pw > endCol - 2) continue;
+
+      // Pick a height — alternate and escalate through the zone
+      const heightIdx = (i + zoneIdx) % heightOptions.length;
+      const py = heightOptions[heightIdx];
       if (py < 2 || py >= GROUND_ROW) continue;
 
-      // One-way platform (can jump through from below)
-      for (let c = px; c < px + pw && c < endCol; c++) {
+      // Check no overlap with existing platforms
+      let overlap = false;
+      for (const ep of this.platforms) {
+        if (Math.abs(ep.col - baseCol) < Math.max(pw, ep.pw) + 1 && Math.abs(ep.row - py) < 2) {
+          overlap = true;
+          break;
+        }
+      }
+      if (overlap) continue;
+
+      // Place one-way platform tiles
+      for (let c = baseCol; c < baseCol + pw && c < endCol; c++) {
         if (c >= 0 && c < LEVEL_COLS && py >= 0 && py < LEVEL_ROWS) {
           this.grid[py][c] = 2; // one-way
         }
       }
 
       this.platforms.push({
-        x: px * TILE,
+        x: baseCol * TILE,
         y: py * TILE,
         w: pw * TILE,
         h: TILE,
         type: zoneIdx >= 8 ? 'crumbling' : 'normal',
         crumbleTimer: -1,
         active: true,
-        col: px,
+        col: baseCol,
         row: py,
         pw
       });
+      placed++;
+    }
+
+    // --- Step formations: solid block staircases (Mario-style) ---
+    // Add 1 step formation per zone (zones 2+)
+    if (zoneIdx >= 2 && zoneWidth >= 10) {
+      const stepCol = startCol + Math.floor(zoneWidth * 0.6);
+      const stepHeight = 2 + (zoneIdx % 2); // 2-3 steps tall
+      const goingRight = zoneIdx % 2 === 0;
+
+      for (let step = 0; step < stepHeight; step++) {
+        const c = goingRight ? stepCol + step : stepCol + (stepHeight - 1 - step);
+        const r = GROUND_ROW - 1 - step;
+        if (c >= startCol && c < endCol && r >= 2 && r < GROUND_ROW && !isNearLandmark(c, 1)) {
+          if (this.grid[r][c] === 0) {
+            this.grid[r][c] = 1; // solid block (staircase step)
+          }
+        }
+      }
     }
   }
 
   placeHearts(startCol, endCol, zoneIdx) {
-    // 2-3 hearts per zone, placed just above ground level (easy to grab)
-    const count = 2 + (zoneIdx % 2);
-    for (let i = 0; i < count; i++) {
-      const col = startCol + 3 + Math.floor((i / count) * (endCol - startCol - 6));
-      // Place heart 2 tiles above ground level
-      const heartRow = GROUND_ROW - 3;
+    // Strategic heart placement:
+    // - Primary: on TOP of floating platforms (reward for jumping)
+    // - Secondary: above gaps (reward for risky jumps)
+    // - Fallback: a few at ground level in sparse areas
+    // Never near landmarks — they have their own rewards
+
+    const landmarkCols = this.landmarks.map(l => l.col);
+    const isNearLandmark = (col) => landmarkCols.some(lc => Math.abs(lc - col) < 5);
+
+    // 1) Place a heart on top of each platform in this zone
+    const zonePlatforms = this.platforms.filter(p => {
+      const pCol = Math.floor(p.x / TILE);
+      return pCol >= startCol && pCol < endCol;
+    });
+
+    for (const plat of zonePlatforms) {
+      const centerCol = Math.floor(plat.x / TILE) + Math.floor(plat.pw / 2);
+      if (isNearLandmark(centerCol)) continue;
+      // Place heart 1 tile above platform
       this.hearts.push({
-        x: col * TILE + TILE / 2,
-        y: heartRow * TILE + TILE / 2,
+        x: centerCol * TILE + TILE / 2,
+        y: (plat.row - 1) * TILE + TILE / 2,
         collected: false,
         anim: Math.random() * Math.PI * 2
       });
+    }
+
+    // 2) Place hearts above gap hazards (risky reward)
+    const zoneGaps = this.hazards.filter(h => {
+      return h.type === 'hipaa_hole' && h.col >= startCol && h.col < endCol;
+    });
+    for (const gap of zoneGaps) {
+      if (isNearLandmark(gap.col)) continue;
+      this.hearts.push({
+        x: gap.x + gap.w / 2,
+        y: (GROUND_ROW - 3) * TILE + TILE / 2,
+        collected: false,
+        anim: Math.random() * Math.PI * 2
+      });
+    }
+
+    // 3) Ground-level hearts — extra in early zones for gentler start
+    const groundHeartCount = zoneIdx <= 2 ? 2 : 1;
+    for (let g = 0; g < groundHeartCount; g++) {
+      const groundCol = startCol + 4 + g * 8 + (zoneIdx * 3) % 7;
+      if (!isNearLandmark(groundCol) && groundCol >= startCol && groundCol < endCol - 3) {
+        this.hearts.push({
+          x: groundCol * TILE + TILE / 2,
+          y: (GROUND_ROW - 2) * TILE + TILE / 2,
+          collected: false,
+          anim: Math.random() * Math.PI * 2
+        });
+      }
     }
   }
 
   placeHazards(startCol, endCol, zoneIdx) {
     const terrain = ZONES[zoneIdx].terrain;
+    const LANDMARK_BUFFER = 6;
+    const isNearLandmark = (col) => this.landmarks.some(l => Math.abs(l.col - col) < LANDMARK_BUFFER);
 
-    // Compliance Spikes
-    if (zoneIdx >= 3 && zoneIdx <= 6) {
+    // Compliance Spikes — between landmarks only (start from zone 5 for gentler start)
+    if (zoneIdx >= 5 && zoneIdx <= 6) {
       const spikeCol = startCol + 8 + (zoneIdx * 3) % 7;
-      if (spikeCol < endCol - 3) {
+      if (spikeCol < endCol - 3 && !isNearLandmark(spikeCol)) {
         const spikeW = 2;
         this.hazards.push({
           type: 'spikes',
@@ -1118,10 +1315,10 @@ class Level {
       }
     }
 
-    // Vendor Lock-in Tar (stone zones)
+    // Vendor Lock-in Tar (stone zones) — between landmarks only
     if (terrain === 'stone' && zoneIdx >= 5) {
       const tarCol = startCol + 15 + (zoneIdx * 5) % 9;
-      if (tarCol < endCol - 5) {
+      if (tarCol < endCol - 5 && !isNearLandmark(tarCol)) {
         this.hazards.push({
           type: 'tar',
           x: tarCol * TILE,
@@ -1133,11 +1330,11 @@ class Level {
       }
     }
 
-    // Data Breach Fire (volcanic zone)
+    // Data Breach Fire (volcanic zone) — between landmarks only
     if (terrain === 'volcanic') {
       for (let i = 0; i < 3; i++) {
         const fireCol = startCol + 5 + i * 12;
-        if (fireCol < endCol - 3) {
+        if (fireCol < endCol - 3 && !isNearLandmark(fireCol)) {
           this.hazards.push({
             type: 'fire',
             x: fireCol * TILE,
@@ -1166,10 +1363,22 @@ class Level {
 
   placeDecorations(startCol, endCol, zoneIdx) {
     const terrain = ZONES[zoneIdx].terrain;
+
+    // Build exclusion zones: landmarks (5-col buffer) and platforms (2-col buffer)
+    const isExcluded = (col) => {
+      // Avoid landmarks with generous buffer
+      if (this.landmarks.some(l => Math.abs(l.col - col) < 5)) return true;
+      // Avoid directly under floating platforms (don't clutter jump zones)
+      if (this.platforms.some(p => {
+        const pStartCol = Math.floor(p.x / TILE);
+        return col >= pStartCol - 1 && col <= pStartCol + p.pw + 1;
+      })) return true;
+      return false;
+    };
+
     // Scatter decorations
     for (let c = startCol + 1; c < endCol - 1; c += 3 + (c % 5)) {
-      const isLandmark = this.landmarks.some(l => Math.abs(l.col - c) < 3);
-      if (isLandmark) continue;
+      if (isExcluded(c)) continue;
 
       if (terrain === 'grass') {
         const types = ['tree', 'bush', 'flower', 'rock'];
@@ -1181,7 +1390,7 @@ class Level {
           col: c
         });
       } else if (terrain === 'stone') {
-        const types = ['boulder', 'skull', 'signpost'];
+        const types = ['boulder', 'skull', 'rock'];
         const t = types[(c * 7 + zoneIdx) % types.length];
         this.decorations.push({
           type: t,
@@ -1238,6 +1447,7 @@ class Character {
     this.jumpBufferTimer = 0; // frames since jump was pressed
     this.jumpHeld = false;    // is jump key held?
     this.wasOnGround = false;
+    this.doubleJumpUsed = false; // for double jump
 
     // Animation
     this.walkFrame = 0;
@@ -1265,6 +1475,10 @@ class Character {
 
     // Movement modifier (for tar hazard)
     this.speedMult = 1.0;
+
+    // Landing squash effect
+    this.landingSquashTimer = 0;
+    this.prevVy = 0; // track previous frame's vy for landing detection
 
     // Sprites
     this.sprites = null; // {walk: {dir: [Image]}, idle: {dir: Image}}
@@ -1315,18 +1529,19 @@ class Character {
     const targetVX = keys.left ? -MOVE_SPEED * this.speedMult :
                      keys.right ? MOVE_SPEED * this.speedMult : 0;
     if (targetVX !== 0) {
-      this.vx += (targetVX - this.vx) * 0.2; // smooth accel
+      this.vx += (targetVX - this.vx) * 0.35; // snappier Mario-like accel
       this.facingRight = targetVX > 0;
       this.walking = true;
     } else {
-      this.vx *= 0.8; // smooth decel (friction)
-      if (Math.abs(this.vx) < 0.1) this.vx = 0;
+      this.vx *= 0.85; // tighter friction — stop quicker like Mario
+      if (Math.abs(this.vx) < 0.15) this.vx = 0;
     }
 
     // Coyote time — track how long since we left ground
     if (this.onGround) {
       this.coyoteTimer = COYOTE_FRAMES;
       this.wasOnGround = true;
+      this.doubleJumpUsed = false; // reset double jump on landing
     } else {
       if (this.coyoteTimer > 0) this.coyoteTimer--;
     }
@@ -1339,7 +1554,7 @@ class Character {
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer--;
     this._prevJump = keys.jump;
 
-    // Jumping — with coyote time and jump buffer
+    // Jumping — with coyote time, jump buffer, and optional double jump
     const canJump = this.onGround || this.coyoteTimer > 0;
     if (this.jumpBufferTimer > 0 && canJump) {
       this.vy = JUMP_FORCE;
@@ -1347,11 +1562,17 @@ class Character {
       this.coyoteTimer = 0;
       this.jumpBufferTimer = 0;
       this.jumping = true;
+      this.doubleJumpUsed = false;
+    } else if (ALLOW_DOUBLE_JUMP && this.jumpBufferTimer > 0 && !canJump && !this.doubleJumpUsed) {
+      // Double jump — in-air second jump
+      this.vy = JUMP_FORCE * 0.85; // slightly weaker
+      this.jumpBufferTimer = 0;
+      this.doubleJumpUsed = true;
     }
 
-    // Variable jump height — releasing jump early cuts upward velocity
+    // Variable jump height — releasing jump early cuts upward velocity (Mario-like)
     if (!keys.jump && this.vy < 0) {
-      this.vy *= JUMP_CUT_MULT + 0.55; // softer cut
+      this.vy *= 0.65; // firm cut for short hops, hold for full height
     }
 
     // Gravity
@@ -1363,19 +1584,40 @@ class Character {
     this.resolveCollisionX(level);
 
     // Move Y with collision
+    const prevVy = this.vy;
     this.y += this.vy;
     this.resolveCollisionY(level);
+
+    // Landing squash detection — was falling fast and now on ground
+    if (this.onGround && prevVy > 3) {
+      this.landingSquashTimer = 6;
+    }
+    if (this.landingSquashTimer > 0) this.landingSquashTimer--;
 
     // Clamp to level bounds
     if (this.x < PLAYER_W / 2) this.x = PLAYER_W / 2;
     if (this.x > LEVEL_W - PLAYER_W / 2) this.x = LEVEL_W - PLAYER_W / 2;
 
-    // Fall off bottom
+    // Fall off bottom — respawn just before the hole
     if (this.y > LEVEL_H + 100) {
       this.takeDamage(1);
       if (!this.dead) {
-        this.x = this.lastCheckpointX;
-        this.y = this.lastCheckpointY - PLAYER_H;
+        // Find the nearest HIPAA hole to where we fell
+        const fallCol = Math.floor(this.x / TILE);
+        let respawnX = this.lastCheckpointX;
+        let bestDist = Infinity;
+        for (const h of level.hazards) {
+          if (h.type !== 'hipaa_hole') continue;
+          const holeCenterCol = h.col + Math.floor(h.gapW / 2);
+          const dist = Math.abs(fallCol - holeCenterCol);
+          if (dist < bestDist) {
+            bestDist = dist;
+            // Respawn 2 tiles before the hole (on solid ground)
+            respawnX = (h.col - 2) * TILE + TILE / 2;
+          }
+        }
+        this.x = respawnX;
+        this.y = (GROUND_ROW) * TILE - PLAYER_H;
         this.vy = 0;
       }
     }
@@ -1519,6 +1761,17 @@ class Character {
 
     ctx.save();
 
+    // Landing squash effect — brief vertical scale reduction
+    if (this.landingSquashTimer > 0) {
+      const squashAmt = (this.landingSquashTimer / 6) * 0.12; // max 12% squash
+      const scaleX = 1 + squashAmt * 0.5;
+      const scaleY = 1 - squashAmt;
+      const footY = drawY + PLAYER_H;
+      ctx.translate(drawX + PLAYER_W / 2, footY);
+      ctx.scale(scaleX, scaleY);
+      ctx.translate(-(drawX + PLAYER_W / 2), -footY);
+    }
+
     // Try to draw loaded sprites
     if (this.sprites) {
       let sprite;
@@ -1624,6 +1877,7 @@ class Game {
     this.audioUnlocked = false;
     this.musicGain = null;
     this.currentMusic = null;
+    this.muted = false;
 
     // UI state
     this.activePanel = null;
@@ -1651,7 +1905,9 @@ class Game {
     // Opening scene
     this.openingTimer = 0;
     this.openingTextIndex = 0;
-    this.openingText = "I have stolen all the attention of doctors!! No one can slay me!!";
+    this.openingText = "Ha ha ha! I have stolen all the attention of doctors!! No one can slay me!!";
+    this.dragonVoiceEnded = false;
+    this.dragonSceneStartTime = 0; // real time (ms) when dragon scene started
 
     // Doctors
     this.doctors = [];
@@ -1660,6 +1916,16 @@ class Game {
 
     // Roadmap overlay
     this.roadmapOverlayVisible = false;
+
+    // Damage feedback
+    this.screenShakeTimer = 0;
+    this.damageFlashTimer = 0;
+
+    // Collection feedback
+    this.collectionPopTimer = 0;
+
+    // Dragon hit numbers (floating damage)
+    this.dragonHitNumbers = [];
 
     // Time
     this.time = 0;
@@ -1674,27 +1940,51 @@ class Game {
     this.bowSprite = null;
     this.tilesetImages = {};  // terrain -> {img, meta}
 
-    // Parallax clouds
+    // Parallax clouds — big fluffy pixel-art clouds
     this.clouds = [];
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 18; i++) {
       this.clouds.push({
-        x: Math.random() * LEVEL_W,
-        y: 20 + Math.random() * 120,
-        w: 40 + Math.random() * 80,
-        h: 16 + Math.random() * 24,
-        speed: 0.1 + Math.random() * 0.3,
-        alpha: 0.15 + Math.random() * 0.2
+        x: Math.random() * LEVEL_W * 1.2,
+        y: 30 + Math.random() * 100,
+        w: 80 + Math.random() * 140,
+        h: 30 + Math.random() * 30,
+        speed: 0.05 + Math.random() * 0.15,
+        alpha: 0.7 + Math.random() * 0.3,
+        puffs: Array.from({length: 3 + Math.floor(Math.random() * 4)}, (_, j) => ({
+          xOff: j * (0.2 + Math.random() * 0.15),
+          yOff: -0.2 - Math.random() * 0.5,
+          size: 0.3 + Math.random() * 0.4
+        }))
       });
     }
 
-    // Mountains for parallax
-    this.mountains = [];
-    for (let i = 0; i < 20; i++) {
-      this.mountains.push({
-        x: i * 600 + Math.random() * 200,
-        height: 60 + Math.random() * 100,
-        width: 150 + Math.random() * 200,
-        color: i % 2 === 0 ? '#1a2a1a' : '#152015'
+    // Mountains for parallax — layered green mountains
+    this.mountainsBack = [];
+    for (let i = 0; i < 25; i++) {
+      this.mountainsBack.push({
+        x: i * 500 + Math.random() * 200 - 200,
+        height: 120 + Math.random() * 80,
+        width: 300 + Math.random() * 250,
+        color: `hsl(${210 + Math.random() * 15}, ${25 + Math.random() * 15}%, ${65 + Math.random() * 10}%)`
+      });
+    }
+    this.mountainsFront = [];
+    for (let i = 0; i < 30; i++) {
+      this.mountainsFront.push({
+        x: i * 400 + Math.random() * 200 - 100,
+        height: 80 + Math.random() * 100,
+        width: 200 + Math.random() * 300,
+        color: `hsl(${120 + Math.random() * 30}, ${35 + Math.random() * 20}%, ${30 + Math.random() * 15}%)`
+      });
+    }
+    // Background trees layer (between mountains and gameplay)
+    this.bgTrees = [];
+    for (let i = 0; i < 60; i++) {
+      this.bgTrees.push({
+        x: i * 180 + Math.random() * 120 - 60,
+        height: 40 + Math.random() * 50,
+        width: 30 + Math.random() * 30,
+        color: `hsl(${110 + Math.random() * 30}, ${40 + Math.random() * 20}%, ${22 + Math.random() * 12}%)`
       });
     }
 
@@ -1754,6 +2044,18 @@ class Game {
     document.getElementById('loading-screen').style.display = 'none';
     this.loaded = true;
 
+    // Check skip intro flag (set by Play Again)
+    if (sessionStorage.getItem('skipIntro')) {
+      sessionStorage.removeItem('skipIntro');
+      // Skip directly to bard intro with camera at character
+      this.cameraX = this.character.x - this.width / 2;
+      this.cameraY = this.character.y - this.height * 0.55;
+      this.gamePhase = 'opening_bard';
+      document.getElementById('intro-backdrop').classList.add('visible');
+      document.getElementById('intro-scroll').classList.add('visible');
+      return;
+    }
+
     // Position camera at dragon for opening
     const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
     if (dragonLandmark) {
@@ -1762,6 +2064,35 @@ class Game {
     }
 
     this.gamePhase = 'opening_dragon';
+    this.dragonSceneStartTime = performance.now();
+    this.dragonSceneReady = false; // set to true when it's time to leave dragon scene
+
+    // Play dragon voice audio at the start
+    this.dragonVoiceAudio = new Audio('assets/audio/dragon-voice.mp3');
+    this.dragonVoiceAudio.volume = this.muted ? 0 : 0.8;
+
+    const transitionFromDragon = () => {
+      // Wait 1 extra second after audio/timer, then mark ready to transition
+      setTimeout(() => {
+        this.dragonSceneReady = true;
+      }, 1000);
+    };
+
+    this.dragonVoiceAudio.addEventListener('ended', () => {
+      this.dragonVoiceEnded = true;
+      transitionFromDragon();
+    });
+
+    this.dragonVoiceAudio.play().then(() => {
+      // Audio playing — 'ended' event will trigger transition
+    }).catch(() => {
+      // Autoplay blocked — use fixed timer: 6.35s audio duration, then 1s pause
+      setTimeout(() => {
+        this.dragonVoiceEnded = true;
+        transitionFromDragon();
+      }, 6350);
+    });
+
     this.loop();
   }
 
@@ -1940,10 +2271,14 @@ class Game {
   sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   resize() {
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+    // Render at a zoomed-in virtual resolution for a Mario-like close-up feel
+    this.width = Math.floor(window.innerWidth / ZOOM);
+    this.height = Math.floor(window.innerHeight / ZOOM);
     this.canvas.width = this.width;
     this.canvas.height = this.height;
+    // CSS stretches the smaller canvas to fill the window
+    this.canvas.style.width = window.innerWidth + 'px';
+    this.canvas.style.height = window.innerHeight + 'px';
   }
 
   setupInput() {
@@ -2018,12 +2353,31 @@ class Game {
     });
 
     document.getElementById('play-again-btn').addEventListener('click', () => {
+      if (document.getElementById('skip-intro-checkbox').checked) {
+        sessionStorage.setItem('skipIntro', '1');
+      } else {
+        sessionStorage.removeItem('skipIntro');
+      }
       window.location.reload();
     });
 
     // Roadmap overlay
     document.getElementById('view-roadmap-btn').addEventListener('click', () => {
       this.showRoadmapOverlay();
+    });
+
+    // Mute toggle
+    document.getElementById('mute-btn').addEventListener('click', () => {
+      this.toggleMute();
+    });
+
+    // Controls hint toggle
+    document.getElementById('controls-btn').addEventListener('click', () => {
+      const hint = document.getElementById('controls-hint');
+      hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+    });
+    document.getElementById('controls-dismiss').addEventListener('click', () => {
+      document.getElementById('controls-hint').style.display = 'none';
     });
     document.getElementById('roadmap-close').addEventListener('click', () => {
       this.hideRoadmapOverlay();
@@ -2066,8 +2420,28 @@ class Game {
     } catch (e) { /* silent */ }
   }
 
+  toggleMute() {
+    this.muted = !this.muted;
+    const btn = document.getElementById('mute-btn');
+    if (this.muted) {
+      btn.textContent = 'SOUND OFF';
+      btn.classList.add('muted');
+      // Mute AudioContext
+      if (this.audioCtx) this.audioCtx.suspend();
+      // Mute dragon voice
+      if (this.dragonVoiceAudio) this.dragonVoiceAudio.volume = 0;
+    } else {
+      btn.textContent = 'SOUND ON';
+      btn.classList.remove('muted');
+      // Unmute AudioContext
+      if (this.audioCtx) this.audioCtx.resume();
+      // Unmute dragon voice
+      if (this.dragonVoiceAudio) this.dragonVoiceAudio.volume = 0.8;
+    }
+  }
+
   playTone(freq, duration, type = 'square', volume = 0.1) {
-    if (!this.audioCtx) return;
+    if (!this.audioCtx || this.muted) return;
     const osc = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
     osc.type = type;
@@ -2080,9 +2454,11 @@ class Game {
     osc.stop(this.audioCtx.currentTime + duration);
   }
 
-  playHeartSound() {
-    this.playTone(880, 0.1, 'square', 0.08);
-    setTimeout(() => this.playTone(1100, 0.15, 'square', 0.06), 80);
+  playHeartSound(count = 1) {
+    // Rising pitch with each collected heart
+    const pitchBonus = Math.min(count - 1, 6) * 50;
+    this.playTone(880 + pitchBonus, 0.1, 'square', 0.08);
+    setTimeout(() => this.playTone(1100 + pitchBonus, 0.15, 'square', 0.06), 80);
   }
 
   playDamageSound() {
@@ -2121,6 +2497,11 @@ class Game {
   playDragonHitSound() {
     this.playTone(200, 0.15, 'sawtooth', 0.1);
     setTimeout(() => this.playTone(150, 0.2, 'sawtooth', 0.08), 80);
+  }
+
+  triggerDamageFeedback() {
+    this.screenShakeTimer = 8;
+    this.damageFlashTimer = 12;
   }
 
   playVictoryFanfare() {
@@ -2176,7 +2557,11 @@ class Game {
     // === Opening Scene State Machine ===
     if (this.gamePhase === 'opening_dragon') {
       this.openingTimer++;
-      this.openingTextIndex = Math.min(this.openingText.length, Math.floor(this.openingTimer / 2));
+      const elapsedMs = performance.now() - this.dragonSceneStartTime;
+
+      // Typewriter text synced to audio duration (real time, ~6.35s)
+      const textProgress = Math.min(1, elapsedMs / 6350);
+      this.openingTextIndex = Math.floor(textProgress * this.openingText.length);
 
       // Position dragon speech bubble
       const dragonLandmark = this.level.landmarks.find(l => l.item && l.item.id === 'milestone2');
@@ -2191,34 +2576,41 @@ class Game {
           speechEl.classList.add('visible');
         }
 
-        // Dragon laugh particles
-        if (this.openingTimer % 20 === 0) {
+        // Dragon fire particles while speaking
+        if (this.openingTimer % 15 === 0) {
           this.particles.emit(dragonLandmark.x, dragonLandmark.y - 40, 5, {
             colors: ['#f08020', '#f0c040', '#ff4020'], speed: 3, life: 30, upward: true, gravity: -0.03
           });
         }
       }
 
-      // After ~4 seconds, pan to Bard
-      if (this.openingTimer > 240) {
+      // Transition: dragonSceneReady is set by setTimeout after audio ends + 1s pause
+      // ALSO enforce minimum 7.35 seconds real time (performance.now) as safety
+      const MIN_DRAGON_MS = 7350;
+      if (this.dragonSceneReady && elapsedMs >= MIN_DRAGON_MS) {
         document.getElementById('dragon-speech').classList.remove('visible');
         this.gamePhase = 'opening_pan';
         this.openingTimer = 0;
+        this.panStartTime = performance.now();
+        this._panFromX = this.cameraX;
+        this._panFromY = this.cameraY;
       }
+
       this.particles.update();
       return;
     }
 
     if (this.gamePhase === 'opening_pan') {
-      this.openingTimer++;
-      // Pan camera to Bard
+      const panElapsed = performance.now() - (this.panStartTime || performance.now());
+      // Pan camera to Bard over ~3 seconds
+      const panProgress = Math.min(1, panElapsed / 3000);
+      const ease = panProgress * panProgress * (3 - 2 * panProgress); // smoothstep
       const targetX = this.character.x - this.width / 2;
       const targetY = this.character.y - this.height / 2;
-      this.cameraX += (targetX - this.cameraX) * 0.03;
-      this.cameraY += (targetY - this.cameraY) * 0.03;
+      this.cameraX = this._panFromX + (targetX - this._panFromX) * ease;
+      this.cameraY = this._panFromY + (targetY - this._panFromY) * ease;
 
-      const dist = Math.abs(this.cameraX - targetX) + Math.abs(this.cameraY - targetY);
-      if (dist < 5 || this.openingTimer > 180) {
+      if (panProgress >= 1) {
         this.cameraX = targetX;
         this.cameraY = targetY;
         this.gamePhase = 'opening_bard';
@@ -2257,7 +2649,12 @@ class Game {
       this.jumpPressed = false;
     }
 
+    const hpBefore = this.character.hp;
     this.character.update(this.keys, this.level);
+    // If character took fall damage (hp decreased during update), trigger feedback
+    if (this.character.hp < hpBefore) {
+      this.triggerDamageFeedback();
+    }
 
     // Camera follow
     this.updateCamera();
@@ -2293,10 +2690,10 @@ class Game {
   updateCamera() {
     const lookAhead = this.character.facingRight ? LOOK_AHEAD : -LOOK_AHEAD;
     const targetX = this.character.x - this.width / 2 + lookAhead;
-    const targetY = this.character.y - this.height * 0.35; // keep character in upper third, show more ground
+    const targetY = this.character.y - this.height * 0.6; // character sits ~60% down, shows platforms above
 
     this.cameraX += (targetX - this.cameraX) * CAMERA_SMOOTH;
-    this.cameraY += (targetY - this.cameraY) * CAMERA_SMOOTH * 0.5;
+    this.cameraY += (targetY - this.cameraY) * CAMERA_SMOOTH * 0.7; // faster vertical tracking
 
     // Clamp camera
     this.cameraX = Math.max(0, Math.min(LEVEL_W - this.width, this.cameraX));
@@ -2313,10 +2710,14 @@ class Game {
         heart.collected = true;
         this.heartsCollected++;
         this.character.heal(1);
-        this.playHeartSound();
-        this.particles.emit(heart.x, heart.y, 8, {
-          colors: ['#ff4060', '#ff80a0', '#ffc0d0'], speed: 2, life: 20, upward: true
+        // Rising pitch with each collected heart
+        this.playHeartSound(this.heartsCollected);
+        // Extra particles — bigger upward burst
+        this.particles.emit(heart.x, heart.y, 15, {
+          colors: ['#ff4060', '#ff80a0', '#ffc0d0', '#ffe0e8'], speed: 4, life: 30, upward: true, gravity: -0.04
         });
+        // Brief screen pop effect
+        this.collectionPopTimer = 3;
       }
     }
   }
@@ -2338,6 +2739,7 @@ class Game {
       if (cx + cw / 2 > h.x && cx - cw / 2 < h.x + h.w &&
           cy + ch > h.y && cy < h.y + h.h) {
         this.character.takeDamage(1);
+        this.triggerDamageFeedback();
         this.playDamageSound();
         this.particles.emit(this.character.x, this.character.y + PLAYER_H / 2, 10, {
           colors: ['#ff2020', '#ff6040', '#ff8060'], speed: 4, life: 20
@@ -2450,6 +2852,13 @@ class Game {
     this.character.visitedItems.add(item.id);
     this.activePanel = item;
 
+    // Landmark discovery feedback — particles and brief toast
+    this.particles.emit(landmark.x, landmark.y - 40, 20, {
+      colors: ['#f0c040', '#ffe070', '#40e0d0', '#80ff80'], speed: 5, upward: true, life: 40, gravity: -0.03
+    });
+    this.playLevelUpSound();
+    this.showMilestoneBanner(`Landmark ${item.id} discovered!`);
+
     const panel = document.getElementById('info-panel');
     const status = document.getElementById('panel-status');
     const title = document.getElementById('panel-title');
@@ -2554,9 +2963,18 @@ class Game {
         arrow.active = false;
         this.dragonHP -= 5;
         this.dragonHitTimer = 10;
+        this.screenShakeTimer = 4; // brief shake on dragon hit
         this.playDragonHitSound();
         this.particles.emit(dragonLandmark.x, dragonLandmark.y - 20, 8, {
           colors: ['#ff4020', '#ff8040', '#ffc060'], speed: 4, life: 20
+        });
+        // Floating damage number
+        this.dragonHitNumbers.push({
+          x: dragonLandmark.x + (Math.random() - 0.5) * 30,
+          y: dragonLandmark.y - 30,
+          text: '-5',
+          life: 40,
+          maxLife: 40
         });
 
         if (this.dragonHP <= 0) {
@@ -2615,20 +3033,42 @@ class Game {
     }
     healthBar.innerHTML = heartsHTML;
 
-    // Heart counter
-    document.getElementById('heart-counter').textContent = `Hearts: ${this.heartsCollected}/${this.totalHearts}`;
+    // Health counter (HP, not collectibles)
+    document.getElementById('heart-counter').textContent = `Health: ${this.character.hp}/${this.character.maxHP}`;
 
-    // Quest progress
+    // Landmark progress
     const visited = this.character.visitedItems.size;
     const total = ROADMAP_ITEMS.filter(i => i.status !== 'milestone').length;
-    document.getElementById('quest-progress').textContent = `Quest: ${visited}/${total}`;
+    document.getElementById('quest-progress').textContent = `Landmarks: ${visited}/${total}`;
   }
 
   // ---- Draw ----
   draw() {
     const ctx = this.ctx;
-    const cx = this.cameraX;
-    const cy = this.cameraY;
+    let cx = this.cameraX;
+    let cy = this.cameraY;
+
+    // Screen shake offset
+    let shakeX = 0, shakeY = 0;
+    if (this.screenShakeTimer > 0) {
+      shakeX = (Math.random() - 0.5) * 8;
+      shakeY = (Math.random() - 0.5) * 8;
+      this.screenShakeTimer--;
+    }
+    cx -= shakeX;
+    cy -= shakeY;
+
+    // Collection pop effect
+    let popActive = false;
+    if (this.collectionPopTimer > 0) {
+      popActive = true;
+      const popScale = 1 + (this.collectionPopTimer / 3) * 0.02;
+      ctx.save();
+      ctx.translate(this.width / 2, this.height / 2);
+      ctx.scale(popScale, popScale);
+      ctx.translate(-this.width / 2, -this.height / 2);
+      this.collectionPopTimer--;
+    }
 
     // Clear
     ctx.fillStyle = '#0a0a1a';
@@ -2675,60 +3115,128 @@ class Game {
       this.drawDragonHPBar(ctx);
     }
 
+    // Dragon hit numbers
+    this.drawDragonHitNumbers(ctx);
+
+    // Damage red flash overlay
+    if (this.damageFlashTimer > 0) {
+      const alpha = (this.damageFlashTimer / 12) * 0.35;
+      ctx.fillStyle = `rgba(255,0,0,${alpha})`;
+      ctx.fillRect(0, 0, this.width, this.height);
+      this.damageFlashTimer--;
+    }
+
     // Victory flash
     if (this.victoryFlashTimer > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.victoryFlashTimer / 30 * 0.5})`;
       ctx.fillRect(0, 0, this.width, this.height);
     }
+
+    // End collection pop transform
+    if (popActive) {
+      ctx.restore();
+    }
   }
 
   drawBackground(ctx, cx, cy) {
-    // Sky gradient
+    const groundScreenY = GROUND_ROW * TILE - cy;
+
+    // Sky gradient — bright daytime blue
     const grad = ctx.createLinearGradient(0, 0, 0, this.height);
-    grad.addColorStop(0, '#1a1040');
-    grad.addColorStop(0.4, '#2a2060');
-    grad.addColorStop(0.7, '#3a3080');
-    grad.addColorStop(1, '#1a2040');
+    grad.addColorStop(0, '#4a90d9');
+    grad.addColorStop(0.3, '#6eb4e8');
+    grad.addColorStop(0.6, '#a0d4f0');
+    grad.addColorStop(0.85, '#c8e8f8');
+    grad.addColorStop(1, '#d8f0ff');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, this.width, this.height);
 
-    // Stars
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 50; i++) {
-      const sx = ((i * 137 + 50) % 1200) - (cx * 0.02) % 1200;
-      const sy = ((i * 89 + 30) % 300);
-      const alpha = 0.3 + Math.sin(this.time * 0.02 + i) * 0.2;
-      ctx.globalAlpha = alpha;
-      ctx.fillRect(sx < 0 ? sx + 1200 : sx, sy, 2, 2);
-    }
-    ctx.globalAlpha = 1;
-
-    // Mountains (parallax layer 1)
-    for (const mt of this.mountains) {
-      const mx = mt.x - cx * 0.15;
-      const my = this.height - mt.height - 50;
+    // Far mountains (blueish, parallax 0.05)
+    for (const mt of this.mountainsBack) {
+      const mx = mt.x - cx * 0.05;
+      const baseY = groundScreenY + 10;
+      const my = baseY - mt.height;
       ctx.fillStyle = mt.color;
       ctx.beginPath();
-      ctx.moveTo(mx, this.height);
-      ctx.lineTo(mx + mt.width / 2, my);
-      ctx.lineTo(mx + mt.width, this.height);
+      ctx.moveTo(mx, baseY);
+      // Rounded mountain shape
+      ctx.quadraticCurveTo(mx + mt.width * 0.25, my - mt.height * 0.1, mx + mt.width * 0.5, my);
+      ctx.quadraticCurveTo(mx + mt.width * 0.75, my - mt.height * 0.05, mx + mt.width, baseY);
       ctx.fill();
     }
 
-    // Clouds (parallax layer 2)
+    // Clouds (between mountain layers, parallax 0.08) — pixel-art style
     for (const cloud of this.clouds) {
-      const cloudX = cloud.x - cx * 0.3;
+      const cloudX = ((cloud.x + this.time * cloud.speed * 0.5) % (LEVEL_W * 1.4)) - cx * 0.08;
       ctx.globalAlpha = cloud.alpha;
-      ctx.fillStyle = '#c0c0d0';
-      // Simple cloud shape
-      ctx.fillRect(cloudX, cloud.y, cloud.w, cloud.h * 0.6);
-      ctx.fillRect(cloudX + cloud.w * 0.1, cloud.y - cloud.h * 0.3, cloud.w * 0.4, cloud.h * 0.5);
-      ctx.fillRect(cloudX + cloud.w * 0.4, cloud.y - cloud.h * 0.2, cloud.w * 0.3, cloud.h * 0.4);
+
+      const cw = cloud.w;
+      const ch = cloud.h;
+
+      // Main cloud body - stacked rounded rectangles for pixel-art look
+      ctx.fillStyle = '#ffffff';
+      // Base layer (widest)
+      ctx.fillRect(Math.round(cloudX + cw * 0.05), Math.round(cloud.y), Math.round(cw * 0.9), Math.round(ch * 0.5));
+      // Middle puff layer
+      ctx.fillRect(Math.round(cloudX + cw * 0.1), Math.round(cloud.y - ch * 0.3), Math.round(cw * 0.35), Math.round(ch * 0.45));
+      ctx.fillRect(Math.round(cloudX + cw * 0.35), Math.round(cloud.y - ch * 0.4), Math.round(cw * 0.35), Math.round(ch * 0.55));
+      // Top puffs
+      ctx.fillRect(Math.round(cloudX + cw * 0.2), Math.round(cloud.y - ch * 0.55), Math.round(cw * 0.25), Math.round(ch * 0.3));
+      ctx.fillRect(Math.round(cloudX + cw * 0.5), Math.round(cloud.y - ch * 0.45), Math.round(cw * 0.2), Math.round(ch * 0.2));
+
+      // Highlight on upper portion
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.fillRect(Math.round(cloudX + cw * 0.15), Math.round(cloud.y - ch * 0.25), Math.round(cw * 0.6), Math.round(ch * 0.15));
+
+      // Subtle bottom shadow
+      ctx.fillStyle = 'rgba(180,200,220,0.4)';
+      ctx.fillRect(Math.round(cloudX + cw * 0.08), Math.round(cloud.y + ch * 0.3), Math.round(cw * 0.84), Math.round(ch * 0.2));
     }
     ctx.globalAlpha = 1;
+
+    // Near mountains (green, parallax 0.12)
+    for (const mt of this.mountainsFront) {
+      const mx = mt.x - cx * 0.12;
+      const baseY = groundScreenY + 10;
+      const my = baseY - mt.height;
+      ctx.fillStyle = mt.color;
+      ctx.beginPath();
+      ctx.moveTo(mx, baseY);
+      ctx.quadraticCurveTo(mx + mt.width * 0.3, my + mt.height * 0.1, mx + mt.width * 0.5, my);
+      ctx.quadraticCurveTo(mx + mt.width * 0.7, my + mt.height * 0.15, mx + mt.width, baseY);
+      ctx.fill();
+
+      // Darker base
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillRect(mx, baseY - mt.height * 0.15, mt.width, mt.height * 0.15);
+    }
+
+    // Background tree line (parallax 0.18)
+    for (const tree of this.bgTrees) {
+      const tx = tree.x - cx * 0.18;
+      const baseY = groundScreenY + 5;
+      const ty = baseY - tree.height;
+
+      // Tree trunk
+      ctx.fillStyle = 'hsl(30, 30%, 18%)';
+      ctx.fillRect(tx + tree.width * 0.35, ty + tree.height * 0.5, tree.width * 0.3, tree.height * 0.5);
+
+      // Tree canopy (layered circles)
+      ctx.fillStyle = tree.color;
+      ctx.beginPath();
+      ctx.arc(tx + tree.width * 0.5, ty + tree.height * 0.35, tree.width * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(tx + tree.width * 0.3, ty + tree.height * 0.45, tree.width * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(tx + tree.width * 0.7, ty + tree.height * 0.45, tree.width * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  // Build a Wang tile cache from loaded tileset metadata + image
+  // Build a Wang corner tile cache from loaded sidescroller tileset metadata + image
+  // These are corner-based Wang tiles: index = NW*8 + NE*4 + SW*2 + SE*1
   buildWangCache(terrain) {
     const ts = this.tilesetImages[terrain];
     if (!ts || this._wangCache?.[terrain]) return;
@@ -2736,6 +3244,7 @@ class Game {
 
     const cache = {};
     for (const tile of ts.meta.tileset_data.tiles) {
+      // Wang index from corners: upper=1, lower=0
       const c = tile.corners;
       const nw = c.NW === 'upper' ? 1 : 0;
       const ne = c.NE === 'upper' ? 1 : 0;
@@ -2755,23 +3264,38 @@ class Game {
     this._wangCache[terrain] = cache;
   }
 
-  // Get the Wang index for a grid cell based on its 4 corner vertices.
-  // A corner vertex is "upper" (solid terrain, 1) if ALL neighbouring cells
-  // sharing that vertex are solid. Otherwise it's "lower" (transparent, 0).
+  // Compute Wang corner index for a solid grid cell at (r, c).
+  // Each corner vertex is shared by 4 cells. A corner is 'upper' (surface/grass)
+  // if ANY of those 4 cells is NOT solid (exposed to air). It's 'lower' (underground)
+  // if ALL 4 cells are solid.
   getWangIndex(r, c, level) {
     const s = (rr, cc) => {
-      if (rr < 0 || rr >= LEVEL_ROWS || cc < 0 || cc >= LEVEL_COLS) return false;
+      if (cc < 0 || cc >= LEVEL_COLS) return false;
+      if (rr >= LEVEL_ROWS) return true; // below grid = solid earth
+      if (rr < 0) return false;
       return level.grid[rr][cc] === 1;
     };
-    const nw = (s(r - 1, c) && s(r, c - 1) && s(r - 1, c - 1)) ? 1 : 0;
-    const ne = (s(r - 1, c) && s(r, c + 1) && s(r - 1, c + 1)) ? 1 : 0;
-    const sw = (s(r + 1, c) && s(r, c - 1) && s(r + 1, c - 1)) ? 1 : 0;
-    const se = (s(r + 1, c) && s(r, c + 1) && s(r + 1, c + 1)) ? 1 : 0;
+
+    // NW vertex: shared by (r-1,c-1), (r-1,c), (r,c-1), (r,c)
+    const nwAllSolid = s(r-1, c-1) && s(r-1, c) && s(r, c-1) && s(r, c);
+    // NE vertex: shared by (r-1,c), (r-1,c+1), (r,c), (r,c+1)
+    const neAllSolid = s(r-1, c) && s(r-1, c+1) && s(r, c) && s(r, c+1);
+    // SW vertex: shared by (r,c-1), (r,c), (r+1,c-1), (r+1,c)
+    const swAllSolid = s(r, c-1) && s(r, c) && s(r+1, c-1) && s(r+1, c);
+    // SE vertex: shared by (r,c), (r,c+1), (r+1,c), (r+1,c+1)
+    const seAllSolid = s(r, c) && s(r, c+1) && s(r+1, c) && s(r+1, c+1);
+
+    // upper = surface/grass (NOT all solid), lower = underground (all solid)
+    const nw = nwAllSolid ? 0 : 1;
+    const ne = neAllSolid ? 0 : 1;
+    const sw = swAllSolid ? 0 : 1;
+    const se = seAllSolid ? 0 : 1;
+
     return nw * 8 + ne * 4 + sw * 2 + se;
   }
 
   drawTiles(ctx, cx, cy) {
-    // Build Wang tile caches on first call
+    // Build Wang corner tile caches on first call
     for (const t of ['grass', 'stone', 'volcanic']) {
       this.buildWangCache(t);
     }
@@ -2780,6 +3304,16 @@ class Game {
     const endCol = Math.min(LEVEL_COLS, Math.ceil((cx + this.width) / TILE) + 1);
     const startRow = Math.max(0, Math.floor(cy / TILE) - 1);
     const endRow = Math.min(LEVEL_ROWS, Math.ceil((cy + this.height) / TILE) + 1);
+
+    // Draw solid earth fill below the terrain grid (covers below-grid camera area)
+    const belowGridY = LEVEL_ROWS * TILE - cy;
+    if (belowGridY < this.height) {
+      // Sample terrain color for the fill
+      const terrainColors = { grass: '#4a3a20', stone: '#3a3a40', volcanic: '#2a1010' };
+      const midTerrain = this.level.getTerrainAt(Math.floor((cx + this.width / 2) / TILE));
+      ctx.fillStyle = terrainColors[midTerrain] || '#4a3a20';
+      ctx.fillRect(0, Math.max(0, belowGridY), this.width, this.height - Math.max(0, belowGridY));
+    }
 
     for (let r = startRow; r < endRow; r++) {
       for (let c = startCol; c < endCol; c++) {
@@ -2791,11 +3325,16 @@ class Game {
         const terrain = this.level.getTerrainAt(c);
 
         if (tile === 1) {
-          // Try to use the PixelLab Wang tileset
+          // Draw solid fill behind tile to prevent sky bleedthrough
+          const bgColors = { grass: '#4a3a20', stone: '#3a3a40', volcanic: '#2a1010' };
+          ctx.fillStyle = bgColors[terrain] || '#4a3a20';
+          ctx.fillRect(drawX, drawY, TILE, TILE);
+
+          // Try to use the PixelLab Wang corner tileset
           const wangCache = this._wangCache?.[terrain];
           if (wangCache) {
             const wangIdx = this.getWangIndex(r, c, this.level);
-            const wangTile = wangCache[wangIdx] || wangCache[15]; // fallback to solid center
+            const wangTile = wangCache[wangIdx] || wangCache[0]; // fallback to all-lower (underground)
             if (wangTile) {
               ctx.drawImage(wangTile, Math.round(drawX), Math.round(drawY), TILE, TILE);
               continue;
@@ -2845,29 +3384,111 @@ class Game {
             }
           }
         } else if (tile === 2) {
-          // One-way platform — Mario-style brick block
+          // One-way platform — stone brick with grass top (reference-style)
           const brickColors = terrain === 'stone'
-            ? { main: '#707880', light: '#909aa4', dark: '#505860', line: '#404850' }
+            ? { main: '#6a7078', light: '#828a94', dark: '#505860', mortar: '#3a4048', grass: '#4a8a3a', grassLight: '#6aaa50', grassDark: '#38782a' }
             : terrain === 'volcanic'
-            ? { main: '#5a2020', light: '#7a3030', dark: '#3a1010', line: '#2a0808' }
-            : { main: '#c08040', light: '#d0a060', dark: '#906030', line: '#704820' };
-          // Full block face
+            ? { main: '#5a2828', light: '#7a3838', dark: '#3a1818', mortar: '#2a0c0c', grass: '#4a3a20', grassLight: '#6a5030', grassDark: '#3a2a18' }
+            : { main: '#8a7860', light: '#a09070', dark: '#6a5a44', mortar: '#504030', grass: '#4a9a3a', grassLight: '#6abb55', grassDark: '#389028' };
+
+          // Check neighbors for edge shaping
+          const hasLeft = c > 0 && this.level.grid[r][c - 1] === 2;
+          const hasRight = c < LEVEL_COLS - 1 && this.level.grid[r][c + 1] === 2;
+
+          // Stone brick body
           ctx.fillStyle = brickColors.main;
-          ctx.fillRect(drawX, drawY, TILE, TILE);
-          // Light highlight (top + left)
+          ctx.fillRect(drawX, drawY + 6, TILE, TILE - 6);
+
+          // Brick pattern — two rows of offset bricks
+          ctx.fillStyle = brickColors.mortar;
+          ctx.fillRect(drawX, drawY + 6 + 12, TILE, 1); // horizontal mortar
+          // Top row bricks
+          ctx.fillRect(drawX + 10, drawY + 6, 1, 12);
+          ctx.fillRect(drawX + 22, drawY + 6, 1, 12);
+          // Bottom row bricks (offset)
+          ctx.fillRect(drawX + 5, drawY + 19, 1, TILE - 19);
+          ctx.fillRect(drawX + 16, drawY + 19, 1, TILE - 19);
+          ctx.fillRect(drawX + 27, drawY + 19, 1, TILE - 19);
+
+          // Light edges on bricks
           ctx.fillStyle = brickColors.light;
-          ctx.fillRect(drawX, drawY, TILE, 2);
-          ctx.fillRect(drawX, drawY, 2, TILE);
-          // Dark shadow (bottom + right)
+          ctx.fillRect(drawX + 1, drawY + 7, 8, 1);
+          ctx.fillRect(drawX + 12, drawY + 7, 9, 1);
+          ctx.fillRect(drawX + 24, drawY + 7, 7, 1);
+
+          // Dark bottom edge
           ctx.fillStyle = brickColors.dark;
-          ctx.fillRect(drawX, drawY + TILE - 2, TILE, 2);
-          ctx.fillRect(drawX + TILE - 2, drawY, 2, TILE);
-          // Mortar lines
-          ctx.fillStyle = brickColors.line;
-          ctx.fillRect(drawX, drawY + TILE / 2 - 1, TILE, 1);
-          ctx.fillRect(drawX + TILE / 2, drawY, 1, TILE / 2);
-          ctx.fillRect(drawX + TILE / 4, drawY + TILE / 2, 1, TILE / 2);
-          ctx.fillRect(drawX + 3 * TILE / 4, drawY + TILE / 2, 1, TILE / 2);
+          ctx.fillRect(drawX, drawY + TILE - 1, TILE, 1);
+          if (!hasLeft) ctx.fillRect(drawX, drawY + 6, 1, TILE - 6);
+          if (!hasRight) ctx.fillRect(drawX + TILE - 1, drawY + 6, 1, TILE - 6);
+
+          // Grass top layer
+          ctx.fillStyle = brickColors.grass;
+          ctx.fillRect(drawX, drawY + 2, TILE, 5);
+
+          // Grass highlight
+          ctx.fillStyle = brickColors.grassLight;
+          ctx.fillRect(drawX, drawY + 2, TILE, 2);
+
+          // Grass blades (pixel tufts sticking up)
+          ctx.fillStyle = brickColors.grass;
+          const seed = c * 7 + r * 13;
+          for (let b = 0; b < 5; b++) {
+            const bx = drawX + ((seed + b * 7) % TILE);
+            const bh = 2 + ((seed + b * 3) % 3);
+            ctx.fillRect(bx, drawY + 2 - bh, 2, bh);
+          }
+          ctx.fillStyle = brickColors.grassLight;
+          for (let b = 0; b < 3; b++) {
+            const bx = drawX + ((seed + b * 11 + 3) % TILE);
+            ctx.fillRect(bx, drawY, 1, 2);
+          }
+
+          // Round off edges if at platform ends
+          if (!hasLeft) {
+            ctx.fillStyle = brickColors.grassDark;
+            ctx.fillRect(drawX, drawY + 4, 1, 3);
+          }
+          if (!hasRight) {
+            ctx.fillStyle = brickColors.grassDark;
+            ctx.fillRect(drawX + TILE - 1, drawY + 4, 1, 3);
+          }
+        }
+      }
+    }
+
+    // Draw grass tufts on top of ground surface tiles for lush look
+    for (let c = startCol; c < endCol; c++) {
+      if (this.level.grid[GROUND_ROW]?.[c] !== 1) continue;
+      // Only draw tufts on the surface row where above is air
+      if (GROUND_ROW > 0 && this.level.grid[GROUND_ROW - 1]?.[c] !== 0) continue;
+
+      const drawX = c * TILE - cx;
+      const groundY = GROUND_ROW * TILE - cy;
+      const terrain = this.level.getTerrainAt(c);
+
+      if (terrain === 'grass') {
+        // Green grass tufts above the surface
+        const seed = c * 17;
+        ctx.fillStyle = '#4a9a3a';
+        for (let t = 0; t < 4; t++) {
+          const tx = drawX + ((seed + t * 8) % (TILE - 2));
+          const th = 3 + ((seed + t * 5) % 4);
+          ctx.fillRect(tx, groundY - th, 2, th);
+        }
+        ctx.fillStyle = '#5abb50';
+        for (let t = 0; t < 3; t++) {
+          const tx = drawX + ((seed + t * 11 + 4) % (TILE - 2));
+          const th = 2 + ((seed + t * 7) % 3);
+          ctx.fillRect(tx, groundY - th, 1, th);
+        }
+      } else if (terrain === 'stone') {
+        // Small moss tufts
+        const seed = c * 13;
+        ctx.fillStyle = '#4a7a4a';
+        for (let t = 0; t < 2; t++) {
+          const tx = drawX + ((seed + t * 12) % (TILE - 2));
+          ctx.fillRect(tx, groundY - 2, 3, 2);
         }
       }
     }
@@ -2882,13 +3503,17 @@ class Game {
       if (drawX > this.width || drawX + plat.w < 0) continue;
 
       const shake = plat.crumbleTimer > 0 ? (Math.random() - 0.5) * 4 : 0;
-      ctx.fillStyle = '#8a6a40';
-      ctx.fillRect(drawX + shake, drawY, plat.w, TILE * 0.4);
-      ctx.fillStyle = '#6a5030';
-      ctx.fillRect(drawX + shake, drawY + TILE * 0.4, plat.w, TILE * 0.6);
+      // Stone brick with cracks
+      ctx.fillStyle = '#7a6a58';
+      ctx.fillRect(drawX + shake, drawY + 4, plat.w, TILE - 4);
+      // Cracked grass top
+      ctx.fillStyle = '#5a8a3a';
+      ctx.fillRect(drawX + shake, drawY, plat.w, 5);
+      ctx.fillStyle = '#6aaa50';
+      ctx.fillRect(drawX + shake, drawY, plat.w, 2);
 
       // Cracks
-      ctx.fillStyle = '#4a3020';
+      ctx.fillStyle = '#4a3a28';
       ctx.fillRect(drawX + shake + 8, drawY + 4, 2, TILE - 8);
       ctx.fillRect(drawX + shake + plat.w - 12, drawY + 6, 2, TILE - 10);
 
@@ -3049,49 +3674,120 @@ class Game {
       if (sprite) {
         ctx.drawImage(sprite, drawX, drawY - sprite.height + TILE);
       } else {
-        // Fallback procedural
+        // Fallback procedural — enhanced pixel-art decorations
         if (deco.type === 'tree') {
-          ctx.fillStyle = '#3a5a2a';
-          ctx.fillRect(drawX + 10, drawY - 32, 12, 28);
-          ctx.fillStyle = '#2a8a2a';
-          ctx.fillRect(drawX + 4, drawY - 44, 24, 16);
-          ctx.fillRect(drawX + 8, drawY - 52, 16, 12);
+          // Trunk with bark detail
+          ctx.fillStyle = '#5a3a1a';
+          ctx.fillRect(drawX + 12, drawY - 36, 8, 36);
+          ctx.fillStyle = '#4a2a10';
+          ctx.fillRect(drawX + 14, drawY - 30, 2, 20);
+          // Rich canopy layers
+          ctx.fillStyle = '#2a7a28';
+          ctx.beginPath();
+          ctx.arc(drawX + 16, drawY - 42, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#3a9a38';
+          ctx.beginPath();
+          ctx.arc(drawX + 12, drawY - 46, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(drawX + 20, drawY - 44, 10, 0, Math.PI * 2);
+          ctx.fill();
+          // Highlights
+          ctx.fillStyle = '#4aaa48';
+          ctx.beginPath();
+          ctx.arc(drawX + 14, drawY - 50, 6, 0, Math.PI * 2);
+          ctx.fill();
         } else if (deco.type === 'bush') {
-          ctx.fillStyle = '#3a7a3a';
-          ctx.fillRect(drawX + 4, drawY - 8, 24, 12);
-          ctx.fillStyle = '#4a9a4a';
-          ctx.fillRect(drawX + 8, drawY - 12, 16, 8);
+          ctx.fillStyle = '#2a6a28';
+          ctx.beginPath();
+          ctx.arc(drawX + 16, drawY - 6, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#3a8a38';
+          ctx.beginPath();
+          ctx.arc(drawX + 10, drawY - 8, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(drawX + 22, drawY - 8, 8, 0, Math.PI * 2);
+          ctx.fill();
+          // Small flower on bush
+          ctx.fillStyle = '#e86090';
+          ctx.fillRect(drawX + 14, drawY - 14, 3, 3);
         } else if (deco.type === 'flower') {
-          ctx.fillStyle = '#2a6a2a';
-          ctx.fillRect(drawX + 14, drawY - 12, 4, 12);
-          ctx.fillStyle = '#e04060';
-          ctx.fillRect(drawX + 12, drawY - 16, 8, 6);
+          // Stem
+          ctx.fillStyle = '#2a7a2a';
+          ctx.fillRect(drawX + 15, drawY - 14, 2, 14);
+          // Leaf
+          ctx.fillStyle = '#3a8a30';
+          ctx.fillRect(drawX + 11, drawY - 8, 4, 2);
+          // Petals
+          const colors = ['#e86090', '#ff7070', '#f0a040', '#d060d0'];
+          const flowerColor = colors[Math.floor((drawX + drawY) * 0.1) % colors.length];
+          ctx.fillStyle = flowerColor;
+          ctx.fillRect(drawX + 12, drawY - 18, 3, 3);
+          ctx.fillRect(drawX + 17, drawY - 18, 3, 3);
+          ctx.fillRect(drawX + 12, drawY - 14, 3, 3);
+          ctx.fillRect(drawX + 17, drawY - 14, 3, 3);
+          // Center
+          ctx.fillStyle = '#f0e040';
+          ctx.fillRect(drawX + 14, drawY - 17, 4, 4);
         } else if (deco.type === 'rock') {
-          ctx.fillStyle = '#808080';
-          ctx.fillRect(drawX + 8, drawY - 8, 16, 10);
-          ctx.fillStyle = '#909090';
-          ctx.fillRect(drawX + 10, drawY - 10, 12, 4);
-        } else if (deco.type === 'boulder') {
-          ctx.fillStyle = '#606060';
-          ctx.fillRect(drawX + 4, drawY - 16, 24, 18);
+          // Rounded rock with shading
           ctx.fillStyle = '#707070';
-          ctx.fillRect(drawX + 6, drawY - 18, 20, 6);
+          ctx.fillRect(drawX + 6, drawY - 6, 20, 8);
+          ctx.fillRect(drawX + 8, drawY - 8, 16, 2);
+          ctx.fillRect(drawX + 8, drawY + 2, 16, 2);
+          // Highlight
+          ctx.fillStyle = '#909090';
+          ctx.fillRect(drawX + 8, drawY - 8, 12, 2);
+          // Shadow
+          ctx.fillStyle = '#505050';
+          ctx.fillRect(drawX + 10, drawY + 2, 12, 2);
+          // Moss
+          ctx.fillStyle = '#5a8a4a';
+          ctx.fillRect(drawX + 8, drawY - 7, 4, 2);
+        } else if (deco.type === 'boulder') {
+          ctx.fillStyle = '#585858';
+          ctx.fillRect(drawX + 4, drawY - 14, 24, 16);
+          ctx.fillRect(drawX + 6, drawY - 16, 20, 2);
+          // Highlight
+          ctx.fillStyle = '#787878';
+          ctx.fillRect(drawX + 6, drawY - 16, 16, 3);
+          // Cracks
+          ctx.fillStyle = '#404040';
+          ctx.fillRect(drawX + 12, drawY - 10, 1, 6);
+          ctx.fillRect(drawX + 20, drawY - 8, 1, 4);
+          // Moss patches
+          ctx.fillStyle = '#4a7a3a';
+          ctx.fillRect(drawX + 6, drawY - 14, 6, 2);
         } else if (deco.type === 'skull') {
-          ctx.fillStyle = '#d0c8b0';
+          ctx.fillStyle = '#d8d0b8';
           ctx.fillRect(drawX + 10, drawY - 10, 12, 10);
+          ctx.fillRect(drawX + 12, drawY - 12, 8, 2);
           ctx.fillStyle = '#1a1a1a';
           ctx.fillRect(drawX + 12, drawY - 8, 3, 3);
           ctx.fillRect(drawX + 18, drawY - 8, 3, 3);
+          ctx.fillRect(drawX + 14, drawY - 4, 4, 2);
         } else if (deco.type === 'signpost') {
+          ctx.fillStyle = '#6a4a28';
+          ctx.fillRect(drawX + 14, drawY - 30, 4, 30);
           ctx.fillStyle = '#8a6a40';
-          ctx.fillRect(drawX + 14, drawY - 28, 4, 28);
+          ctx.fillRect(drawX + 6, drawY - 34, 20, 10);
           ctx.fillStyle = '#a08050';
-          ctx.fillRect(drawX + 6, drawY - 32, 20, 10);
+          ctx.fillRect(drawX + 8, drawY - 32, 16, 6);
+          // Arrow
+          ctx.fillStyle = '#4a3420';
+          ctx.fillRect(drawX + 20, drawY - 30, 4, 2);
         } else if (deco.type === 'deadtree') {
-          ctx.fillStyle = '#4a3a2a';
-          ctx.fillRect(drawX + 12, drawY - 36, 8, 36);
-          ctx.fillRect(drawX + 4, drawY - 28, 8, 4);
-          ctx.fillRect(drawX + 20, drawY - 24, 8, 4);
+          ctx.fillStyle = '#3a2a1a';
+          ctx.fillRect(drawX + 12, drawY - 40, 8, 40);
+          ctx.fillRect(drawX + 4, drawY - 32, 10, 4);
+          ctx.fillRect(drawX + 20, drawY - 26, 10, 3);
+          ctx.fillRect(drawX + 2, drawY - 24, 6, 3);
+          // Bark texture
+          ctx.fillStyle = '#2a1a10';
+          ctx.fillRect(drawX + 14, drawY - 35, 2, 8);
+          ctx.fillRect(drawX + 16, drawY - 20, 2, 6);
         }
       }
     }
@@ -3435,6 +4131,31 @@ class Game {
     ctx.textAlign = 'center';
     ctx.fillText('THE DRAGON', this.width / 2, barY - 10);
     ctx.textAlign = 'start';
+  }
+
+  drawDragonHitNumbers(ctx) {
+    for (let i = this.dragonHitNumbers.length - 1; i >= 0; i--) {
+      const hn = this.dragonHitNumbers[i];
+      hn.y -= 1.5; // float upward
+      hn.life--;
+      if (hn.life <= 0) {
+        this.dragonHitNumbers.splice(i, 1);
+        continue;
+      }
+      const alpha = Math.min(1, hn.life / (hn.maxLife * 0.4));
+      const drawX = hn.x - this.cameraX;
+      const drawY = hn.y - this.cameraY;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '14px "Press Start 2P"';
+      ctx.fillStyle = '#ff2020';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.textAlign = 'center';
+      ctx.strokeText(hn.text, drawX, drawY);
+      ctx.fillText(hn.text, drawX, drawY);
+      ctx.restore();
+    }
   }
 
   // Roadmap overlay
